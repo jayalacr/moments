@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { updateTemplateUrl } from '@/app/superadmin/_actions';
+import { updateTemplateType } from '@/app/superadmin/_actions';
 
 const C = {
   border: '#222D3F',
@@ -64,7 +64,7 @@ export default function TemplateUpload({ eventId, currentUrl, eventSlug, eventTy
     const { data } = supabase.storage.from('templates').getPublicUrl(path);
 
     try {
-      await updateTemplateUrl(eventId, data.publicUrl);
+      await updateTemplateType(eventId, data.publicUrl);
       setStatus('success');
     } catch {
       setStatus('error');

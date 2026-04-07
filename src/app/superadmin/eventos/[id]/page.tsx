@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { toggleEventStatus } from '@/app/superadmin/_actions';
-import TemplateUpload from './_components/TemplateUpload';
+import TemplateSelector from './_components/TemplateSelector';
 
 const C = {
   bg: '#0D1117',
@@ -126,14 +126,14 @@ export default async function EventoDetailPage({ params }: Props) {
       {/* Separador */}
       <div style={{ height: '1px', backgroundColor: C.border, marginBottom: '28px' }} />
 
-      {/* Template upload */}
+      {/* Template selector */}
       <div style={{ marginBottom: '8px' }}>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: C.muted, letterSpacing: '2px', marginBottom: '16px' }}>
-          TEMPLATE HTML
+          TEMPLATE
         </p>
-        <TemplateUpload
+        <TemplateSelector
           eventId={event.id}
-          currentUrl={event.template_url ?? null}
+          currentType={event.template_type ?? null}
           eventSlug={event.slug}
           eventType={event.event_type}
         />

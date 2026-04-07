@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
-import InvitacionRenderer from './_components/InvitacionRenderer';
+import { TEMPLATES } from '@/lib/templates';
 
 interface Props {
   params: Promise<{ type: string; slug: string }>;
@@ -28,25 +28,19 @@ export default async function InvitacionPage({ params }: Props) {
 
   const { data: event } = await supabase
     .from('events')
-    .select('id, title, config, template_url')
+    .select('id, title, template_type, config')
     .eq('event_type', type)
     .eq('slug', slug)
     .eq('status', 'published')
     .single();
 
-  if (!event?.template_url) notFound();
+  if (!event) notFound();
 
-  // Fetcha el HTML desde Supabase Storage
-  const res = await fetch(event.template_url, { next: { revalidate: 60 } });
-  if (!res.ok) notFound();
+  const entry = event.template_type ? TEMPLATES[event.template_type] : null;
 
-  const html = await res.text();
+  if (!entry) notFound();
 
-  // Inyecta el config antes del </head> o al inicio si no hay head
-  const configScript = `<script>window.__MOMENTS__=${JSON.stringify({ config: event.config ?? {} })}</script>`;
-  const injected = html.includes('</head>')
-    ? html.replace('</head>', `${configScript}</head>`)
-    : configScript + html;
+  const Template = entry.component;
 
-  return <InvitacionRenderer html={injected} />;
+  return <Template config={event.config ?? {}} />;
 }

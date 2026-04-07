@@ -1,32 +1,37 @@
 /**
- * Registro de templates disponibles.
+ * Registro central de templates disponibles.
  *
- * Cada clave es el valor que se guarda en events.template_type.
  * Para agregar un template nuevo:
- *   1. Crea el componente en src/components/templates/[nombre]/
- *   2. Agrégalo aquí con su clave
- *
- * El plan define las features disponibles (Essential/Plus/Deluxe).
- * El template_type define el diseño visual único de cada invitación.
+ *   1. Crea el componente en src/components/templates/[nombre]/index.tsx
+ *   2. Agrégalo aquí con su clave, label y plan
+ *   3. Commit + push → Vercel despliega automáticamente
+ *   4. En el superadmin, asigna el template_type al evento
  */
 
 import type { ComponentType } from 'react';
-import type { EssentialConfig } from '@/components/templates/essential/EssentialTemplate';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TemplateComponent = ComponentType<{ config: any }>;
 
-// Importaciones estáticas de templates registrados
+export interface TemplateEntry {
+  component: TemplateComponent;
+  label: string;
+  plan: 'essential' | 'plus' | 'deluxe';
+}
+
 import EssentialTemplate from '@/components/templates/essential/EssentialTemplate';
 
-export const TEMPLATES: Record<string, TemplateComponent> = {
-  // Templates de ejemplo (referencia por plan)
-  'essential-demo': EssentialTemplate as TemplateComponent,
+export const TEMPLATES: Record<string, TemplateEntry> = {
+  'essential-demo': {
+    component: EssentialTemplate as TemplateComponent,
+    label: 'Essential — Demo clásico',
+    plan: 'essential',
+  },
 
-  // Templates de invitaciones reales — agrega aquí los nuevos
-  // 'boda-clasica-dorado': BodaClasicaDorado,
-  // 'boda-rustica-flores':  BodaRusticaFlores,
-  // 'xv-botanico':          XVBotanico,
+  // Agrega nuevos templates aquí:
+  // 'boda-rustica-2025': {
+  //   component: BodaRustica,
+  //   label: 'Boda Rústica 2025',
+  //   plan: 'essential',
+  // },
 };
-
-export type { EssentialConfig };

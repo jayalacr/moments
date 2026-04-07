@@ -4,11 +4,11 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-export async function updateTemplateUrl(eventId: string, templateUrl: string) {
+export async function updateTemplateType(eventId: string, templateType: string) {
   const supabase = await createClient();
   const { error } = await supabase
     .from('events')
-    .update({ template_url: templateUrl })
+    .update({ template_type: templateType || null })
     .eq('id', eventId);
   if (error) throw new Error(error.message);
   revalidatePath('/superadmin');
