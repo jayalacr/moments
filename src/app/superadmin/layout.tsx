@@ -15,15 +15,15 @@ const sans = DM_Sans({
 });
 
 const C = {
-  bg: '#07090F',
-  sidebar: '#0B0F1A',
-  border: '#141C2E',
-  borderBright: '#1E2D45',
+  bg: '#0D1117',
+  sidebar: '#161B26',
+  border: '#222D3F',
+  borderBright: '#2D3F57',
   accent: '#2DD4BF',
   accentDim: 'rgba(45,212,191,0.12)',
-  text: '#C8D4E8',
-  muted: '#3D5070',
-  mutedMid: '#536480',
+  text: '#EAF0FB',
+  muted: '#7A90A8',
+  mutedMid: '#9DB2C8',
 };
 
 export default function SuperadminLayout({ children }: { children: React.ReactNode }) {

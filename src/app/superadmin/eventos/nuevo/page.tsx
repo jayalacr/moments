@@ -4,11 +4,11 @@ import Link from 'next/link';
 import NuevoEventoForm from './_components/NuevoEventoForm';
 
 const C = {
-  muted: '#3D5070',
-  mutedMid: '#536480',
+  muted: '#7A90A8',
+  mutedMid: '#9DB2C8',
   accent: '#2DD4BF',
-  text: '#C8D4E8',
-  border: '#141C2E',
+  text: '#EAF0FB',
+  border: '#222D3F',
 };
 
 export default async function NuevoEventoPage() {

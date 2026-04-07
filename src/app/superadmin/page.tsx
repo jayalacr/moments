@@ -4,14 +4,14 @@ import Link from 'next/link';
 import { toggleEventStatus } from './_actions';
 
 const C = {
-  bg: '#07090F',
-  border: '#141C2E',
-  borderBright: '#1E2D45',
+  bg: '#0D1117',
+  border: '#222D3F',
+  borderBright: '#2D3F57',
   accent: '#2DD4BF',
   accentDim: 'rgba(45,212,191,0.1)',
-  text: '#C8D4E8',
-  muted: '#3D5070',
-  mutedMid: '#536480',
+  text: '#EAF0FB',
+  muted: '#7A90A8',
+  mutedMid: '#9DB2C8',
   green: '#4ADE80',
   greenDim: 'rgba(74,222,128,0.12)',
   amber: '#FBBF24',
