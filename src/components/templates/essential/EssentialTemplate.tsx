@@ -24,6 +24,7 @@ const EVENT = {
   fullNames: { person1: 'Sofía Herrera López', person2: 'Mateo Mendoza Ruiz' },
   date: { day: '18', month: 'Octubre', year: '2025' },
   location: 'Ciudad de México',
+  heroLabel: 'Nuestro gran día',
   // Máximo 5 imágenes. images[0] se usa como portada (hero).
   images: [
     'https://images.unsplash.com/photo-1519741497674-611481863552?w=1400&q=80', // portada
@@ -126,7 +127,7 @@ export default function EssentialTemplate() {
         <div className="hero-bg" style={heroImage ? { backgroundImage: `url(${heroImage})` } : undefined} />
         <div className="hero-overlay" />
         <div className="hero-content">
-          <p className="label gold hero-label">Matrimonio</p>
+          <p className="label gold hero-label">{EVENT.heroLabel}</p>
           <h1 className="hero-names">
             <span>{EVENT.couple.person1}</span>
             <span className="hero-amp">&</span>
