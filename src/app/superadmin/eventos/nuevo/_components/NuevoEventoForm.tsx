@@ -9,6 +9,12 @@ interface Organizer {
   email: string;
 }
 
+interface Me {
+  id: string;
+  full_name: string | null;
+  email: string;
+}
+
 const C = {
   bg: '#0D1117',
   sidebar: '#161B26',
@@ -65,7 +71,7 @@ const labelStyle: React.CSSProperties = {
   textTransform: 'uppercase',
 };
 
-export default function NuevoEventoForm({ organizers }: { organizers: Organizer[] }) {
+export default function NuevoEventoForm({ organizers, me }: { organizers: Organizer[]; me: Me | null }) {
   const [isPending, startTransition] = useTransition();
 
   function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -147,11 +153,31 @@ export default function NuevoEventoForm({ organizers }: { organizers: Organizer[
         </div>
       </div>
 
+      {/* Template */}
+      <div>
+        <label htmlFor="template_type" style={labelStyle}>Template (diseño de la invitación)</label>
+        <input
+          id="template_type"
+          name="template_type"
+          type="text"
+          placeholder="ej: essential-demo, boda-clasica-dorado"
+          style={inputStyle}
+        />
+        <p style={{ marginTop: '6px', fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted }}>
+          // Clave del template registrado en src/lib/templates.ts — se puede asignar después
+        </p>
+      </div>
+
       {/* Organizador */}
       <div>
         <label htmlFor="owner_id" style={labelStyle}>Organizador</label>
         <select id="owner_id" name="owner_id" required style={selectStyle}>
           <option value="">Seleccionar organizador...</option>
+          {me && (
+            <option value={me.id}>
+              {me.full_name ? `${me.full_name} — ` : ''}{me.email} (Yo)
+            </option>
+          )}
           {organizers.map(org => (
             <option key={org.id} value={org.id}>
               {org.full_name ? `${org.full_name} — ` : ''}{org.email}

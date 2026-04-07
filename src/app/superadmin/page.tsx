@@ -236,16 +236,24 @@ export default async function SuperadminPage() {
 
                   {/* Acciones */}
                   <td style={{ padding: '14px 16px' }}>
-                    {(event.status === 'published' || event.status === 'paused' || event.status === 'draft' || event.status === 'setup') && (
-                      <form action={toggleEventStatus.bind(null, event.id, event.status)}>
-                        <button
-                          type="submit"
-                          className={`toggle-btn${event.status === 'published' ? ' pause' : ''}`}
-                        >
-                          {event.status === 'published' ? 'pause' : 'publish'}
-                        </button>
-                      </form>
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Link
+                        href={`/superadmin/eventos/${event.id}`}
+                        style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.accent, textDecoration: 'none', padding: '5px 10px', border: `1px solid ${C.borderBright}`, borderRadius: '4px' }}
+                      >
+                        editar
+                      </Link>
+                      {(event.status === 'published' || event.status === 'paused' || event.status === 'draft' || event.status === 'setup') && (
+                        <form action={toggleEventStatus.bind(null, event.id, event.status)}>
+                          <button
+                            type="submit"
+                            className={`toggle-btn${event.status === 'published' ? ' pause' : ''}`}
+                          >
+                            {event.status === 'published' ? 'pause' : 'publish'}
+                          </button>
+                        </form>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );

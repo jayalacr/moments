@@ -17,91 +17,44 @@ const jost = Jost({
 });
 
 // ---------------------------------------------------------------------------
-// Mock data — reemplazar con props reales en Sprint 2+
+// Types
 // ---------------------------------------------------------------------------
-const EVENT = {
-  couple: { person1: 'Sofía', person2: 'Mateo' },
-  fullNames: { person1: 'Sofía Herrera López', person2: 'Mateo Mendoza Ruiz' },
-  date: { day: '18', month: 'Octubre', year: '2025' },
-  location: 'Ciudad de México',
-  heroLabel: 'Nuestro gran día',
-  // Máximo 5 imágenes. images[0] se usa como portada (hero).
-  images: [
-    'https://images.unsplash.com/photo-1519741497674-611481863552?w=1400&q=80', // portada
-    'https://images.unsplash.com/photo-1529636798458-92182e662485?w=1400&q=80', // ancho completo
-    'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=900&q=80',  // centrada
-    'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&q=80',  // dúo izq
-    'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&q=80',  // dúo der
-  ],
-  quote: {
-    text: 'Lo que Dios unió, que no lo separe el hombre.',
-    reference: 'Marcos 10:9',
-  },
-  parents: {
-    person1: 'Roberto Herrera &\nCarmen López de Herrera',
-    person2: 'Jorge Mendoza &\nPatricia Ruiz de Mendoza',
-  },
-  itinerary: [
-    {
-      time: '16:00',
-      name: 'Ceremonia Religiosa',
-      venue: 'Parroquia de San Francisco de Asís',
-      address: 'Av. Francisco I. Madero 12, Centro Histórico, CDMX',
-    },
-    {
-      time: '18:30',
-      name: 'Coctel de Bienvenida',
-      venue: 'Jardín Las Palmas',
-      address: 'Calle Palmas 340, Lomas de Chapultepec, CDMX',
-    },
-    {
-      time: '20:00',
-      name: 'Recepción',
-      venue: 'Salón Grand Palais',
-      address: 'Paseo de la Reforma 500, Cuauhtémoc, CDMX',
-    },
-  ],
-  dressCode: {
-    label: 'Formal',
-    women: 'Vestido largo o midi en tonos de la paleta. Se agradece tacón o sandalia elegante.',
-    men: 'Traje oscuro o guayabera formal. Corbata o moño en tonos de la paleta.',
-    swatches: [
-      { color: '#E8D5C4', name: 'Champagne' },
-      { color: '#C9A87C', name: 'Dorado' },
-      { color: '#8B9D77', name: 'Salvia' },
-      { color: '#7B9AB2', name: 'Acero' },
-      { color: '#D4C5B5', name: 'Perla' },
-    ],
-    avoid: [
-      { color: '#FFFFFF', name: 'Blanco' },
-      { color: '#F5F5DC', name: 'Crema' },
-    ],
-  },
-  notes: [
-    'Evento para adultos — no se permiten niños.',
-    'Puntualidad apreciada. Las puertas cierran a las 16:15 h.',
-    'Estacionamiento gratuito disponible en el venue.',
-  ],
-  gifts: {
-    bank: 'BBVA',
-    holder: 'Sofía Herrera López',
-    account: '4152 3140 7823 9012',
-    clabe: '012 180 00412345678 9',
-    giftListUrl: 'https://mesaderegalos.liverpool.com.mx/misregalos/12345',
-    giftListLabel: 'Liverpool',
-  },
-  whatsapp: {
-    number: '5215512345678',
-    message: 'Hola, confirmo mi asistencia a la boda de Sofía & Mateo el 18 de octubre. 🤍',
-  },
-  noChildren: true,
-  rsvpDeadline: '30 de septiembre',
-};
+export interface EssentialConfig {
+  heroLabel?: string;
+  couple?: { person1?: string; person2?: string };
+  fullNames?: { person1?: string; person2?: string };
+  date?: { day?: string; month?: string; year?: string };
+  location?: string;
+  images?: string[];
+  quote?: { text?: string; reference?: string };
+  parents?: { person1?: string; person2?: string };
+  itinerary?: { time: string; name: string; venue: string; address?: string }[];
+  dressCode?: {
+    label?: string;
+    women?: string;
+    men?: string;
+    swatches?: { color: string; name: string }[];
+    avoid?: { color: string; name: string }[];
+  };
+  notes?: string[];
+  gifts?: {
+    bank?: string;
+    holder?: string;
+    account?: string;
+    clabe?: string;
+    giftListUrl?: string;
+    giftListLabel?: string;
+  };
+  whatsapp?: { number?: string; message?: string };
+  noChildren?: boolean;
+  rsvpDeadline?: string;
+}
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export default function EssentialTemplate() {
+export default function EssentialTemplate({ config = {} }: { config?: EssentialConfig }) {
+  const c = config;
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -115,8 +68,8 @@ export default function EssentialTemplate() {
     return () => observer.disconnect();
   }, []);
 
-  const waUrl = `https://wa.me/${EVENT.whatsapp.number}?text=${encodeURIComponent(EVENT.whatsapp.message)}`;
-  const heroImage = EVENT.images[0] || null;
+  const waUrl = `https://wa.me/${c.whatsapp?.number ?? ''}?text=${encodeURIComponent(c.whatsapp?.message ?? '')}`;
+  const heroImage = c.images?.[0] || null;
 
   return (
     <div className={`${cormorant.variable} ${jost.variable}`} style={{ backgroundColor: '#F8F3EC', color: '#1C1611' }}>
@@ -127,16 +80,16 @@ export default function EssentialTemplate() {
         <div className="hero-bg" style={heroImage ? { backgroundImage: `url(${heroImage})` } : undefined} />
         <div className="hero-overlay" />
         <div className="hero-content">
-          <p className="label gold hero-label">{EVENT.heroLabel}</p>
+          <p className="label gold hero-label">{c.heroLabel}</p>
           <h1 className="hero-names">
-            <span>{EVENT.couple.person1}</span>
+            <span>{c.couple?.person1}</span>
             <span className="hero-amp">&</span>
-            <span>{EVENT.couple.person2}</span>
+            <span>{c.couple?.person2}</span>
           </h1>
           <div className="hero-meta">
-            <span className="label gold">{EVENT.date.day} · {EVENT.date.month} · {EVENT.date.year}</span>
+            <span className="label gold">{c.date?.day} · {c.date?.month} · {c.date?.year}</span>
             <span className="hero-meta-dot" />
-            <span className="label muted">{EVENT.location}</span>
+            <span className="label muted">{c.location}</span>
           </div>
         </div>
         <div className="hero-scroll-indicator">
@@ -148,10 +101,10 @@ export default function EssentialTemplate() {
       {/* ── CITA ── */}
       <section className="section reveal">
         <div className="quote-mark">"</div>
-        <p className="quote-text">{EVENT.quote.text}</p>
+        <p className="quote-text">{c.quote?.text}</p>
         <div className="inline-sep">
           <span className="sep-line short" />
-          <span className="label muted">{EVENT.quote.reference}</span>
+          <span className="label muted">{c.quote?.reference}</span>
           <span className="sep-line short" />
         </div>
       </section>
@@ -163,27 +116,27 @@ export default function EssentialTemplate() {
         <p className="label muted reveal" style={{ marginBottom: '2.5rem' }}>Con la bendición de nuestras familias</p>
         <div className="parents-grid">
           <div className="reveal delay-1 text-center">
-            <p className="display-name">{EVENT.fullNames.person1}</p>
+            <p className="display-name">{c.fullNames?.person1}</p>
             <div className="name-sep"><span className="sep-line short" /></div>
             <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
-              Hija de<br />{EVENT.parents.person1}
+              Hija de<br />{c.parents?.person1}
             </p>
           </div>
           <div className="parents-divider" />
           <div className="reveal delay-2 text-center">
-            <p className="display-name">{EVENT.fullNames.person2}</p>
+            <p className="display-name">{c.fullNames?.person2}</p>
             <div className="name-sep"><span className="sep-line short" /></div>
             <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
-              Hijo de<br />{EVENT.parents.person2}
+              Hijo de<br />{c.parents?.person2}
             </p>
           </div>
         </div>
       </section>
 
       {/* ── FOTO 2 (ancho completo) ── */}
-      {EVENT.images[1] && (
+      {c.images?.[1] && (
         <div className="photo-full reveal">
-          <img src={EVENT.images[1]} alt="Foto de los novios" className="photo-img photo-img--hover" />
+          <img src={c.images[1]} alt="Foto de los novios" className="photo-img photo-img--hover" />
         </div>
       )}
 
@@ -193,9 +146,9 @@ export default function EssentialTemplate() {
       <section className="section section--tinted">
         <h2 className="section-heading reveal">Programa del Día</h2>
         <div className="itinerary">
-          {EVENT.itinerary.map((item, i) => {
+          {(c.itinerary ?? []).map((item, i) => {
             const [h, m] = item.time.split(':');
-            const isLast = i === EVENT.itinerary.length - 1;
+            const isLast = i === (c.itinerary?.length ?? 1) - 1;
             return (
               <div key={i} className={`itinerary-item reveal delay-${i + 1}`}>
                 {/* Línea de tiempo */}
@@ -230,10 +183,10 @@ export default function EssentialTemplate() {
       </section>
 
       {/* ── FOTO 3 (ancho pantalla) ── */}
-      {EVENT.images[2] && (
+      {c.images?.[2] && (
         <div className="photo-center reveal">
           <div className="photo-img--hover" style={{ width: '100%', height: '100%' }}>
-            <img src={EVENT.images[2]} alt="Foto de los novios" className="photo-img" />
+            <img src={c.images[2]} alt="Foto de los novios" className="photo-img" />
           </div>
         </div>
       )}
@@ -243,24 +196,24 @@ export default function EssentialTemplate() {
       {/* ── DRESS CODE ── */}
       <section className="section section--tinted">
         <h2 className="section-heading reveal">Dress Code</h2>
-        <p className="label gold reveal" style={{ marginBottom: '2rem' }}>{EVENT.dressCode.label}</p>
+        <p className="label gold reveal" style={{ marginBottom: '2rem' }}>{c.dressCode?.label}</p>
 
         <div className="dresscode-gender reveal">
           <div className="dc-gender-block">
             <div className="dc-gender-icon"><WomenIcon /></div>
             <p className="label muted dc-gender-label">Ellas</p>
-            <p className="dc-gender-text">{EVENT.dressCode.women}</p>
+            <p className="dc-gender-text">{c.dressCode?.women}</p>
           </div>
           <div className="dc-gender-divider" />
           <div className="dc-gender-block">
             <div className="dc-gender-icon"><MenIcon /></div>
             <p className="label muted dc-gender-label">Ellos</p>
-            <p className="dc-gender-text">{EVENT.dressCode.men}</p>
+            <p className="dc-gender-text">{c.dressCode?.men}</p>
           </div>
         </div>
 
         <div className="swatches reveal" style={{ marginTop: '2rem' }}>
-          {EVENT.dressCode.swatches.map((s, i) => (
+          {(c.dressCode?.swatches ?? []).map((s, i) => (
             <div key={i} className="swatch-item">
               <div className="swatch-circle" style={{ backgroundColor: s.color }} />
               <span className="label muted">{s.name}</span>
@@ -268,11 +221,11 @@ export default function EssentialTemplate() {
           ))}
         </div>
 
-        {EVENT.dressCode.avoid.length > 0 && (
+        {(c.dressCode?.avoid?.length ?? 0) > 0 && (
           <div className="reveal" style={{ marginTop: '2rem', textAlign: 'center' }}>
             <p className="label muted" style={{ marginBottom: '1rem' }}>Por favor evita</p>
             <div className="swatches" style={{ justifyContent: 'center' }}>
-              {EVENT.dressCode.avoid.map((s, i) => (
+              {c.dressCode!.avoid!.map((s, i) => (
                 <div key={i} className="swatch-item">
                   <div className="swatch-circle swatch-avoid" style={{ backgroundColor: s.color }} />
                   <span className="label muted">{s.name}</span>
@@ -286,11 +239,11 @@ export default function EssentialTemplate() {
       <Ornament />
 
       {/* ── INDICACIONES ── */}
-      {EVENT.notes.length > 0 && (
+      {(c.notes?.filter(Boolean).length ?? 0) > 0 && (
         <section className="section">
           <h2 className="section-heading reveal">Toma nota</h2>
           <div className="notes-list">
-            {EVENT.notes.map((note, i) => (
+            {c.notes!.filter(Boolean).map((note, i) => (
               <div key={i} className={`note-item reveal delay-${i + 1}`}>
                 <span className="note-dot" />
                 <p className="note-text">{note}</p>
@@ -301,19 +254,19 @@ export default function EssentialTemplate() {
       )}
 
       {/* ── FOTOS 4 y 5 (dúo) ── */}
-      {(EVENT.images[3] || EVENT.images[4]) && (
+      {(c.images?.[3] || c.images?.[4]) && (
         <div className="photo-duo reveal">
-          {EVENT.images[3] && (
+          {c.images?.[3] && (
             <div className="photo-duo-item">
               <div className="photo-img--hover" style={{ width: '100%', height: '100%' }}>
-                <img src={EVENT.images[3]} alt="Foto de los novios" className="photo-img" />
+                <img src={c.images[3]} alt="Foto de los novios" className="photo-img" />
               </div>
             </div>
           )}
-          {EVENT.images[4] && (
+          {c.images?.[4] && (
             <div className="photo-duo-item">
               <div className="photo-img--hover" style={{ width: '100%', height: '100%' }}>
-                <img src={EVENT.images[4]} alt="Foto de los novios" className="photo-img" />
+                <img src={c.images[4]} alt="Foto de los novios" className="photo-img" />
               </div>
             </div>
           )}
@@ -339,10 +292,10 @@ export default function EssentialTemplate() {
               Transferencia Bancaria
             </p>
             {[
-              { label: 'Banco', value: EVENT.gifts.bank },
-              { label: 'Nombre', value: EVENT.gifts.holder },
-              { label: 'No. de cuenta', value: EVENT.gifts.account },
-              { label: 'CLABE', value: EVENT.gifts.clabe },
+              { label: 'Banco', value: c.gifts?.bank },
+              { label: 'Nombre', value: c.gifts?.holder },
+              { label: 'No. de cuenta', value: c.gifts?.account },
+              { label: 'CLABE', value: c.gifts?.clabe },
             ].map(({ label, value }) => (
               <div key={label} className="gift-row">
                 <span className="gift-label">{label}</span>
@@ -352,16 +305,16 @@ export default function EssentialTemplate() {
           </div>
 
           {/* Tarjeta mesa de regalos */}
-          {EVENT.gifts.giftListUrl && (
+          {c.gifts?.giftListUrl && (
             <div className="gift-card gift-card--list reveal delay-1">
               <GiftIcon />
               <p className="label" style={{ letterSpacing: '0.2em', margin: '1.25rem 0 0.5rem', color: '#9B8B78' }}>
                 Mesa de Regalos
               </p>
               <p className="gift-value" style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-                {EVENT.gifts.giftListLabel}
+                {c.gifts.giftListLabel}
               </p>
-              <a href={EVENT.gifts.giftListUrl} target="_blank" rel="noopener noreferrer" className="btn-outline btn-outline--sm">
+              <a href={c.gifts.giftListUrl} target="_blank" rel="noopener noreferrer" className="btn-outline btn-outline--sm">
                 Ver mesa de regalos →
               </a>
             </div>
@@ -372,7 +325,7 @@ export default function EssentialTemplate() {
       <Ornament />
 
       {/* ── NO NIÑOS ── */}
-      {EVENT.noChildren && (
+      {c.noChildren && (
         <section className="section">
           <div className="no-children-block reveal">
             <NoChildrenIcon />
@@ -390,7 +343,7 @@ export default function EssentialTemplate() {
       <section className="section">
         <h2 className="section-heading reveal">¿Nos acompañas?</h2>
         <p className="label muted reveal" style={{ marginBottom: '2.5rem' }}>
-          Confirma tu asistencia antes del <strong style={{ color: '#1C1611' }}>{EVENT.rsvpDeadline}</strong>
+          Confirma tu asistencia antes del <strong style={{ color: '#1C1611' }}>{c.rsvpDeadline}</strong>
         </p>
         <a href={waUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp reveal">
           <WhatsAppIcon />
@@ -401,10 +354,10 @@ export default function EssentialTemplate() {
       {/* ── FOOTER ── */}
       <footer className="footer">
         <p className="footer-names">
-          {EVENT.couple.person1} &amp; {EVENT.couple.person2}
+          {c.couple?.person1} &amp; {c.couple?.person2}
         </p>
         <p className="label muted" style={{ marginTop: '0.5rem' }}>
-          {EVENT.date.day} · {EVENT.date.month} · {EVENT.date.year} · {EVENT.location}
+          {c.date?.day} · {c.date?.month} · {c.date?.year} · {c.location}
         </p>
       </footer>
     </div>

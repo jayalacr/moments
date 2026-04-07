@@ -27,6 +27,12 @@ export default async function NuevoEventoPage() {
     .eq('role', 'organizador')
     .order('full_name');
 
+  const { data: me } = await supabase
+    .from('profiles')
+    .select('id, full_name, email')
+    .eq('id', user.id)
+    .single();
+
   return (
     <div style={{ padding: '32px 40px', maxWidth: '560px' }}>
       {/* Breadcrumb */}
@@ -54,7 +60,7 @@ export default async function NuevoEventoPage() {
       {/* Separador */}
       <div style={{ height: '1px', backgroundColor: C.border, marginBottom: '28px' }} />
 
-      <NuevoEventoForm organizers={organizers ?? []} />
+      <NuevoEventoForm organizers={organizers ?? []} me={me} />
     </div>
   );
 }
