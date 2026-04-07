@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
+import InvitacionRenderer from './_components/InvitacionRenderer';
 
 interface Props {
   params: Promise<{ type: string; slug: string }>;
@@ -41,11 +42,11 @@ export default async function InvitacionPage({ params }: Props) {
 
   const html = await res.text();
 
-  // Inyecta el config como variable global para que el HTML lo pueda usar
-  // Accesible en el HTML con: window.__MOMENTS__.config
+  // Inyecta el config antes del </head> o al inicio si no hay head
   const configScript = `<script>window.__MOMENTS__=${JSON.stringify({ config: event.config ?? {} })}</script>`;
+  const injected = html.includes('</head>')
+    ? html.replace('</head>', `${configScript}</head>`)
+    : configScript + html;
 
-  return (
-    <div dangerouslySetInnerHTML={{ __html: configScript + html }} />
-  );
+  return <InvitacionRenderer html={injected} />;
 }

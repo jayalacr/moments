@@ -1,0 +1,29 @@
+  <!DOCTYPE html>                                                    
+  <html lang="es">                                          
+  <head>                                                             
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,               
+  initial-scale=1.0">                                       
+    <title>Mi invitación</title>
+    <style>                                                          
+      body { font-family: sans-serif; text-align: center; padding:
+  60px 20px; }                                                       
+      h1 { font-size: 48px; }                               
+    </style>                                                         
+  </head>
+  <body>                                                             
+    <h1 id="nombres"></h1>                                  
+    <p id="fecha"></p>                                               
+  
+    <script>                                                         
+      const cfg = window.__MOMENTS__?.config;               
+      if (cfg) {                                                     
+        document.getElementById('nombres').textContent =
+          `${cfg.couple?.person1} & ${cfg.couple?.person2}`;         
+        document.getElementById('fecha').textContent =               
+          `${cfg.date?.day} de ${cfg.date?.month} de 
+  ${cfg.date?.year}`;                                                
+      }                                                     
+    </script>                                                        
+  </body>                                                   
+  </html>
