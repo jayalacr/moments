@@ -12,6 +12,10 @@ interface ImageUploadProps {
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!;
 const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!;
 
+const MAX_PX = 2400;        // ancho/alto máximo al comprimir
+const QUALITY = 0.92;       // calidad JPEG de la compresión en canvas
+const COMPRESS_THRESHOLD = 5 * 1024 * 1024; // solo comprimir si > 5 MB
+
 const C = {
   border: '#EDE5D8',
   accent: '#C9A87C',
@@ -19,10 +23,49 @@ const C = {
   text: '#1C1611',
   muted: '#9C8E82',
   mutedLight: '#C5B9B0',
-  bg: '#F8F3EC',
   white: '#FFFFFF',
   error: '#C0392B',
 };
+
+/** Redimensiona y comprime una imagen usando canvas antes de subir. */
+function compressImage(file: File): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
+      let { width, height } = img;
+      if (width > MAX_PX || height > MAX_PX) {
+        if (width >= height) {
+          height = Math.round((height * MAX_PX) / width);
+          width = MAX_PX;
+        } else {
+          width = Math.round((width * MAX_PX) / height);
+          height = MAX_PX;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        blob => blob ? resolve(blob) : reject(new Error('Error al comprimir la imagen.')),
+        'image/jpeg',
+        QUALITY,
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('No se pudo leer la imagen.'));
+    };
+
+    img.src = objectUrl;
+  });
+}
 
 export default function ImageUpload({ value, onChange, label }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -35,22 +78,22 @@ export default function ImageUpload({ value, onChange, label }: ImageUploadProps
       setError('Solo se permiten imágenes.');
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      setError('El archivo no debe superar 10 MB.');
-      return;
-    }
 
     setError('');
     setUploading(true);
     setProgress(0);
 
     try {
+      // Solo comprimir si el archivo supera el umbral; de lo contrario subir original
+      const fileToUpload = file.size > COMPRESS_THRESHOLD
+        ? await compressImage(file)
+        : file;
+
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', fileToUpload, 'image.jpg');
       formData.append('upload_preset', UPLOAD_PRESET);
       formData.append('folder', 'moments');
 
-      // Usar XMLHttpRequest para tener progreso real
       const rawUrl = await new Promise<string>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`);
@@ -72,8 +115,7 @@ export default function ImageUpload({ value, onChange, label }: ImageUploadProps
         xhr.send(formData);
       });
 
-      // Guardamos la URL limpia — el template aplica las transformaciones
-      // correctas según contexto (hero, duo, centrada, móvil/desktop).
+      // URL limpia — el template aplica transformaciones según contexto
       onChange(rawUrl);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error desconocido.');
@@ -115,14 +157,19 @@ export default function ImageUpload({ value, onChange, label }: ImageUploadProps
           transition: 'border-color 0.2s, background 0.2s',
         }}
       >
-        {/* Preview */}
+        {/* Preview — imagen completa sin recortar */}
         {value && !uploading && (
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', backgroundColor: '#F0EBE3' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={cld(value, T.thumb)}
               alt="preview"
-              style={{ width: '100%', height: '180px', objectFit: 'cover', display: 'block' }}
+              style={{
+                width: '100%',
+                maxHeight: '200px',
+                objectFit: 'contain',
+                display: 'block',
+              }}
             />
             <button
               type="button"
@@ -182,7 +229,7 @@ export default function ImageUpload({ value, onChange, label }: ImageUploadProps
                 {value ? 'Cambiar imagen' : 'Seleccionar imagen'}
               </button>
               <span style={{ fontSize: '11px', color: C.mutedLight, fontFamily: 'var(--font-jost)' }}>
-                o arrastra aquí · JPG, PNG, WebP · máx. 10 MB
+                o arrastra aquí · JPG, PNG, WebP · cualquier tamaño
               </span>
             </>
           )}
