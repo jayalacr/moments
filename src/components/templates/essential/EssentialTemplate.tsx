@@ -1,6 +1,6 @@
 'use client';
 
-import { Cormorant_Garamond, Jost } from 'next/font/google';
+import { Cormorant_Garamond, Playfair_Display, EB_Garamond, Jost, Raleway, Montserrat } from 'next/font/google';
 import { useEffect } from 'react';
 import { cld, T } from '@/lib/cloudinary';
 
@@ -10,12 +10,46 @@ const cormorant = Cormorant_Garamond({
   style: ['normal', 'italic'],
   variable: '--font-cormorant',
 });
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-playfair',
+});
+const ebGaramond = EB_Garamond({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  style: ['normal', 'italic'],
+  variable: '--font-eb-garamond',
+});
 
 const jost = Jost({
   subsets: ['latin'],
   weight: ['300', '400', '500'],
   variable: '--font-jost',
 });
+const raleway = Raleway({
+  subsets: ['latin'],
+  weight: ['300', '400', '500'],
+  variable: '--font-raleway',
+});
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  weight: ['300', '400', '500'],
+  variable: '--font-montserrat',
+});
+
+// Font variable map
+const DISPLAY_FONT_VAR: Record<string, string> = {
+  cormorant:   'var(--font-cormorant)',
+  playfair:    'var(--font-playfair)',
+  'eb-garamond': 'var(--font-eb-garamond)',
+};
+const BODY_FONT_VAR: Record<string, string> = {
+  jost:       'var(--font-jost)',
+  raleway:    'var(--font-raleway)',
+  montserrat: 'var(--font-montserrat)',
+};
 
 // ---------------------------------------------------------------------------
 // Types
@@ -50,6 +84,13 @@ export interface EssentialConfig {
   noChildren?: boolean;
   noChildrenMessage?: string;
   rsvpDeadline?: string;
+  theme?: {
+    accentColor?: string;
+    backgroundColor?: string;
+    textColor?: string;
+    displayFont?: 'cormorant' | 'playfair' | 'eb-garamond';
+    bodyFont?: 'jost' | 'raleway' | 'montserrat';
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -57,6 +98,31 @@ export interface EssentialConfig {
 // ---------------------------------------------------------------------------
 export default function EssentialTemplate({ config = {} }: { config?: EssentialConfig }) {
   const c = config;
+  const t = c.theme ?? {};
+
+  const accentColor = t.accentColor ?? '#B8965A';
+  const backgroundColor = t.backgroundColor ?? '#F8F3EC';
+  const textColor = t.textColor ?? '#1C1611';
+  const displayFontVar = DISPLAY_FONT_VAR[t.displayFont ?? 'cormorant'] ?? 'var(--font-cormorant)';
+  const bodyFontVar = BODY_FONT_VAR[t.bodyFont ?? 'jost'] ?? 'var(--font-jost)';
+
+  const allFontVars = [
+    cormorant.variable, playfair.variable, ebGaramond.variable,
+    jost.variable, raleway.variable, montserrat.variable,
+  ].join(' ');
+
+  // Inline style on the root div so CSS vars like var(--font-cormorant) resolve
+  // correctly — next/font defines --font-* on this same element via className.
+  const rootStyle = {
+    backgroundColor,
+    color: textColor,
+    '--ivory':        backgroundColor,
+    '--charcoal':     textColor,
+    '--gold':         accentColor,
+    '--font-display': displayFontVar,
+    '--font-body':    bodyFontVar,
+  } as React.CSSProperties;
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -74,7 +140,7 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
   const heroImage = c.images?.[0] || null;
 
   return (
-    <div className={`${cormorant.variable} ${jost.variable}`} style={{ backgroundColor: '#F8F3EC', color: '#1C1611' }}>
+    <div className={allFontVars} style={rootStyle}>
       <style>{css}</style>
 
       {/* ── HERO ── */}
@@ -496,17 +562,18 @@ const css = `
     --charcoal: #1C1611;
     --gold:     #B8965A;
     --taupe:    #8B7355;
-    --muted:    #E6DDD2;
-    --muted-fg: #9B8B78;
+    --muted:    color-mix(in srgb, var(--ivory) 85%, var(--charcoal));
+    --muted-fg: color-mix(in srgb, var(--ivory) 45%, var(--charcoal));
+    --tinted:   color-mix(in srgb, var(--ivory) 92%, var(--charcoal));
   }
 
   /* ---------- Typography helpers ---------- */
-  .font-display { font-family: var(--font-cormorant), Georgia, serif; }
-  .font-body    { font-family: var(--font-jost), system-ui, sans-serif; }
+  .font-display { font-family: var(--font-display, var(--font-cormorant), Georgia, serif); }
+  .font-body    { font-family: var(--font-body, var(--font-jost), system-ui, sans-serif); }
 
   /* ---------- Shared ---------- */
   .label {
-    font-family: var(--font-jost), system-ui, sans-serif;
+    font-family: var(--font-body);
     font-size: 12px;
     letter-spacing: 0.22em;
     text-transform: uppercase;
@@ -596,7 +663,7 @@ const css = `
   }
   .hero-label { margin: 0; animation-delay: 0s; }
   .hero-names {
-    font-family: var(--font-cormorant), Georgia, serif;
+    font-family: var(--font-display);
     font-size: clamp(56px, 12vw, 130px);
     font-weight: 300;
     font-style: italic;
@@ -676,7 +743,7 @@ const css = `
   }
 
   .section-heading {
-    font-family: var(--font-cormorant), Georgia, serif;
+    font-family: var(--font-display);
     font-size: clamp(2.25rem, 5.5vw, 3.5rem);
     font-weight: 300;
     font-style: italic;
@@ -685,14 +752,14 @@ const css = `
   }
   /* Sección con fondo alterno */
   .section--tinted {
-    background: #EDE5DA;
+    background: var(--tinted);
     width: 100%;
     max-width: 100%;
     padding-left: max(2rem, calc((100vw - 680px) / 2));
     padding-right: max(2rem, calc((100vw - 680px) / 2));
   }
   .section--tinted-wide {
-    background: #EDE5DA;
+    background: var(--tinted);
     width: 100%;
     max-width: 100%;
     padding-left: max(2rem, calc((100vw - 860px) / 2));
@@ -711,7 +778,7 @@ const css = `
 
   /* ---------- Quote ---------- */
   .quote-mark {
-    font-family: var(--font-cormorant), Georgia, serif;
+    font-family: var(--font-display);
     font-size: 5rem;
     line-height: 1;
     color: var(--gold);
@@ -719,7 +786,7 @@ const css = `
     margin-bottom: 0.5rem;
   }
   .quote-text {
-    font-family: var(--font-cormorant), Georgia, serif;
+    font-family: var(--font-display);
     font-size: clamp(1.3rem, 3vw, 1.75rem);
     font-style: italic;
     font-weight: 300;
@@ -753,7 +820,7 @@ const css = `
     align-self: stretch;
   }
   .display-name {
-    font-family: var(--font-cormorant), Georgia, serif;
+    font-family: var(--font-display);
     font-size: 1.25rem;
     font-weight: 400;
     color: var(--charcoal);
@@ -806,7 +873,7 @@ const css = `
   /* Tarjeta de evento */
   .itinerary-card {
     flex: 1;
-    background: #F0E9DF;
+    background: var(--tinted);
     border: 1px solid var(--muted);
     border-radius: 14px;
     overflow: hidden;
@@ -829,20 +896,20 @@ const css = `
     line-height: 1;
   }
   .time-h {
-    font-family: var(--font-cormorant), Georgia, serif;
+    font-family: var(--font-display);
     font-size: 2rem;
     font-weight: 300;
     color: var(--gold);
     line-height: 1;
   }
   .time-m {
-    font-family: var(--font-cormorant), Georgia, serif;
+    font-family: var(--font-display);
     font-size: 1.1rem;
     font-weight: 300;
     color: var(--gold);
   }
   .itinerary-name {
-    font-family: var(--font-cormorant), Georgia, serif;
+    font-family: var(--font-display);
     font-size: 1.2rem;
     font-weight: 400;
     color: var(--charcoal);
@@ -852,7 +919,7 @@ const css = `
     padding: 0.875rem 1.25rem;
   }
   .itinerary-venue {
-    font-family: var(--font-jost), system-ui, sans-serif;
+    font-family: var(--font-body);
     font-size: 12px;
     font-weight: 500;
     color: var(--charcoal);
@@ -864,7 +931,7 @@ const css = `
     gap: 0.35rem;
   }
   .itinerary-address span {
-    font-family: var(--font-jost), system-ui, sans-serif;
+    font-family: var(--font-body);
     font-size: 12px;
     color: var(--muted-fg);
     line-height: 1.5;
@@ -885,7 +952,7 @@ const css = `
   .dc-gender-label { margin-bottom: 0.4rem !important; }
   .dc-gender-divider { width: 1px; background: var(--muted); align-self: stretch; }
   .dc-gender-text {
-    font-family: var(--font-jost), system-ui, sans-serif;
+    font-family: var(--font-body);
     font-size: 13px;
     color: var(--muted-fg);
     line-height: 1.8;
@@ -914,7 +981,7 @@ const css = `
     display: flex;
     align-items: flex-start;
     gap: 1.25rem;
-    background: #F0E9DF;
+    background: var(--tinted);
     border: 1px solid var(--muted);
     border-left: 3px solid var(--gold);
     border-radius: 12px;
@@ -923,14 +990,14 @@ const css = `
     text-align: left;
   }
   .no-children-title {
-    font-family: var(--font-cormorant), Georgia, serif;
+    font-family: var(--font-display);
     font-size: 1.15rem;
     font-weight: 400;
     color: var(--charcoal);
     margin: 0 0 0.4rem;
   }
   .no-children-desc {
-    font-family: var(--font-jost), system-ui, sans-serif;
+    font-family: var(--font-body);
     font-size: 12px;
     color: var(--muted-fg);
     line-height: 1.8;
@@ -951,7 +1018,7 @@ const css = `
     align-items: flex-start;
     gap: 0.75rem;
     padding: 0.875rem 1.25rem;
-    background: #F0E9DF;
+    background: var(--tinted);
     border: 1px solid var(--muted);
     border-radius: 10px;
   }
@@ -964,7 +1031,7 @@ const css = `
     margin-top: 5px;
   }
   .note-text {
-    font-family: var(--font-jost), system-ui, sans-serif;
+    font-family: var(--font-body);
     font-size: 13px;
     color: var(--charcoal);
     line-height: 1.7;
@@ -1089,7 +1156,7 @@ const css = `
   }
   .gift-card {
     width: 100%;
-    background: #F0E9DF;
+    background: var(--tinted);
     border: 1px solid var(--muted);
     border-radius: 16px;
     padding: 2rem;
@@ -1113,13 +1180,13 @@ const css = `
   }
   .gift-row:last-child { border-bottom: none; }
   .gift-label {
-    font-family: var(--font-jost), system-ui, sans-serif;
+    font-family: var(--font-body);
     font-size: 13px;
     color: var(--muted-fg);
     flex-shrink: 0;
   }
   .gift-value {
-    font-family: var(--font-jost), system-ui, sans-serif;
+    font-family: var(--font-body);
     font-size: 14px;
     font-weight: 500;
     color: var(--charcoal);
@@ -1135,7 +1202,7 @@ const css = `
     border-radius: 100px;
     border: 1px solid var(--gold);
     color: var(--gold);
-    font-family: var(--font-jost), system-ui, sans-serif;
+    font-family: var(--font-body);
     font-size: 11px;
     letter-spacing: 0.2em;
     text-transform: uppercase;
@@ -1153,7 +1220,7 @@ const css = `
     border-radius: 100px;
     background: #25D366;
     color: #fff;
-    font-family: var(--font-jost), system-ui, sans-serif;
+    font-family: var(--font-body);
     font-size: 12px;
     letter-spacing: 0.15em;
     text-transform: uppercase;
@@ -1178,10 +1245,10 @@ const css = `
     text-align: center;
     padding: 3rem 2rem;
     border-top: 1px solid var(--muted);
-    background: #F0E9DF;
+    background: var(--tinted);
   }
   .footer-names {
-    font-family: var(--font-cormorant), Georgia, serif;
+    font-family: var(--font-display);
     font-size: 1.5rem;
     font-style: italic;
     font-weight: 300;

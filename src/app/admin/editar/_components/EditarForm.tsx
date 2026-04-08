@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { updateEventConfig } from '@/app/admin/_actions';
 import ImageUpload from '@/components/ui/ImageUpload';
 
@@ -27,6 +27,13 @@ interface EventConfig {
   noChildren: boolean;
   noChildrenMessage: string;
   rsvpDeadline: string;
+  theme: {
+    accentColor: string;
+    backgroundColor: string;
+    textColor: string;
+    displayFont: 'cormorant' | 'playfair' | 'eb-garamond';
+    bodyFont: 'jost' | 'raleway' | 'montserrat';
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -49,6 +56,13 @@ const DEFAULT: EventConfig = {
   noChildren: false,
   noChildrenMessage: '',
   rsvpDeadline: '',
+  theme: {
+    accentColor: '#B8965A',
+    backgroundColor: '#F8F3EC',
+    textColor: '#1C1611',
+    displayFont: 'cormorant',
+    bodyFont: 'jost',
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -81,6 +95,33 @@ const DARK = {
   monoFont:    'var(--font-mono), system-ui',
   isDark:      true,
 };
+
+// ---------------------------------------------------------------------------
+// Font preview maps
+// ---------------------------------------------------------------------------
+const DISPLAY_FONT_FAMILY: Record<string, string> = {
+  cormorant:     "'Cormorant Garamond', Georgia, serif",
+  playfair:      "'Playfair Display', Georgia, serif",
+  'eb-garamond': "'EB Garamond', Georgia, serif",
+};
+const DISPLAY_FONT_LABEL: Record<string, string> = {
+  cormorant:     'Cormorant Garamond',
+  playfair:      'Playfair Display',
+  'eb-garamond': 'EB Garamond',
+};
+const BODY_FONT_FAMILY: Record<string, string> = {
+  jost:       "'Jost', system-ui, sans-serif",
+  raleway:    "'Raleway', system-ui, sans-serif",
+  montserrat: "'Montserrat', system-ui, sans-serif",
+};
+const BODY_FONT_LABEL: Record<string, string> = {
+  jost:       'Jost',
+  raleway:    'Raleway',
+  montserrat: 'Montserrat',
+};
+
+const GOOGLE_FONTS_URL =
+  'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Playfair+Display:ital,wght@0,400;1,400&family=EB+Garamond:ital,wght@0,400;1,400&family=Jost:wght@300&family=Raleway:wght@300&family=Montserrat:wght@300&display=swap';
 
 // ---------------------------------------------------------------------------
 // Style factories (depend on colors)
@@ -197,10 +238,21 @@ export default function EditarForm({
     images:    initialConfig.images?.length ? [...initialConfig.images, ...Array(5).fill('')].slice(0, 5) : DEFAULT.images,
     itinerary: initialConfig.itinerary?.length ? initialConfig.itinerary : DEFAULT.itinerary,
     notes:     initialConfig.notes?.length    ? initialConfig.notes      : DEFAULT.notes,
+    theme:     { ...DEFAULT.theme, ...initialConfig.theme },
   }));
 
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    const existing = document.getElementById('editarform-gfonts');
+    if (existing) return;
+    const link = document.createElement('link');
+    link.id = 'editarform-gfonts';
+    link.rel = 'stylesheet';
+    link.href = GOOGLE_FONTS_URL;
+    document.head.appendChild(link);
+  }, []);
 
   function set<K extends keyof EventConfig>(key: K, value: EventConfig[K]) {
     setCfg(prev => ({ ...prev, [key]: value }));
@@ -427,6 +479,106 @@ export default function EditarForm({
             <Field label="Nombre mesa de regalos (ej: Liverpool)" C={C}><input style={S.input} value={cfg.gifts.giftListLabel} onChange={e => set('gifts', { ...cfg.gifts, giftListLabel: e.target.value })} placeholder="Liverpool" /></Field>
             <Field label="Link mesa de regalos" C={C}><input style={S.input} type="url" value={cfg.gifts.giftListUrl} onChange={e => set('gifts', { ...cfg.gifts, giftListUrl: e.target.value })} placeholder="https://mesaderegalos.liverpool.com.mx/..." /></Field>
           </Row>
+        </Section>
+
+        {/* ── 0. Diseño ── */}
+        <Section title="Diseño" C={C}>
+          <Row>
+            <Field label="Tipografía display (títulos)" C={C}>
+              <select
+                style={S.input}
+                value={cfg.theme.displayFont}
+                onChange={e => set('theme', { ...cfg.theme, displayFont: e.target.value as EventConfig['theme']['displayFont'] })}
+              >
+                <option value="cormorant">Cormorant Garamond</option>
+                <option value="playfair">Playfair Display</option>
+                <option value="eb-garamond">EB Garamond</option>
+              </select>
+              <p style={{
+                marginTop: '8px',
+                fontFamily: DISPLAY_FONT_FAMILY[cfg.theme.displayFont],
+                fontSize: '22px',
+                fontStyle: 'italic',
+                fontWeight: 400,
+                color: C.muted,
+                lineHeight: 1.2,
+              }}>
+                {DISPLAY_FONT_LABEL[cfg.theme.displayFont]}
+              </p>
+            </Field>
+            <Field label="Tipografía cuerpo (texto)" C={C}>
+              <select
+                style={S.input}
+                value={cfg.theme.bodyFont}
+                onChange={e => set('theme', { ...cfg.theme, bodyFont: e.target.value as EventConfig['theme']['bodyFont'] })}
+              >
+                <option value="jost">Jost</option>
+                <option value="raleway">Raleway</option>
+                <option value="montserrat">Montserrat</option>
+              </select>
+              <p style={{
+                marginTop: '8px',
+                fontFamily: BODY_FONT_FAMILY[cfg.theme.bodyFont],
+                fontSize: '13px',
+                fontWeight: 300,
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                color: C.muted,
+              }}>
+                {BODY_FONT_LABEL[cfg.theme.bodyFont]}
+              </p>
+            </Field>
+          </Row>
+          <Row>
+            <Field label="Color de fondo" C={C}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <input
+                  type="color"
+                  value={cfg.theme.backgroundColor}
+                  onChange={e => set('theme', { ...cfg.theme, backgroundColor: e.target.value })}
+                  style={{ width: '40px', height: '40px', border: 'none', borderRadius: '6px', cursor: 'pointer', padding: '2px', backgroundColor: 'transparent' }}
+                />
+                <input
+                  style={{ ...S.input, flex: 1 }}
+                  value={cfg.theme.backgroundColor}
+                  onChange={e => set('theme', { ...cfg.theme, backgroundColor: e.target.value })}
+                  placeholder="#F8F3EC"
+                />
+              </div>
+            </Field>
+            <Field label="Color de texto" C={C}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <input
+                  type="color"
+                  value={cfg.theme.textColor}
+                  onChange={e => set('theme', { ...cfg.theme, textColor: e.target.value })}
+                  style={{ width: '40px', height: '40px', border: 'none', borderRadius: '6px', cursor: 'pointer', padding: '2px', backgroundColor: 'transparent' }}
+                />
+                <input
+                  style={{ ...S.input, flex: 1 }}
+                  value={cfg.theme.textColor}
+                  onChange={e => set('theme', { ...cfg.theme, textColor: e.target.value })}
+                  placeholder="#1C1611"
+                />
+              </div>
+            </Field>
+          </Row>
+          <Field label="Color de acento" C={C}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <input
+                type="color"
+                value={cfg.theme.accentColor}
+                onChange={e => set('theme', { ...cfg.theme, accentColor: e.target.value })}
+                style={{ width: '40px', height: '40px', border: 'none', borderRadius: '6px', cursor: 'pointer', padding: '2px', backgroundColor: 'transparent' }}
+              />
+              <input
+                style={{ ...S.input, flex: 1 }}
+                value={cfg.theme.accentColor}
+                onChange={e => set('theme', { ...cfg.theme, accentColor: e.target.value })}
+                placeholder="#B8965A"
+              />
+            </div>
+          </Field>
         </Section>
 
         {/* ── 9. Confirmación ── */}
