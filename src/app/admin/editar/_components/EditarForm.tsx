@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { updateEventConfig } from '@/app/admin/_actions';
+import ImageUpload from '@/components/ui/ImageUpload';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -24,6 +25,7 @@ interface EventConfig {
   gifts: { bank: string; holder: string; account: string; clabe: string; giftListUrl: string; giftListLabel: string };
   whatsapp: { number: string; message: string };
   noChildren: boolean;
+  noChildrenMessage: string;
   rsvpDeadline: string;
 }
 
@@ -45,6 +47,7 @@ const DEFAULT: EventConfig = {
   gifts: { bank: '', holder: '', account: '', clabe: '', giftListUrl: '', giftListLabel: '' },
   whatsapp: { number: '', message: '' },
   noChildren: false,
+  noChildrenMessage: '',
   rsvpDeadline: '',
 };
 
@@ -267,19 +270,16 @@ export default function EditarForm({ eventId, initialConfig }: { eventId: string
             'Imagen 4 — dúo izquierda',
             'Imagen 5 — dúo derecha',
           ].map((lbl, i) => (
-            <Field key={i} label={lbl}>
-              <input
-                style={input}
-                type="url"
-                value={cfg.images[i] ?? ''}
-                onChange={e => {
-                  const imgs = [...cfg.images];
-                  imgs[i] = e.target.value;
-                  set('images', imgs);
-                }}
-                placeholder="https://..."
-              />
-            </Field>
+            <ImageUpload
+              key={i}
+              label={lbl}
+              value={cfg.images[i] ?? ''}
+              onChange={url => {
+                const imgs = [...cfg.images];
+                imgs[i] = url;
+                set('images', imgs);
+              }}
+            />
           ))}
         </Section>
 
@@ -449,10 +449,20 @@ export default function EditarForm({ eventId, initialConfig }: { eventId: string
               type="checkbox"
               checked={cfg.noChildren}
               onChange={e => set('noChildren', e.target.checked)}
-              style={{ width: '16px', height: '16px', accentColor: C.accent, cursor: 'pointer' }}
+              style={{ width: '16px', height: '16px', accentColor: C.accent, cursor: 'pointer', flexShrink: 0 }}
             />
-            <span style={{ fontSize: '14px', color: C.text }}>Evento para adultos (mostrar nota de "no niños")</span>
+            <span style={{ fontSize: '14px', color: C.text }}>Evento para adultos (mostrar aviso de "no niños")</span>
           </label>
+          {cfg.noChildren && (
+            <Field label="Mensaje personalizado (opcional)">
+              <textarea
+                style={textarea}
+                value={cfg.noChildrenMessage}
+                onChange={e => set('noChildrenMessage', e.target.value)}
+                placeholder="Con todo nuestro cariño, les pedimos que esta celebración sea exclusiva para adultos. Agradecemos su comprensión."
+              />
+            </Field>
+          )}
         </Section>
 
       </div>

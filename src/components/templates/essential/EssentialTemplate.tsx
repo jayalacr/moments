@@ -48,6 +48,7 @@ export interface EssentialConfig {
   };
   whatsapp?: { number?: string; message?: string };
   noChildren?: boolean;
+  noChildrenMessage?: string;
   rsvpDeadline?: string;
 }
 
@@ -358,7 +359,9 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
             <NoChildrenIcon />
             <div>
               <p className="no-children-title">Evento solo para adultos</p>
-              <p className="no-children-desc">Con todo nuestro cariño, les pedimos que esta celebración sea exclusiva para adultos. Agradecemos su comprensión.</p>
+              <p className="no-children-desc">
+                {c.noChildrenMessage || 'Con todo nuestro cariño, les pedimos que esta celebración sea exclusiva para adultos. Agradecemos su comprensión.'}
+              </p>
             </div>
           </div>
         </section>
@@ -877,10 +880,6 @@ const css = `
     align-items: start;
     text-align: left;
   }
-  @media (max-width: 560px) {
-    .dresscode-gender { grid-template-columns: 1fr; }
-    .dc-gender-divider { display: none; }
-  }
   .dc-gender-block { display: flex; flex-direction: column; align-items: flex-start; }
   .dc-gender-icon { margin-bottom: 0.5rem; }
   .dc-gender-label { margin-bottom: 0.4rem !important; }
@@ -891,6 +890,23 @@ const css = `
     color: var(--muted-fg);
     line-height: 1.8;
     margin: 0;
+  }
+  @media (max-width: 560px) {
+    .dresscode-gender {
+      grid-template-columns: 1fr;
+      gap: 0;
+      max-width: 340px;
+      text-align: center;
+    }
+    .dc-gender-block { align-items: center; padding: 1.5rem 0; }
+    .dc-gender-block:first-child { padding-top: 0; }
+    .dc-gender-divider {
+      width: 60%;
+      height: 1px;
+      background: var(--border);
+      margin: 0 auto;
+      align-self: auto;
+    }
   }
 
   /* ---------- No children ---------- */
@@ -1154,9 +1170,7 @@ const css = `
     .hero-meta { flex-direction: column; gap: 0.4rem; }
     .hero-meta-dot { display: none; }
     .section { padding: 4rem 1.5rem; }
-    .dresscode-gender { grid-template-columns: 1fr; }
-    .dc-gender-divider { width: 80%; height: 1px; margin: 0.5rem auto; }
-    .dc-gender-divider.vertical { width: 80%; height: 1px; }
+    .dresscode-gender { max-width: 100%; }
   }
 
   /* ---------- Footer ---------- */
