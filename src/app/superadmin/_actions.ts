@@ -20,6 +20,14 @@ export async function toggleEventStatus(eventId: string, currentStatus: string) 
   const newStatus = currentStatus === 'published' ? 'paused' : 'published';
   await supabase.from('events').update({ status: newStatus }).eq('id', eventId);
   revalidatePath('/superadmin');
+  revalidatePath(`/superadmin/eventos/${eventId}`);
+}
+
+export async function setEventDraft(eventId: string) {
+  const supabase = await createClient();
+  await supabase.from('events').update({ status: 'draft' }).eq('id', eventId);
+  revalidatePath('/superadmin');
+  revalidatePath(`/superadmin/eventos/${eventId}`);
 }
 
 export async function createEvent(formData: FormData) {

@@ -198,11 +198,11 @@ export default async function AdminPage() {
                   Editar invitación
                 </Link>
                 <Link
-                  href={`/${event.event_type}/${event.slug}`}
+                  href={event.status === 'published' ? `/${event.event_type}/${event.slug}` : '/admin/preview'}
                   target="_blank"
                   className="admin-cta-sec"
                 >
-                  Ver invitación ↗
+                  {event.status === 'published' ? 'Ver invitación ↗' : 'Vista previa ↗'}
                 </Link>
               </div>
             </div>

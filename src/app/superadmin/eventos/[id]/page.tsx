@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { toggleEventStatus } from '@/app/superadmin/_actions';
+import { toggleEventStatus, setEventDraft } from '@/app/superadmin/_actions';
 import TemplateSelector from './_components/TemplateSelector';
 
 const C = {
@@ -63,6 +63,14 @@ export default async function EventoDetailPage({ params }: Props) {
           border: 1px solid ${C.borderBright}; background: transparent; color: ${C.mutedMid};
         }
         .toggle-btn:hover { border-color: ${C.accent}; color: ${C.accent}; background: ${C.accentDim}; }
+        .ghost-link {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 9px 18px; border-radius: 6px;
+          font-family: var(--font-mono); font-size: 11px;
+          border: 1px solid ${C.borderBright}; color: ${C.mutedMid};
+          text-decoration: none; transition: border-color 0.15s, color 0.15s, background 0.15s;
+        }
+        .ghost-link:hover { border-color: ${C.accent}; color: ${C.accent}; background: ${C.accentDim}; }
       `}</style>
 
       {/* Breadcrumb */}
@@ -95,13 +103,22 @@ export default async function EventoDetailPage({ params }: Props) {
           </div>
         </div>
 
-        {(event.status === 'published' || event.status === 'paused' || event.status === 'draft' || event.status === 'setup') && (
-          <form action={toggleEventStatus.bind(null, event.id, event.status)}>
-            <button type="submit" className="toggle-btn">
-              {event.status === 'published' ? 'pause' : 'publish'}
-            </button>
-          </form>
-        )}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {(event.status === 'published' || event.status === 'paused' || event.status === 'draft' || event.status === 'setup') && (
+            <form action={toggleEventStatus.bind(null, event.id, event.status)}>
+              <button type="submit" className="toggle-btn">
+                {event.status === 'published' ? 'pause' : 'publish'}
+              </button>
+            </form>
+          )}
+          {event.status !== 'draft' && (
+            <form action={setEventDraft.bind(null, event.id)}>
+              <button type="submit" className="toggle-btn">
+                → draft
+              </button>
+            </form>
+          )}
+        </div>
       </div>
 
       {/* Info del evento */}
@@ -121,6 +138,26 @@ export default async function EventoDetailPage({ params }: Props) {
             </p>
           </div>
         ))}
+      </div>
+
+      {/* Separador */}
+      <div style={{ height: '1px', backgroundColor: C.border, marginBottom: '28px' }} />
+
+      {/* Editar contenido */}
+      <div style={{ marginBottom: '28px' }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: C.muted, letterSpacing: '2px', marginBottom: '12px' }}>
+          CONTENIDO
+        </p>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <Link href={`/superadmin/eventos/${event.id}/config`} className="ghost-link">
+            editar datos →
+          </Link>
+          {event.template_type && (
+            <Link href={`/superadmin/eventos/${event.id}/preview`} target="_blank" className="ghost-link">
+              vista previa ↗
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Separador */}
