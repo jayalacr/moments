@@ -9,18 +9,20 @@ export function cld(url: string | undefined | null, transforms: string): string 
 }
 
 // Transformaciones predefinidas
+// q_auto:best — calidad máxima dentro del modo automático
+// El recorte lo maneja CSS (object-fit: cover), no Cloudinary
 export const T = {
-  /** Hero desktop — landscape optimizado */
-  heroDesktop: 'f_auto,q_auto,w_1600,c_fill,g_auto',
-  /** Hero móvil — portrait para viewport vertical */
-  heroMobile: 'f_auto,q_auto,w_800,ar_9:16,c_fill,g_auto',
+  /** Hero desktop — ancho amplio para pantallas retina */
+  heroDesktop: 'f_auto,q_auto:best,w_2400',
+  /** Hero móvil */
+  heroMobile: 'f_auto,q_auto:best,w_1200',
   /** Foto ancho completo */
-  fullDesktop: 'f_auto,q_auto,w_1400,c_fill,g_auto',
-  fullMobile: 'f_auto,q_auto,w_800,ar_4:3,c_fill,g_auto',
+  fullDesktop: 'f_auto,q_auto:best,w_2000',
+  fullMobile: 'f_auto,q_auto:best,w_1000',
   /** Foto centrada */
-  centered: 'f_auto,q_auto,w_900,c_fill,g_auto',
+  centered: 'f_auto,q_auto:best,w_1400',
   /** Fotos en dúo (la mitad del ancho) */
-  duo: 'f_auto,q_auto,w_700,ar_3:4,c_fill,g_auto',
+  duo: 'f_auto,q_auto:best,w_1000',
   /** Miniatura para preview en el admin */
   thumb: 'f_auto,q_auto,w_400',
 };
