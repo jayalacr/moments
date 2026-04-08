@@ -2,6 +2,7 @@
 
 import { Cormorant_Garamond, Jost } from 'next/font/google';
 import { useEffect } from 'react';
+import { cld, T } from '@/lib/cloudinary';
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
@@ -77,7 +78,16 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
 
       {/* ── HERO ── */}
       <section className="hero">
-        <div className="hero-bg" style={heroImage ? { backgroundImage: `url(${heroImage})` } : undefined} />
+        <div className="hero-bg">
+          {heroImage && (
+            <picture style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+              <source media="(max-width: 768px)" srcSet={cld(heroImage, T.heroMobile)} />
+              <source media="(min-width: 769px)" srcSet={cld(heroImage, T.heroDesktop)} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={cld(heroImage, T.heroDesktop)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
+            </picture>
+          )}
+        </div>
         <div className="hero-overlay" />
         <div className="hero-content">
           <p className="label gold hero-label">{c.heroLabel}</p>
@@ -136,7 +146,12 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
       {/* ── FOTO 2 (ancho completo) ── */}
       {c.images?.[1] && (
         <div className="photo-full reveal">
-          <img src={c.images[1]} alt="Foto de los novios" className="photo-img photo-img--hover" />
+          <picture style={{ width: '100%', height: '100%', display: 'block' }}>
+            <source media="(max-width: 768px)" srcSet={cld(c.images[1], T.fullMobile)} />
+            <source media="(min-width: 769px)" srcSet={cld(c.images[1], T.fullDesktop)} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={cld(c.images[1], T.fullDesktop)} alt="Foto de los novios" className="photo-img photo-img--hover" />
+          </picture>
         </div>
       )}
 
@@ -186,7 +201,11 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
       {c.images?.[2] && (
         <div className="photo-center reveal">
           <div className="photo-img--hover" style={{ width: '100%', height: '100%' }}>
-            <img src={c.images[2]} alt="Foto de los novios" className="photo-img" />
+            <picture style={{ width: '100%', height: '100%', display: 'block' }}>
+              <source srcSet={cld(c.images[2], T.centered)} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={cld(c.images[2], T.centered)} alt="Foto de los novios" className="photo-img" />
+            </picture>
           </div>
         </div>
       )}
@@ -259,14 +278,22 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
           {c.images?.[3] && (
             <div className="photo-duo-item">
               <div className="photo-img--hover" style={{ width: '100%', height: '100%' }}>
-                <img src={c.images[3]} alt="Foto de los novios" className="photo-img" />
+                <picture style={{ width: '100%', height: '100%', display: 'block' }}>
+                  <source srcSet={cld(c.images[3], T.duo)} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={cld(c.images[3], T.duo)} alt="Foto de los novios" className="photo-img" />
+                </picture>
               </div>
             </div>
           )}
           {c.images?.[4] && (
             <div className="photo-duo-item">
               <div className="photo-img--hover" style={{ width: '100%', height: '100%' }}>
-                <img src={c.images[4]} alt="Foto de los novios" className="photo-img" />
+                <picture style={{ width: '100%', height: '100%', display: 'block' }}>
+                  <source srcSet={cld(c.images[4], T.duo)} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={cld(c.images[4], T.duo)} alt="Foto de los novios" className="photo-img" />
+                </picture>
               </div>
             </div>
           )}
@@ -523,9 +550,8 @@ const css = `
     position: absolute;
     inset: 0;
     background-color: var(--dark, #14100c);
-    background-size: cover;
-    background-position: center;
     z-index: 0;
+    overflow: hidden;
     transform: scale(1.04);
     animation: heroZoom 12s ease-in-out infinite alternate;
   }
