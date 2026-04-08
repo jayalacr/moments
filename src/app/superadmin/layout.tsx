@@ -103,10 +103,10 @@ export default function SuperadminLayout({ children }: { children: React.ReactNo
             Eventos
           </Link>
 
-          <div className="sa-nav-item" style={{ opacity: 0.4, cursor: 'not-allowed' }}>
+          <Link href="/superadmin/organizadores" className="sa-nav-item">
             <span className="nav-icon">◈</span>
             Organizadores
-          </div>
+          </Link>
 
           <div style={{ margin: '16px 0 8px', borderTop: `1px solid ${C.border}` }} />
 

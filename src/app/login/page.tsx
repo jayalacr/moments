@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
 import { Jost } from 'next/font/google';
 
 const jost = Jost({ subsets: ['latin'], weight: ['300', '400', '500'] });
@@ -85,9 +86,14 @@ export default function LoginPage() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: '#7A6A5A' }}>
-              Contraseña
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: '#7A6A5A' }}>
+                Contraseña
+              </label>
+              <Link href="/forgot-password" style={{ fontSize: '11px', color: '#C9A87C', textDecoration: 'none' }}>
+                ¿Olvidaste la tuya?
+              </Link>
+            </div>
             <input
               type="password"
               required

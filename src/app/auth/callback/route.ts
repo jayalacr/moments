@@ -11,9 +11,11 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      // Si viene de una invitación → ir a setup-password
       if (type === 'invite') {
         return NextResponse.redirect(new URL('/setup-password', origin))
+      }
+      if (type === 'recovery') {
+        return NextResponse.redirect(new URL('/reset-password', origin))
       }
       // Login normal → dejar que el middleware redirija según rol
       return NextResponse.redirect(new URL('/admin', origin))

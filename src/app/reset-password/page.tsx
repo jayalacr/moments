@@ -7,7 +7,7 @@ import { Jost } from 'next/font/google';
 
 const jost = Jost({ subsets: ['latin'], weight: ['300', '400', '500'] });
 
-export default function SetupPasswordPage() {
+export default function ResetPasswordPage() {
   const router = useRouter();
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -37,10 +37,15 @@ export default function SetupPasswordPage() {
       return;
     }
 
-    // Enviar email de bienvenida (sin bloquear el flujo si falla)
-    fetch('/api/welcome-email', { method: 'POST' }).catch(() => {});
-
-    router.push('/admin');
+    // Redirigir según rol
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles').select('role').eq('id', user.id).single();
+      router.push(profile?.role === 'superadmin' ? '/superadmin' : '/admin');
+    } else {
+      router.push('/login');
+    }
   }
 
   return (
@@ -61,17 +66,17 @@ export default function SetupPasswordPage() {
             Moments
           </p>
           <h1 style={{ fontSize: '22px', fontWeight: 300, color: '#1C1611', letterSpacing: '1px' }}>
-            Crea tu contraseña
+            Nueva contraseña
           </h1>
           <p style={{ marginTop: '12px', fontSize: '13px', color: '#7A6A5A', lineHeight: 1.6 }}>
-            Elige una contraseña para acceder a tu panel.
+            Elige una nueva contraseña para tu cuenta.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: '#7A6A5A' }}>
-              Contraseña
+              Nueva contraseña
             </label>
             <input
               type="password"
@@ -79,15 +84,7 @@ export default function SetupPasswordPage() {
               autoComplete="new-password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              style={{
-                padding: '12px 14px',
-                border: '1px solid #DDD5C8',
-                borderRadius: '6px',
-                backgroundColor: '#fff',
-                fontSize: '15px',
-                color: '#1C1611',
-                outline: 'none',
-              }}
+              style={{ padding: '12px 14px', border: '1px solid #DDD5C8', borderRadius: '6px', backgroundColor: '#fff', fontSize: '15px', color: '#1C1611', outline: 'none' }}
             />
           </div>
 
@@ -101,15 +98,7 @@ export default function SetupPasswordPage() {
               autoComplete="new-password"
               value={confirm}
               onChange={e => setConfirm(e.target.value)}
-              style={{
-                padding: '12px 14px',
-                border: '1px solid #DDD5C8',
-                borderRadius: '6px',
-                backgroundColor: '#fff',
-                fontSize: '15px',
-                color: '#1C1611',
-                outline: 'none',
-              }}
+              style={{ padding: '12px 14px', border: '1px solid #DDD5C8', borderRadius: '6px', backgroundColor: '#fff', fontSize: '15px', color: '#1C1611', outline: 'none' }}
             />
           </div>
 
@@ -121,20 +110,15 @@ export default function SetupPasswordPage() {
             type="submit"
             disabled={loading}
             style={{
-              marginTop: '8px',
-              padding: '14px',
-              backgroundColor: '#1C1611',
-              color: '#F8F3EC',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '12px',
-              letterSpacing: '3px',
-              textTransform: 'uppercase',
+              marginTop: '8px', padding: '14px',
+              backgroundColor: '#1C1611', color: '#F8F3EC',
+              border: 'none', borderRadius: '6px',
+              fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase',
               cursor: loading ? 'not-allowed' : 'pointer',
               opacity: loading ? 0.6 : 1,
             }}
           >
-            {loading ? 'Guardando...' : 'Guardar y entrar'}
+            {loading ? 'Guardando...' : 'Guardar contraseña'}
           </button>
         </form>
       </div>
