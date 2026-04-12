@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planes — Invitaciones Digitales para Boda</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #FAF7F2;
+    --warm-white: #FFFDF9;
+    --gold: #C9A96E;
+    --gold-light: #E8D5B0;
+    --gold-dark: #8B6E3E;
+    --ink: #1C1917;
+    --ink-mid: #44403C;
+    --ink-muted: #78716C;
+    --ink-faint: #A8A29E;
+    --border: #E7E0D5;
+    --border-light: #F0EAE0;
+    --essential-bg: #F7F4EF;
+    --plus-bg: #FDFBF7;
+    --deluxe-bg: #F5F0E8;
+    --check-e: #D6CFC4;
+    --check-p: #C9A96E;
+    --check-d: #8B6E3E;
+    --no-color: #DDD8D0;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HERO */
+  .hero {
+    text-align: center;
+    padding: 72px 24px 56px;
+    position: relative;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 48px;
+    background: linear-gradient(to bottom, transparent, var(--gold));
+  }
+  .hero-eyebrow {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+  .hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(38px, 6vw, 64px);
+    font-weight: 300;
+    line-height: 1.1;
+    color: var(--ink);
+    margin-bottom: 16px;
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--gold-dark);
+  }
+  .hero-sub {
+    font-size: 15px;
+    font-weight: 300;
+    color: var(--ink-muted);
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  /* ORNAMENT */
+  .ornament {
+    text-align: center;
+    margin: 8px 0 40px;
+    color: var(--gold);
+    font-size: 18px;
+    letter-spacing: 12px;
+    opacity: 0.6;
+  }
+
+  /* PLAN HEADERS */
+  .table-wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 16px 80px;
+  }
+
+  .plan-headers {
+    display: grid;
+    grid-template-columns: 220px repeat(3, minmax(0, 1fr));
+    gap: 0;
+    margin-bottom: 0;
+  }
+
+  .ph-spacer { }
+
+  .ph-card {
+    padding: 24px 20px 20px;
+    text-align: center;
+    position: relative;
+  }
+  .ph-card.essential { background: var(--essential-bg); border-radius: 12px 12px 0 0; border: 1px solid var(--border); border-bottom: none; margin: 0 4px; }
+  .ph-card.plus { background: var(--warm-white); border-radius: 12px 12px 0 0; border: 1.5px solid var(--gold); border-bottom: none; margin: 0 4px; }
+  .ph-card.deluxe { background: var(--deluxe-bg); border-radius: 12px 12px 0 0; border: 1px solid var(--border); border-bottom: none; margin: 0 4px; }
+
+  .ph-popular {
+    position: absolute;
+    top: -12px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--gold);
+    color: white;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .ph-icon {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    margin: 0 auto 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ph-icon.e { background: var(--border-light); }
+  .ph-icon.p { background: var(--gold-light); }
+  .ph-icon.d { background: #D4C4A0; }
+
+  .ph-plan-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .ph-plan-desc {
+    font-size: 11px;
+    color: var(--ink-faint);
+    font-weight: 300;
+  }
+
+  /* TABLE BODY */
+  .table-body {
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+  }
+
+  .section-divider {
+    display: grid;
+    grid-template-columns: 220px repeat(3, minmax(0, 1fr));
+    background: var(--ink);
+    padding: 8px 0;
+  }
+  .sd-label {
+    grid-column: 1;
+    padding: 0 20px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold-light);
+    display: flex;
+    align-items: center;
+  }
+  .sd-e, .sd-p, .sd-d {
+    border-top: none;
+    padding: 0 4px;
+  }
+  .sd-e-inner { background: var(--essential-bg); height: 100%; }
+  .sd-p-inner { background: var(--warm-white); height: 100%; border-left: 1.5px solid var(--gold); border-right: 1.5px solid var(--gold); }
+  .sd-d-inner { background: var(--deluxe-bg); height: 100%; }
+
+  .feature-row {
+    display: grid;
+    grid-template-columns: 220px repeat(3, minmax(0, 1fr));
+    border-top: 1px solid var(--border-light);
+  }
+  .feature-row:hover { background: #F9F5EF40; }
+
+  .fr-label {
+    padding: 11px 20px;
+    font-size: 12px;
+    color: var(--ink-muted);
+    font-weight: 400;
+    display: flex;
+    align-items: flex-start;
+    padding-top: 13px;
+    line-height: 1.4;
+  }
+
+  .fr-cell {
+    padding: 10px 14px;
+    font-size: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    line-height: 1.4;
+  }
+  .fr-cell.e { background: var(--essential-bg); }
+  .fr-cell.p { background: var(--warm-white); border-left: 1.5px solid var(--gold); border-right: 1.5px solid var(--gold); }
+  .fr-cell.d { background: var(--deluxe-bg); }
+
+  .ck {
+    flex-shrink: 0;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px;
+    margin-top: 1px;
+  }
+  .ck-e { background: var(--check-e); color: #5F5E5A; }
+  .ck-p { background: var(--gold-light); color: var(--gold-dark); }
+  .ck-d { background: #C4A876; color: #5A3E1B; }
+  .ck-no { background: var(--no-color); color: #B0AAA2; }
+
+  .fr-text { color: var(--ink-mid); }
+  .fr-text.muted { color: var(--ink-faint); }
+  .fr-note { font-size: 10px; color: var(--ink-faint); display: block; margin-top: 2px; font-weight: 300; }
+
+  /* FOOTER CAPS */
+  .plan-footer-row {
+    display: grid;
+    grid-template-columns: 220px repeat(3, minmax(0, 1fr));
+    border-top: 1px solid var(--border-light);
+  }
+  .pf-spacer { padding: 16px 20px; }
+  .pf-cell {
+    padding: 16px 14px;
+    text-align: center;
+  }
+  .pf-cell.e { background: var(--essential-bg); border-radius: 0 0 0 0; }
+  .pf-cell.p { background: var(--warm-white); border-left: 1.5px solid var(--gold); border-right: 1.5px solid var(--gold); border-bottom: 1.5px solid var(--gold); border-radius: 0 0 10px 10px; margin: 0 4px; }
+  .pf-cell.d { background: var(--deluxe-bg); }
+
+  .btn-cta {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    padding: 8px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    text-decoration: none;
+    border: none;
+  }
+  .btn-cta:hover { opacity: 0.8; }
+  .btn-e { background: var(--border); color: var(--ink-mid); }
+  .btn-p { background: var(--gold); color: white; }
+  .btn-d { background: var(--ink); color: var(--gold-light); }
+
+  /* FOOTER NOTE */
+  .footer-note {
+    text-align: center;
+    padding: 32px 24px 16px;
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-weight: 300;
+    max-width: 980px;
+    margin: 0 auto;
+  }
+  .footer-note span { color: var(--gold); }
+
+  /* SVG icons */
+  .ph-svg { width: 18px; height: 18px; }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .hero { animation: fadeUp 0.7s ease both; }
+  .table-wrap { animation: fadeUp 0.7s 0.2s ease both; }
+
+  @media (max-width: 700px) {
+    .plan-headers, .section-divider, .feature-row, .plan-footer-row {
+      grid-template-columns: 1fr;
+    }
+    .fr-label { display: none; }
+    .ph-card { margin: 0; border-radius: 0; }
+    .fr-cell { border-left: none !important; border-right: none !important; }
+    .pf-cell { margin: 0 !important; border-radius: 0 !important; border: none !important; }
+    .sd-label { grid-column: 1; }
+    .sd-e, .sd-p, .sd-d { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <p class="hero-eyebrow">Invitaciones Digitales</p>
+  <h1 class="hero-title">Elige el plan para<br><em>su gran día</em></h1>
+  <div class="ornament">— ◇ —</div>
+  <p class="hero-sub">Cada plan incluye una invitación diseñada a medida, adaptada al estilo y necesidades de cada pareja.</p>
+</div>
+
+<div class="table-wrap">
+
+  <!-- PLAN HEADERS -->
+  <div class="plan-headers">
+    <div class="ph-spacer"></div>
+
+    <div class="ph-card essential">
+      <div class="ph-icon e">
+        <svg class="ph-svg" viewBox="0 0 24 24" fill="none" stroke="#888780" stroke-width="1.5"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 6v6l4 2"/></svg>
+      </div>
+      <p class="ph-plan-name">Essential</p>
+      <p class="ph-plan-desc">Sencillo y elegante</p>
+    </div>
+
+    <div class="ph-card plus">
+      <div class="ph-popular">Más popular</div>
+      <div class="ph-icon p">
+        <svg class="ph-svg" viewBox="0 0 24 24" fill="none" stroke="#8B6E3E" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      </div>
+      <p class="ph-plan-name">Plus</p>
+      <p class="ph-plan-desc">Experiencia completa</p>
+    </div>
+
+    <div class="ph-card deluxe">
+      <div class="ph-icon d">
+        <svg class="ph-svg" viewBox="0 0 24 24" fill="none" stroke="#8B6E3E" stroke-width="1.5"><path d="M2 20h20M6 20V10M12 20V4M18 20v-6"/></svg>
+      </div>
+      <p class="ph-plan-name">Deluxe</p>
+      <p class="ph-plan-desc">Premium e inmersivo</p>
+    </div>
+  </div>
+
+  <!-- TABLE BODY -->
+  <div class="table-body">
+
+    <!-- PRESENTACIÓN -->
+    <div class="section-divider">
+      <div class="sd-label">Presentación</div>
+      <div class="sd-e"><div class="sd-e-inner"></div></div>
+      <div class="sd-p"><div class="sd-p-inner"></div></div>
+      <div class="sd-d"><div class="sd-d-inner"></div></div>
+    </div>
+
+    <div class="feature-row">
+      <div class="fr-label">Apartado inicial</div>
+      <div class="fr-cell e"><span class="ck ck-e">✓</span><span class="fr-text">Frase, cita, nombres de novios y padres</span></div>
+      <div class="fr-cell p"><span class="ck ck-p">✓</span><span class="fr-text">Frase, cita, nombres de novios y padres</span></div>
+      <div class="fr-cell d"><span class="ck ck-d">✓</span><span class="fr-text">Frase, cita, nombres de novios y padres</span></div>
+    </div>
+
+    <div class="feature-row">
+      <div class="fr-label">Loader animado</div>
+      <div class="fr-cell e"><span class="ck ck-no">✕</span><span class="fr-text muted">No incluido</span></div>
+      <div class="fr-cell p"><span class="ck ck-no">✕</span><span class="fr-text muted">No incluido</span></div>
+      <div class="fr-cell d"><span class="ck ck-d">✓</span><span class="fr-text">Animación de entrada personalizada</span></div>
+    </div>
+
+    <div class="feature-row">
+      <div class="fr-label">Cuenta regresiva</div>
+      <div class="fr-cell e"><span class="ck ck-no">✕</span><span class="fr-text muted">No incluida</span></div>
+      <div class="fr-cell p"><span class="ck ck-p">✓</span><span class="fr-text">Incluida</span></div>
+      <div class="fr-cell d"><span class="ck ck-d">✓</span><span class="fr-text">Incluida</span></div>
+    </div>
+
+    <div class="feature-row">
+      <div class="fr-label">Música de fondo</div>
+      <div class="fr-cell e"><span class="ck ck-no">✕</span><span class="fr-text muted">No incluida</span></div>
+      <div class="fr-cell p"><span class="ck ck-no">✕</span><span class="fr-text muted">No incluida</span></div>
+      <div class="fr-cell d"><span class="ck ck-d">✓</span><span class="fr-text">Incluida</span></div>
+    </div>
+
+    <!-- FOTOS -->
+    <div class="section-divider">
+      <div class="sd-label">Fotos</div>
+      <div class="sd-e"><div class="sd-e-inner"></div></div>
+      <div class="sd-p"><div class="sd-p-inner"></div></div>
+      <div class="sd-d"><div class="sd-d-inner"></div></div>
+    </div>
+
+    <div class="feature-row">
+      <div class="fr-label">Fotos en la invitación</div>
+      <div class="fr-cell e"><span class="ck ck-e">✓</span><div><span class="fr-text">1 foto principal</span><span class="fr-note">Hasta 5 imágenes en total</span></div></div>
+      <div class="fr-cell p"><span class="ck ck-p">✓</span><div><span class="fr-text">Carrusel de fotos</span><span class="fr-note">De 5 a 10 imágenes</span></div></div>
+      <div class="fr-cell d"><span class="ck ck-d">✓</span><div><span class="fr-text">Carrusel automático</span><span class="fr-note">Fotos distribuidas a lo largo de la invitación</span></div></div>
+    </div>
+
+    <!-- LOGÍSTICA -->
+    <div class="section-divider">
+      <div class="sd-label">Logística</div>
+      <div class="sd-e"><div class="sd-e-inner"></div></div>
+      <div class="sd-p"><div class="sd-p-inner"></div></div>
+      <div class="sd-d"><div class="sd-d-inner"></div></div>
+    </div>
+
+    <div class="feature-row">
+      <div class="fr-label">Itinerario</div>
+      <div class="fr-cell e"><span class="ck ck-e">✓</span><span class="fr-text">Estático</span></div>
+      <div class="fr-cell p"><span class="ck ck-p">✓</span><span class="fr-text">Animado</span></div>
+      <div class="fr-cell d"><span class="ck ck-d">✓</span><span class="fr-text">Animado</span></div>
+    </div>
+
+    <div class="feature-row">
+      <div class="fr-label">Ubicaciones</div>
+      <div class="fr-cell e"><span class="ck ck-no">✕</span><span class="fr-text muted">Sin mapa</span></div>
+      <div class="fr-cell p"><span class="ck ck-p">✓</span><span class="fr-text">Google Maps interactivo</span></div>
+      <div class="fr-cell d"><span class="ck ck-d">✓</span><span class="fr-text">Google Maps interactivo</span></div>
+    </div>
+
+    <div class="feature-row">
+      <div class="fr-label">Dress code</div>
+      <div class="fr-cell e"><span class="ck ck-e">✓</span><span class="fr-text">Incluido</span></div>
+      <div class="fr-cell p"><span class="ck ck-p">✓</span><span class="fr-text">Incluido</span></div>
+      <div class="fr-cell d"><span class="ck ck-d">✓</span><span class="fr-text">Incluido</span></div>
+    </div>
+
+    <div class="feature-row">
+      <div class="fr-label">Boda destino</div>
+      <div class="fr-cell e"><span class="ck ck-no">✕</span><span class="fr-text muted">No incluido</span></div>
+      <div class="fr-cell p"><span class="ck ck-p">✓</span><span class="fr-text">Sección de recomendaciones</span></div>
+      <div class="fr-cell d"><span class="ck ck-d">✓</span><span class="fr-text">Sección de recomendaciones</span></div>
+    </div>
+
+    <!-- REGALOS -->
+    <div class="section-divider">
+      <div class="sd-label">Regalos</div>
+      <div class="sd-e"><div class="sd-e-inner"></div></div>
+      <div class="sd-p"><div class="sd-p-inner"></div></div>
+      <div class="sd-d"><div class="sd-d-inner"></div></div>
+    </div>
+
+    <div class="feature-row">
+      <div class="fr-label">Datos de transferencia</div>
+      <div class="fr-cell e"><span class="ck ck-e">✓</span><span class="fr-text">Icono sobre / CLABE</span></div>
+      <div class="fr-cell p"><span class="ck ck-p">✓</span><span class="fr-text">Icono sobre / CLABE</span></div>
+      <div class="fr-cell d"><span class="ck ck-d">✓</span><span class="fr-text">Icono sobre / CLABE</span></div>
+    </div>
+
+    <div class="feature-row">
+      <div class="fr-label">Mesa de regalos</div>
+      <div class="fr-cell e"><span class="ck ck-e">✓</span><span class="fr-text">Link a mesa de regalos</span></div>
+      <div class="fr-cell p"><span class="ck ck-p">✓</span><span class="fr-text">Link a mesa de regalos</span></div>
+      <div class="fr-cell d"><span class="ck ck-d">✓</span><span class="fr-text">Link a mesa de regalos</span></div>
+    </div>
+
+    <!-- CONFIRMACIÓN -->
+    <div class="section-divider">
+      <div class="sd-label">Confirmación de asistencia</div>
+      <div class="sd-e"><div class="sd-e-inner"></div></div>
+      <div class="sd-p"><div class="sd-p-inner"></div></div>
+      <div class="sd-d"><div class="sd-d-inner"></div></div>
+    </div>
+
+    <div class="feature-row">
+      <div class="fr-label">Tipo de confirmación</div>
+      <div class="fr-cell e"><span class="ck ck-e">✓</span><div><span class="fr-text">Botón a WhatsApp</span><span class="fr-note">Mensaje pre-escrito al encargado</span></div></div>
+      <div class="fr-cell p"><span class="ck ck-p">✓</span><div><span class="fr-text">Formulario en modal</span><span class="fr-note">Invitado escribe su nombre</span></div></div>
+      <div class="fr-cell d"><span class="ck ck-d">✓</span><div><span class="fr-text">Modal personalizado</span><span class="fr-note">Link único, datos pre-cargados</span></div></div>
+    </div>
+
+    <div class="feature-row">
+      <div class="fr-label">Control de cupo</div>
+      <div class="fr-cell e"><span class="ck ck-no">✕</span><span class="fr-text muted">Sin control de cupo</span></div>
+      <div class="fr-cell p"><span class="ck ck-p">✓</span><div><span class="fr-text">Máximo global de acompañantes</span><span class="fr-note">El organizador define el límite</span></div></div>
+      <div class="fr-cell d"><span class="ck ck-d">✓</span><div><span class="fr-text">Cupo asignado por invitado</span><span class="fr-note">Definido individualmente</span></div></div>
+    </div>
+
+    <div class="feature-row">
+      <div class="fr-label">Dashboard</div>
+      <div class="fr-cell e"><span class="ck ck-no">✕</span><span class="fr-text muted">Sin dashboard</span></div>
+      <div class="fr-cell p"><span class="ck ck-p">✓</span><div><span class="fr-text">Conteo general</span><span class="fr-note">Confirmados / Pendientes / Declinaron</span></div></div>
+      <div class="fr-cell d"><span class="ck ck-d">✓</span><div><span class="fr-text">Dashboard completo</span><span class="fr-note">Estado individual por invitado + reenvío de links</span></div></div>
+    </div>
+
+    <!-- EXTRAS -->
+    <div class="section-divider">
+      <div class="sd-label">Extras</div>
+      <div class="sd-e"><div class="sd-e-inner"></div></div>
+      <div class="sd-p"><div class="sd-p-inner"></div></div>
+      <div class="sd-d"><div class="sd-d-inner"></div></div>
+    </div>
+
+    <div class="feature-row">
+      <div class="fr-label">Agendar en Google Calendar</div>
+      <div class="fr-cell e"><span class="ck ck-no">✕</span><span class="fr-text muted">No incluido</span></div>
+      <div class="fr-cell p"><span class="ck ck-no">✕</span><span class="fr-text muted">No incluido</span></div>
+      <div class="fr-cell d"><span class="ck ck-d">✓</span><span class="fr-text">Incluido</span></div>
+    </div>
+
+    <!-- FOOTER ROW -->
+    <div class="plan-footer-row">
+      <div class="pf-spacer"></div>
+      <div class="pf-cell e"><button class="btn-cta btn-e">Elegir Essential</button></div>
+      <div class="pf-cell p"><button class="btn-cta btn-p">Elegir Plus</button></div>
+      <div class="pf-cell d"><button class="btn-cta btn-d">Elegir Deluxe</button></div>
+    </div>
+
+  </div>
+</div>
+
+<p class="footer-note">Todos los planes incluyen diseño personalizado al estilo de la boda · <span>Hecho con amor</span></p>
+
+</body>
+</html>

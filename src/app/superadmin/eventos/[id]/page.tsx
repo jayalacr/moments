@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { toggleEventStatus, setEventDraft } from '@/app/superadmin/_actions';
 import TemplateSelector from './_components/TemplateSelector';
+import PlanChanger from './_components/PlanChanger';
 
 const C = {
   bg: '#0D1117',
@@ -173,6 +174,21 @@ export default async function EventoDetailPage({ params }: Props) {
           currentType={event.template_type ?? null}
           eventSlug={event.slug}
           eventType={event.event_type}
+        />
+      </div>
+
+      {/* Separador */}
+      <div style={{ height: '1px', backgroundColor: C.border, marginTop: '28px', marginBottom: '28px' }} />
+
+      {/* Cambiar plan */}
+      <div style={{ marginBottom: '8px' }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: C.muted, letterSpacing: '2px', marginBottom: '16px' }}>
+          PLAN
+        </p>
+        <PlanChanger
+          eventId={event.id}
+          currentPlan={event.plan as 'essential' | 'plus' | 'deluxe'}
+          currentTemplateType={event.template_type ?? null}
         />
       </div>
     </div>

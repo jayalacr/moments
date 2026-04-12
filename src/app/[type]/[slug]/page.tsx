@@ -3,13 +3,17 @@ import { notFound } from 'next/navigation';
 import { TEMPLATES } from '@/lib/templates';
 import { Jost } from 'next/font/google';
 
+// Siempre renderizar desde el servidor con datos frescos de Supabase
+export const dynamic = 'force-dynamic';
+
 const jost = Jost({ subsets: ['latin'], weight: ['300', '400'] });
 
 interface Props {
   params: Promise<{ type: string; slug: string }>;
+  searchParams: Promise<{ id?: string }>;
 }
 
-export async function generateMetadata({ params }: Props) {
+export async function generateMetadata({ params }: Pick<Props, 'params'>) {
   const { type, slug } = await params;
   const supabase = createAdminClient();
 
@@ -24,8 +28,9 @@ export async function generateMetadata({ params }: Props) {
   return { title: event.title, description: `Estás invitado — ${event.title}` };
 }
 
-export default async function InvitacionPage({ params }: Props) {
+export default async function InvitacionPage({ params, searchParams }: Props) {
   const { type, slug } = await params;
+  const { id: guestToken } = await searchParams;
   const supabase = createAdminClient();
 
   const { data: event } = await supabase
@@ -70,7 +75,46 @@ export default async function InvitacionPage({ params }: Props) {
 
   if (!entry) notFound();
 
+  // Si hay token, resolver datos del invitado server-side
+  let maxCompanions: number | undefined;
+  let companionNames: string[] | undefined;
+  let guestName: string | undefined;
+  let hasExistingRsvp = false;
+
+  if (guestToken) {
+    const { data: guest } = await supabase
+      .from('guests')
+      .select('id, name, max_companions, companion_names')
+      .eq('token', guestToken)
+      .eq('event_id', event.id)
+      .single();
+
+    if (guest) {
+      maxCompanions = guest.max_companions;
+      companionNames = guest.companion_names ?? [];
+      guestName = guest.name ?? undefined;
+
+      const { data: existingRsvp } = await supabase
+        .from('rsvps')
+        .select('id')
+        .eq('guest_id', guest.id)
+        .maybeSingle();
+
+      hasExistingRsvp = !!existingRsvp;
+    }
+  }
+
   const Template = entry.component;
 
-  return <Template config={event.config ?? {}} />;
+  return (
+    <Template
+      config={event.config ?? {}}
+      eventId={event.id}
+      guestToken={guestToken}
+      maxCompanions={maxCompanions}
+      companionNames={companionNames}
+      guestName={guestName}
+      hasExistingRsvp={hasExistingRsvp}
+    />
+  );
 }

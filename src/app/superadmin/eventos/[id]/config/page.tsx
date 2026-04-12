@@ -20,7 +20,7 @@ export default async function EventoConfigPage({ params }: Props) {
 
   const { data: event } = await supabase
     .from('events')
-    .select('id, title, slug, config')
+    .select('id, title, slug, plan, config')
     .eq('id', id)
     .single();
 
@@ -50,7 +50,13 @@ export default async function EventoConfigPage({ params }: Props) {
         </h1>
       </div>
 
-      <EditarForm eventId={event.id} eventSlug={event.slug} initialConfig={event.config ?? {}} theme="dark" />
+      <EditarForm
+        eventId={event.id}
+        eventSlug={event.slug}
+        initialConfig={event.config ?? {}}
+        plan={event.plan as 'essential' | 'plus' | 'deluxe'}
+        theme="dark"
+      />
     </div>
   );
 }

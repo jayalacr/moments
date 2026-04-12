@@ -34,6 +34,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .eq('id', user?.id ?? '')
     .single();
 
+  const { data: event } = await supabase
+    .from('events')
+    .select('plan')
+    .eq('owner_id', user?.id ?? '')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  const showGuests = event?.plan === 'plus' || event?.plan === 'deluxe';
+
   return (
     <div
       className={`${cormorant.variable} ${jost.variable}`}
@@ -104,6 +114,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <span className="dot" />
             Mi evento
           </Link>
+          {showGuests && (
+            <Link href="/admin/invitados" className="admin-nav-link">
+              <span className="dot" />
+              Invitados
+            </Link>
+          )}
           <div className="admin-nav-link" style={{ opacity: 0.4, cursor: 'not-allowed' }}>
             <span className="dot" />
             Confirmaciones

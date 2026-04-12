@@ -13,6 +13,16 @@ export async function updateEventConfig(eventId: string, config: Record<string, 
 
   if (error) throw new Error(error.message);
 
+  // Obtener slug y tipo para revalidar la invitación pública
+  const { data: event } = await supabase
+    .from('events')
+    .select('slug, event_type')
+    .eq('id', eventId)
+    .single();
+
   revalidatePath('/admin');
   revalidatePath('/admin/editar');
+  if (event) {
+    revalidatePath(`/${event.event_type}/${event.slug}`);
+  }
 }

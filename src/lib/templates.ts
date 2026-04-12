@@ -11,7 +11,15 @@
 import type { ComponentType } from 'react';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type TemplateComponent = ComponentType<{ config: any }>;
+export type TemplateComponent = ComponentType<{
+  config: any;
+  eventId?: string;
+  guestToken?: string;
+  maxCompanions?: number;
+  companionNames?: string[];
+  guestName?: string;
+  hasExistingRsvp?: boolean;
+}>;
 
 export interface TemplateEntry {
   component: TemplateComponent;
@@ -20,11 +28,32 @@ export interface TemplateEntry {
 }
 
 import EssentialTemplate from '@/components/templates/essential/EssentialTemplate';
+import PlusTemplate from '@/components/templates/plus/PlusTemplate';
+import WeddingDarkTemplate from '@/components/templates/wedding-dark/WeddingDarkTemplate';
+import WeddingBeachTemplate from '@/components/templates/wedding-beach/WeddingBeachTemplate';
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'essential-demo': {
     component: EssentialTemplate as TemplateComponent,
     label: 'Essential — Demo clásico',
+    plan: 'essential',
+  },
+
+  'plus-classic': {
+    component: PlusTemplate as TemplateComponent,
+    label: 'Plus — Clásico',
+    plan: 'plus',
+  },
+
+  'wedding-dark-deluxe': {
+    component: WeddingDarkTemplate as TemplateComponent,
+    label: 'Wedding — Dark Deluxe',
+    plan: 'deluxe',
+  },
+
+  'wedding-beach-essential': {
+    component: WeddingBeachTemplate as TemplateComponent,
+    label: 'Wedding — Beach Essential',
     plan: 'essential',
   },
 

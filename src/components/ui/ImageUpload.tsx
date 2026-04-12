@@ -8,6 +8,8 @@ interface ImageUploadProps {
   onChange: (url: string) => void;
   label?: string;
   folder?: string;
+  /** Si true y no hay imagen, bloquea la subida (límite de plan alcanzado) */
+  disabled?: boolean;
 }
 
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!;
@@ -72,13 +74,14 @@ const C = {
   error: '#C0392B',
 };
 
-export default function ImageUpload({ value, onChange, label, folder = 'moments' }: ImageUploadProps) {
+export default function ImageUpload({ value, onChange, label, folder = 'moments', disabled = false }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
 
   async function handleFile(file: File) {
+    if (disabled) return;
     if (!file.type.startsWith('image/')) {
       setError('Solo se permiten imágenes.');
       return;
@@ -149,14 +152,15 @@ export default function ImageUpload({ value, onChange, label, folder = 'moments'
       )}
 
       <div
-        onDrop={handleDrop}
-        onDragOver={e => e.preventDefault()}
+        onDrop={disabled ? undefined : handleDrop}
+        onDragOver={disabled ? undefined : e => e.preventDefault()}
         style={{
           border: `1px dashed ${uploading ? C.accent : C.border}`,
           borderRadius: '10px',
-          backgroundColor: uploading ? C.accentLight : C.white,
+          backgroundColor: disabled && !value ? '#F5F5F5' : uploading ? C.accentLight : C.white,
           overflow: 'hidden',
           transition: 'border-color 0.2s, background 0.2s',
+          opacity: disabled && !value ? 0.55 : 1,
         }}
       >
         {/* Preview — imagen completa sin recortar */}
@@ -206,6 +210,10 @@ export default function ImageUpload({ value, onChange, label, folder = 'moments'
                 Subiendo… {progress}%
               </span>
             </>
+          ) : disabled && !value ? (
+            <span style={{ fontSize: '12px', color: C.mutedLight, fontFamily: 'var(--font-jost)', textAlign: 'center' }}>
+              Límite alcanzado
+            </span>
           ) : (
             <>
               <button

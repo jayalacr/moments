@@ -10,7 +10,7 @@ export default async function EditarPage() {
 
   const { data: event } = await supabase
     .from('events')
-    .select('id, title, slug, config')
+    .select('id, title, slug, plan, config')
     .eq('owner_id', user.id)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -39,7 +39,12 @@ export default async function EditarPage() {
         </h1>
       </div>
 
-      <EditarForm eventId={event.id} eventSlug={event.slug} initialConfig={event.config ?? {}} />
+      <EditarForm
+        eventId={event.id}
+        eventSlug={event.slug}
+        initialConfig={event.config ?? {}}
+        plan={event.plan as 'essential' | 'plus' | 'deluxe'}
+      />
     </div>
   );
 }

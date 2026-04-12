@@ -1,7 +1,82 @@
 'use client';
 
 import { Cormorant_Garamond, Jost } from 'next/font/google';
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import type { ImageBlock } from '@/lib/imageLayout';
+
+// ---------------------------------------------------------------------------
+// Config type
+// ---------------------------------------------------------------------------
+export interface PlusConfig {
+  heroLabel?: string;
+  couple?: { person1?: string; person2?: string };
+  fullNames?: { person1?: string; person2?: string };
+  date?: { day?: string; month?: string; year?: string };
+  location?: string;
+  targetDate?: string;
+  quote?: { text?: string; reference?: string };
+  parents?: { person1?: string; person2?: string };
+  images?: string[];
+  itinerary?: Array<{
+    time: string;
+    name: string;
+    venue: string;
+    address?: string;
+    mapsUrl?: string;
+    image?: string;
+  }>;
+  dressCode?: {
+    label?: string;
+    women?: string;
+    men?: string;
+    swatches?: Array<{ color: string; name: string }>;
+    avoid?: Array<{ color: string; name: string }>;
+  };
+  notes?: string[];
+  destination?: {
+    hotels?: Array<{
+      name: string;
+      category?: string;
+      address?: string;
+      note?: string;
+      phone?: string;
+    }>;
+    transport?: {
+      info?: string;
+      schedule?: Array<{ time: string; detail: string }>;
+      contact?: string;
+    };
+  };
+  gifts?: {
+    bank?: string;
+    holder?: string;
+    account?: string;
+    clabe?: string;
+    giftListUrl?: string;
+    giftListLabel?: string;
+  };
+  noChildren?: boolean;
+  noChildrenMessage?: string;
+  rsvp?: {
+    maxPlusOnes?: number;
+    deadline?: string;
+    dietaryOptions?: string[];
+  };
+  sections?: {
+    quote?: boolean;
+    parents?: boolean;
+    dressCode?: boolean;
+    notes?: boolean;
+    gifts?: boolean;
+    destination?: boolean;
+  };
+  theme?: {
+    accentColor?: string;
+    backgroundColor?: string;
+    textColor?: string;
+  };
+  imageLayout?: ImageBlock[];
+}
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
@@ -20,6 +95,7 @@ const jost = Jost({
 // Mock data
 // ---------------------------------------------------------------------------
 const EVENT = {
+  heroLabel: 'Matrimonio',
   couple: { person1: 'Valentina', person2: 'Sebastián' },
   fullNames: { person1: 'Valentina Ríos Castillo', person2: 'Sebastián Mora Vega' },
   date: { day: '01', month: 'Agosto', year: '2026' },
@@ -142,6 +218,75 @@ const EVENT = {
 };
 
 // ---------------------------------------------------------------------------
+// DuoBlock — dos imágenes lado a lado (colapsa en mobile)
+// ---------------------------------------------------------------------------
+function DuoBlock({ src1, src2 }: { src1: string; src2: string }) {
+  return (
+    <div className="duo-block">
+      <div className="duo-block-item">
+        <img src={src1} alt="" className="duo-block-img" />
+      </div>
+      <div className="duo-block-item">
+        <img src={src2} alt="" className="duo-block-img" />
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CarouselBlock — carrusel inline para bloques de imageLayout
+// ---------------------------------------------------------------------------
+function CarouselBlock({ srcs }: { srcs: string[] }) {
+  const [idx, setIdx] = useState(0);
+  const total = srcs.length;
+  const touchStartX = useRef<number | null>(null);
+
+  const prev = () => setIdx(i => (i - 1 + total) % total);
+  const next = () => setIdx(i => (i + 1) % total);
+
+  const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) diff > 0 ? next() : prev();
+    touchStartX.current = null;
+  };
+
+  if (total === 0) return null;
+
+  return (
+    <div className="carousel" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+      <div className="carousel-track" style={{ transform: `translateX(-${idx * 100}%)` }}>
+        {srcs.map((src, i) => (
+          <div key={i} className="carousel-slide">
+            <img src={src} alt={`Foto ${i + 1}`} className="carousel-img" />
+          </div>
+        ))}
+      </div>
+      {total > 1 && (
+        <>
+          <button className="carousel-btn carousel-btn--prev" onClick={prev} aria-label="Anterior">
+            <svg width="10" height="17" viewBox="0 0 10 17" fill="none"><path d="M9 1L1 8.5L9 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          <button className="carousel-btn carousel-btn--next" onClick={next} aria-label="Siguiente">
+            <svg width="10" height="17" viewBox="0 0 10 17" fill="none"><path d="M1 1L9 8.5L1 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          <div className="carousel-dots">
+            {srcs.map((_, i) => (
+              <button key={i} className={`carousel-dot${i === idx ? ' carousel-dot--active' : ''}`}
+                onClick={() => setIdx(i)} aria-label={`Foto ${i + 1}`} />
+            ))}
+          </div>
+          <div className="carousel-counter">
+            <span className="label gold">{idx + 1} / {total}</span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Countdown hook
 // ---------------------------------------------------------------------------
 function useCountdown(targetDate: string) {
@@ -167,17 +312,90 @@ function useCountdown(targetDate: string) {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export default function PlusTemplate() {
-  const countdown = useCountdown(EVENT.targetDate);
-  const [carouselIndex, setCarouselIndex] = useState(0);
+export default function PlusTemplate({
+  config = {},
+  eventId,
+  guestToken,
+  maxCompanions: maxCompanionsProp,
+  guestName,
+  hasExistingRsvp = false,
+}: {
+  config?: PlusConfig;
+  eventId?: string;
+  guestToken?: string;
+  maxCompanions?: number;
+  companionNames?: string[];
+  guestName?: string;
+  hasExistingRsvp?: boolean;
+}) {
+  // Merge config over mock defaults
+  const E = {
+    heroLabel:  config.heroLabel  ?? EVENT.heroLabel,
+    couple:     { ...EVENT.couple,    ...config.couple    },
+    fullNames:  { ...EVENT.fullNames, ...config.fullNames },
+    date:       { ...EVENT.date,      ...config.date      },
+    location:   config.location   ?? EVENT.location,
+    targetDate: config.targetDate ?? EVENT.targetDate,
+    quote:      { ...EVENT.quote,     ...config.quote     },
+    parents:    { ...EVENT.parents,   ...config.parents   },
+    images:     config.images?.length ? config.images : EVENT.images,
+    itinerary:  config.itinerary?.length ? config.itinerary : EVENT.itinerary,
+    dressCode:  {
+      ...EVENT.dressCode,
+      ...config.dressCode,
+      swatches: config.dressCode?.swatches ?? EVENT.dressCode.swatches,
+      avoid:    config.dressCode?.avoid    ?? EVENT.dressCode.avoid,
+    },
+    notes:       config.notes       ?? EVENT.notes,
+    destination: {
+      hotels:    config.destination?.hotels    ?? EVENT.destination.hotels,
+      transport: { ...EVENT.destination.transport, ...config.destination?.transport },
+    },
+    gifts:         { ...EVENT.gifts, ...config.gifts },
+    noChildren:    config.noChildren    ?? EVENT.noChildren,
+    noChildrenMessage: config.noChildrenMessage,
+    rsvp:          { ...EVENT.rsvp, ...config.rsvp },
+    sections:      config.sections    ?? {},
+    theme:         config.theme       ?? {},
+    imageLayout:   config.imageLayout ?? [],
+  };
+
+  const accentColor      = E.theme.accentColor      ?? '#B8965A';
+  const backgroundColor  = E.theme.backgroundColor  ?? '#F8F3EC';
+  const textColor        = E.theme.textColor        ?? '#1C1611';
+
+  // Si hay token, usar maxCompanions del prop; si no, usar el config global del evento
+  const effectiveMaxCompanions = guestToken
+    ? (maxCompanionsProp ?? 0)
+    : (E.rsvp.maxPlusOnes ?? 0);
+
+  const countdown = useCountdown(E.targetDate);
   const [modalOpen, setModalOpen] = useState(false);
-  const [rsvpName, setRsvpName] = useState('');
-  const [plusOnes, setPlusOnes] = useState(0);
-  const [companionNames, setCompanionNames] = useState<string[]>([]);
-  const [dietary, setDietary] = useState('Sin restricción');
+  const [rsvpName, setRsvpName] = useState(guestName ?? '');
+  const [companionInputs, setCompanionInputs] = useState<string[]>([]);
+  const [dietary, setDietary] = useState(E.rsvp.dietaryOptions?.[0] ?? 'Sin restricción');
   const [rsvpSent, setRsvpSent] = useState(false);
-  const touchStartX = useRef<number | null>(null);
+  const [rsvpStatus, setRsvpStatus] = useState<'confirmed' | 'declined' | null>(null);
+  const [rsvpLoading, setRsvpLoading] = useState(false);
+  const [rsvpError, setRsvpError] = useState<string | null>(null);
   const axisRef = useRef<HTMLDivElement>(null);
+
+  function handleCompanionCountChange(n: number) {
+    const count = Math.max(0, Math.min(effectiveMaxCompanions, n));
+    setCompanionInputs(prev =>
+      count > prev.length
+        ? [...prev, ...Array(count - prev.length).fill('')]
+        : prev.slice(0, count)
+    );
+  }
+
+  function handleCompanionName(index: number, value: string) {
+    setCompanionInputs(prev => {
+      const updated = [...prev];
+      updated[index] = value;
+      return updated;
+    });
+  }
 
   // Scroll reveal
   useEffect(() => {
@@ -201,44 +419,111 @@ export default function PlusTemplate() {
     return () => observer.disconnect();
   }, []);
 
-  const total = EVENT.images.length;
-  const prev = useCallback(() => setCarouselIndex((i) => (i - 1 + total) % total), [total]);
-  const next = useCallback(() => setCarouselIndex((i) => (i + 1) % total), [total]);
+  /** Renderiza los bloques de imagen configurados para una posición de sección */
+  function renderBlocks(afterSection: string) {
+    const blocks = E.imageLayout.filter(b => b.afterSection === afterSection);
+    if (blocks.length === 0) return null;
 
-  const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const diff = touchStartX.current - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 50) diff > 0 ? next() : prev();
-    touchStartX.current = null;
+    return blocks.map((block, i) => {
+      const srcs = (block.imageIndexes ?? [])
+        .map(idx => E.images[idx])
+        .filter((s): s is string => !!s && s.trim() !== '');
+
+      if (srcs.length === 0) return null;
+
+      if (block.layout === 'full') {
+        return (
+          <div key={i} className="photo-block">
+            <img src={srcs[0]} alt="" className="photo-block-img" />
+          </div>
+        );
+      }
+      if (block.layout === 'duo') {
+        return <DuoBlock key={i} src1={srcs[0]} src2={srcs[1] ?? srcs[0]} />;
+      }
+      // carousel
+      return <CarouselBlock key={i} srcs={srcs} />;
+    });
+  }
+
+  const submitRsvp = async (status: 'confirmed' | 'declined') => {
+    setRsvpLoading(true);
+    setRsvpError(null);
+    try {
+      const res = await fetch('/api/rsvp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...(guestToken ? { token: guestToken } : { eventId }),
+          name: rsvpName.trim(),
+          seats: status === 'declined' ? 0 : 1 + companionInputs.length,
+          companionNames: status === 'declined' ? [] : companionInputs,
+          dietary,
+          status,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setRsvpError(data.error ?? 'Ocurrió un error. Intenta de nuevo.');
+        return;
+      }
+      setRsvpStatus(status);
+      setRsvpSent(true);
+    } catch {
+      setRsvpError('Sin conexión. Verifica tu internet e intenta de nuevo.');
+    } finally {
+      setRsvpLoading(false);
+    }
   };
 
   const handleRsvpSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setRsvpSent(true);
+    submitRsvp('confirmed');
   };
 
-  const heroImage = EVENT.images[0] || null;
+  const heroImage = E.images[0] || null;
 
   return (
-    <div className={`${cormorant.variable} ${jost.variable} plus-root`}>
+    <div 
+      className={`${cormorant.variable} ${jost.variable} plus-root`}
+      style={{
+        '--ivory': backgroundColor,
+        '--charcoal': textColor,
+        '--gold': accentColor,
+        backgroundColor: backgroundColor,
+        color: textColor,
+      } as React.CSSProperties}
+    >
       <style>{css}</style>
+      {/* CSS Dinámico para asegurar que los tokens se sobreescriban en cascada */}
+      <style>{`
+        .plus-root {
+          --ivory: ${backgroundColor};
+          --charcoal: ${textColor} !important;
+          --gold: ${accentColor};
+        }
+        .btn-rsvp { background-color: ${textColor} !important; color: ${backgroundColor} !important; border-color: ${textColor} !important; }
+        .btn-rsvp:hover { background-color: ${accentColor} !important; border-color: ${accentColor} !important; color: #fff !important; }
+        .section--tinted, .section--tinted-wide, .note-item, .dest-card, .gift-card, .form-input, .counter-btn, .dietary-btn, .footer {
+           background-color: color-mix(in srgb, ${backgroundColor} 94%, ${textColor}) !important;
+        }
+      `}</style>
 
       {/* ── HERO ── */}
       <section className="hero">
         <div className="hero-bg" style={heroImage ? { backgroundImage: `url(${heroImage})` } : undefined} />
         <div className="hero-overlay" />
         <div className="hero-content">
-          <p className="label gold hero-label">Matrimonio</p>
+          <p className="label gold hero-label">{E.heroLabel}</p>
           <h1 className="hero-names">
-            <span>{EVENT.couple.person1}</span>
+            <span>{E.couple.person1}</span>
             <span className="hero-amp">&</span>
-            <span>{EVENT.couple.person2}</span>
+            <span>{E.couple.person2}</span>
           </h1>
           <div className="hero-meta">
-            <span className="label gold">{EVENT.date.day} · {EVENT.date.month} · {EVENT.date.year}</span>
+            <span className="label gold">{E.date.day} · {E.date.month} · {E.date.year}</span>
             <span className="hero-meta-dot" />
-            <span className="label muted">{EVENT.location}</span>
+            <span className="label muted">{E.location}</span>
           </div>
 
           {/* Countdown */}
@@ -265,16 +550,20 @@ export default function PlusTemplate() {
         </div>
       </section>
 
+      {renderBlocks('hero')}
+
       {/* ── CITA ── */}
       <section className="section reveal">
         <div className="quote-mark">"</div>
-        <p className="quote-text">{EVENT.quote.text}</p>
+        <p className="quote-text">{E.quote.text}</p>
         <div className="inline-sep">
           <span className="sep-line short" />
-          <span className="label muted">{EVENT.quote.reference}</span>
+          <span className="label muted">{E.quote.reference}</span>
           <span className="sep-line short" />
         </div>
       </section>
+
+      {renderBlocks('quote')}
 
       <Ornament />
 
@@ -283,58 +572,24 @@ export default function PlusTemplate() {
         <p className="label muted reveal" style={{ marginBottom: '2.5rem' }}>Con la bendición de nuestras familias</p>
         <div className="parents-grid">
           <div className="reveal delay-1 text-center">
-            <p className="display-name">{EVENT.fullNames.person1}</p>
+            <p className="display-name">{E.fullNames.person1}</p>
             <div className="name-sep"><span className="sep-line short" /></div>
             <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
-              Hija de<br />{EVENT.parents.person1}
+              Hija de<br />{E.parents.person1}
             </p>
           </div>
           <div className="parents-divider" />
           <div className="reveal delay-2 text-center">
-            <p className="display-name">{EVENT.fullNames.person2}</p>
+            <p className="display-name">{E.fullNames.person2}</p>
             <div className="name-sep"><span className="sep-line short" /></div>
             <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
-              Hijo de<br />{EVENT.parents.person2}
+              Hijo de<br />{E.parents.person2}
             </p>
           </div>
         </div>
       </section>
 
-      <Ornament />
-
-      {/* ── CARRUSEL ── */}
-      <div
-        className="carousel reveal"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
-        <div className="carousel-track" style={{ transform: `translateX(-${carouselIndex * 100}%)` }}>
-          {EVENT.images.map((src, i) => (
-            <div key={i} className="carousel-slide">
-              <img src={src} alt={`Foto ${i + 1}`} className="carousel-img" />
-            </div>
-          ))}
-        </div>
-        <button className="carousel-btn carousel-btn--prev" onClick={prev} aria-label="Anterior">
-          <ChevronIcon direction="left" />
-        </button>
-        <button className="carousel-btn carousel-btn--next" onClick={next} aria-label="Siguiente">
-          <ChevronIcon direction="right" />
-        </button>
-        <div className="carousel-dots">
-          {EVENT.images.map((_, i) => (
-            <button
-              key={i}
-              className={`carousel-dot${i === carouselIndex ? ' carousel-dot--active' : ''}`}
-              onClick={() => setCarouselIndex(i)}
-              aria-label={`Foto ${i + 1}`}
-            />
-          ))}
-        </div>
-        <div className="carousel-counter">
-          <span className="label gold">{carouselIndex + 1} / {total}</span>
-        </div>
-      </div>
+      {renderBlocks('parents')}
 
       <Ornament />
 
@@ -343,9 +598,11 @@ export default function PlusTemplate() {
         <h2 className="section-heading reveal">Programa del Día</h2>
         <div className="dlx-itinerary">
           <div className="dlx-axis" ref={axisRef} />
-          {EVENT.itinerary.map((item, i) => {
+          {E.itinerary.map((item, i) => {
             const [h, m] = item.time.split(':');
-            const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(item.address)}`;
+            const manualUrl = (item as { mapsUrl?: string }).mapsUrl?.trim();
+            const mapsUrl = manualUrl
+              || (item.address ? `https://maps.google.com/?q=${encodeURIComponent(item.address)}` : null);
             return (
               <div key={i} className={`dlx-irow slide-up delay-${i + 1}`}>
                 <div className="dlx-irow-time">
@@ -368,11 +625,13 @@ export default function PlusTemplate() {
                       <div className="dlx-iaddress">
                         <PinIcon /><span>{item.address}</span>
                       </div>
-                      <div className="dlx-maps-wrap">
-                        <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="dlx-maps-btn">
-                          <MapsIcon /> Ver en Google Maps
-                        </a>
-                      </div>
+                      {mapsUrl && (
+                        <div className="dlx-maps-wrap">
+                          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="dlx-maps-btn">
+                            <MapsIcon /> Ver en Google Maps
+                          </a>
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
@@ -382,93 +641,102 @@ export default function PlusTemplate() {
         </div>
       </section>
 
-      <Ornament />
+      {renderBlocks('itinerary')}
+
+      {E.sections.destination === true && <Ornament />}
 
       {/* ── DESTINO ── */}
-      <section className="section section--wide">
-        <h2 className="section-heading reveal">Boda Destino</h2>
-        <p className="label muted reveal" style={{ marginBottom: '3rem' }}>
-          Te ayudamos a organizar tu estadía en Cartagena
-        </p>
+      {E.sections.destination === true && (
+        <section className="section section--wide">
+          <h2 className="section-heading reveal">Boda Destino</h2>
+          <p className="label muted reveal" style={{ marginBottom: '3rem' }}>
+            Te ayudamos a organizar tu estadía en Cartagena
+          </p>
 
-        {/* Hoteles */}
-        <p className="label gold reveal" style={{ marginBottom: '1.5rem' }}>Hospedaje</p>
-        <div className="destination-grid reveal">
-          {EVENT.destination.hotels.map((hotel, i) => (
-            <div key={i} className={`dest-card delay-${i + 1}`}>
-              <div className="dest-card-icon"><HotelIcon /></div>
-              <p className="dest-card-name">{hotel.name}</p>
-              <p className="label muted dest-card-category">{hotel.category}</p>
-              <div className="dest-card-divider" />
-              <div className="dest-card-address">
-                <PinIcon />
-                <span>{hotel.address}</span>
-              </div>
-              <p className="dest-card-note">{hotel.note}</p>
-              <a href={`tel:${hotel.phone}`} className="dest-card-phone">{hotel.phone}</a>
-            </div>
-          ))}
-        </div>
-
-        {/* Transporte */}
-        <p className="label gold reveal" style={{ margin: '3.5rem 0 1.5rem' }}>Transporte</p>
-        <div className="transport-card reveal">
-          <div className="transport-header">
-            <CarIcon />
-            <p className="dest-card-name" style={{ margin: 0 }}>Transfer aeropuerto → hotel</p>
-          </div>
-          <p className="transport-info">{EVENT.destination.transport.info}</p>
-          <div className="transport-schedule">
-            {EVENT.destination.transport.schedule.map((s, i) => (
-              <div key={i} className="transport-row">
-                <span className="transport-time">{s.time}</span>
-                <span className="transport-detail">{s.detail}</span>
+          {/* Hoteles */}
+          <p className="label gold reveal" style={{ marginBottom: '1.5rem' }}>Hospedaje</p>
+          <div className="destination-grid reveal">
+            {E.destination.hotels.map((hotel, i) => (
+              <div key={i} className={`dest-card delay-${i + 1}`}>
+                <div className="dest-card-icon"><HotelIcon /></div>
+                <p className="dest-card-name">{hotel.name}</p>
+                <p className="label muted dest-card-category">{hotel.category}</p>
+                <div className="dest-card-divider" />
+                <div className="dest-card-address">
+                  <PinIcon />
+                  <span>{hotel.address}</span>
+                </div>
+                <p className="dest-card-note">{hotel.note}</p>
+                <a href={`tel:${hotel.phone}`} className="dest-card-phone">{hotel.phone}</a>
               </div>
             ))}
           </div>
-          <div className="transport-contact">
-            <EnvelopeIcon />
-            <a href={`mailto:${EVENT.destination.transport.contact}`} className="dest-card-phone">
-              {EVENT.destination.transport.contact}
-            </a>
-          </div>
-        </div>
-      </section>
 
-      <Ornament />
+          {/* Transporte */}
+          <p className="label gold reveal" style={{ margin: '3.5rem 0 1.5rem' }}>Transporte</p>
+          <div className="transport-card reveal">
+            <div className="transport-header">
+              <CarIcon />
+              <p className="dest-card-name" style={{ margin: 0 }}>Transfer aeropuerto → hotel</p>
+            </div>
+            <p className="transport-info">{E.destination.transport.info}</p>
+            <div className="transport-schedule">
+              {(E.destination.transport.schedule ?? []).map((s, i) => (
+                <div key={i} className="transport-row">
+                  <span className="transport-time">{s.time}</span>
+                  <span className="transport-detail">{s.detail}</span>
+                </div>
+              ))}
+            </div>
+            {E.destination.transport.contact && (
+              <div className="transport-contact">
+                <EnvelopeIcon />
+                <a href={`mailto:${E.destination.transport.contact}`} className="dest-card-phone">
+                  {E.destination.transport.contact}
+                </a>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {renderBlocks('destination')}
+
+      {E.sections.dressCode === true && <Ornament />}
 
       {/* ── DRESS CODE ── */}
+      {E.sections.dressCode === true && (
       <section className="section section--tinted">
         <h2 className="section-heading reveal">Dress Code</h2>
-        <p className="label gold reveal" style={{ marginBottom: '2rem' }}>{EVENT.dressCode.label}</p>
+        <p className="label gold reveal" style={{ marginBottom: '2rem' }}>{E.dressCode.label}</p>
 
         <div className="dresscode-gender reveal">
           <div className="dc-gender-block">
             <div className="dc-gender-icon"><WomenIcon /></div>
             <p className="label muted dc-gender-label">Ellas</p>
-            <p className="dc-gender-text">{EVENT.dressCode.women}</p>
+            <p className="dc-gender-text">{E.dressCode.women}</p>
           </div>
           <div className="dc-gender-divider" />
           <div className="dc-gender-block">
             <div className="dc-gender-icon"><MenIcon /></div>
             <p className="label muted dc-gender-label">Ellos</p>
-            <p className="dc-gender-text">{EVENT.dressCode.men}</p>
+            <p className="dc-gender-text">{E.dressCode.men}</p>
           </div>
         </div>
 
         <div className="swatches reveal" style={{ marginTop: '2rem' }}>
-          {EVENT.dressCode.swatches.map((s, i) => (
+          {E.dressCode.swatches.map((s, i) => (
             <div key={i} className="swatch-item">
               <div className="swatch-circle" style={{ backgroundColor: s.color }} />
               <span className="label muted">{s.name}</span>
             </div>
           ))}
         </div>
-        {EVENT.dressCode.avoid.length > 0 && (
+        {E.dressCode.avoid.length > 0 && (
           <div className="reveal" style={{ marginTop: '2rem', textAlign: 'center' }}>
             <p className="label muted" style={{ marginBottom: '1rem' }}>Por favor evita</p>
             <div className="swatches" style={{ justifyContent: 'center' }}>
-              {EVENT.dressCode.avoid.map((s, i) => (
+              {E.dressCode.avoid.map((s, i) => (
                 <div key={i} className="swatch-item">
                   <div className="swatch-circle swatch-avoid" style={{ backgroundColor: s.color }} />
                   <span className="label muted">{s.name}</span>
@@ -478,15 +746,18 @@ export default function PlusTemplate() {
           </div>
         )}
       </section>
+      )}
 
-      <Ornament />
+      {renderBlocks('dressCode')}
+
+      {E.sections.notes === true && <Ornament />}
 
       {/* ── INDICACIONES ── */}
-      {EVENT.notes.length > 0 && (
+      {E.sections.notes === true && E.notes.filter(Boolean).length > 0 && (
         <section className="section">
           <h2 className="section-heading reveal">Toma nota</h2>
           <div className="notes-list">
-            {EVENT.notes.map((note, i) => (
+            {E.notes.filter(Boolean).map((note, i) => (
               <div key={i} className={`note-item reveal delay-${i + 1}`}>
                 <span className="note-dot" />
                 <p className="note-text">{note}</p>
@@ -496,73 +767,87 @@ export default function PlusTemplate() {
         </section>
       )}
 
-      <Ornament />
+      {renderBlocks('notes')}
+
+      {E.sections.gifts === true && <Ornament />}
 
       {/* ── REGALOS ── */}
-      <section className="section">
-        <div className="reveal" style={{ marginBottom: '1.25rem' }}><EnvelopeIcon /></div>
-        <h2 className="section-heading reveal">Mesa de Regalos</h2>
-        <p className="label muted reveal" style={{ maxWidth: '360px', lineHeight: '1.9', marginBottom: '2.5rem' }}>
-          Tu presencia es el mejor regalo. Si deseas obsequiarnos algo, aquí encontrarás nuestras opciones.
-        </p>
-        <div className="gifts-grid">
-          <div className="gift-card reveal">
-            <p className="label" style={{ letterSpacing: '0.2em', marginBottom: '1.25rem', color: '#9B8B78' }}>
-              Transferencia Bancaria
-            </p>
-            {[
-              { label: 'Banco', value: EVENT.gifts.bank },
-              { label: 'Nombre', value: EVENT.gifts.holder },
-              { label: 'No. de cuenta', value: EVENT.gifts.account },
-              { label: 'CLABE', value: EVENT.gifts.clabe },
-            ].map(({ label, value }) => (
-              <div key={label} className="gift-row">
-                <span className="gift-label">{label}</span>
-                <span className="gift-value">{value}</span>
+      {E.sections.gifts === true && (
+        <section className="section">
+          <div className="reveal" style={{ marginBottom: '1.25rem' }}><EnvelopeIcon /></div>
+          <h2 className="section-heading reveal">Mesa de Regalos</h2>
+          <p className="label muted reveal" style={{ maxWidth: '360px', lineHeight: '1.9', marginBottom: '2.5rem' }}>
+            Tu presencia es el mejor regalo. Si deseas obsequiarnos algo, aquí encontrarás nuestras opciones.
+          </p>
+          <div className="gifts-grid">
+            {(E.gifts.bank || E.gifts.holder || E.gifts.account || E.gifts.clabe) && (
+              <div className="gift-card reveal">
+                <p className="label" style={{ letterSpacing: '0.2em', marginBottom: '1.25rem', color: '#9B8B78' }}>
+                  Transferencia Bancaria
+                </p>
+                {[
+                  { label: 'Banco', value: E.gifts.bank },
+                  { label: 'Nombre', value: E.gifts.holder },
+                  { label: 'No. de cuenta', value: E.gifts.account },
+                  { label: 'CLABE', value: E.gifts.clabe },
+                ].filter(({ value }) => value).map(({ label, value }) => (
+                  <div key={label} className="gift-row">
+                    <span className="gift-label">{label}</span>
+                    <span className="gift-value">{value}</span>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
+            {E.gifts.giftListUrl && (
+              <div className="gift-card gift-card--list reveal delay-1">
+                <GiftIcon />
+                <p className="label" style={{ letterSpacing: '0.2em', margin: '1.25rem 0 0.5rem', color: '#9B8B78' }}>
+                  Mesa de Regalos
+                </p>
+                <p className="gift-value" style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+                  {E.gifts.giftListLabel}
+                </p>
+                <a href={E.gifts.giftListUrl} target="_blank" rel="noopener noreferrer" className="btn-outline btn-outline--sm">
+                  Ver mesa de regalos →
+                </a>
+              </div>
+            )}
           </div>
-          {EVENT.gifts.giftListUrl && (
-            <div className="gift-card gift-card--list reveal delay-1">
-              <GiftIcon />
-              <p className="label" style={{ letterSpacing: '0.2em', margin: '1.25rem 0 0.5rem', color: '#9B8B78' }}>
-                Mesa de Regalos
-              </p>
-              <p className="gift-value" style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-                {EVENT.gifts.giftListLabel}
-              </p>
-              <a href={EVENT.gifts.giftListUrl} target="_blank" rel="noopener noreferrer" className="btn-outline btn-outline--sm">
-                Ver mesa de regalos →
-              </a>
-            </div>
-          )}
-        </div>
-      </section>
+        </section>
+      )}
 
-      <Ornament />
+      {renderBlocks('gifts')}
+
+      {E.noChildren && <Ornament />}
 
       {/* ── NO NIÑOS ── */}
-      {EVENT.noChildren && (
+      {E.noChildren && (
         <section className="section">
           <div className="no-children-block reveal">
             <NoChildrenIcon />
             <div>
               <p className="no-children-title">Evento solo para adultos</p>
-              <p className="no-children-desc">Con todo nuestro cariño, les pedimos que esta celebración sea exclusiva para adultos. Agradecemos su comprensión.</p>
+              <p className="no-children-desc">
+                {E.noChildrenMessage ?? 'Con todo nuestro cariño, les pedimos que esta celebración sea exclusiva para adultos. Agradecemos su comprensión.'}
+              </p>
             </div>
           </div>
         </section>
       )}
+
+      {renderBlocks('noChildren')}
 
       <Ornament />
 
       {/* ── RSVP ── */}
       <section className="section">
         <h2 className="section-heading reveal">¿Nos acompañas?</h2>
-        <p className="label muted reveal" style={{ marginBottom: '2.5rem' }}>
-          Confirma tu asistencia antes del{' '}
-          <strong style={{ color: '#1C1611' }}>{EVENT.rsvp.deadline}</strong>
-        </p>
+        {E.rsvp.deadline && (
+          <p className="label muted reveal" style={{ marginBottom: '2.5rem' }}>
+            Confirma tu asistencia antes del{' '}
+            <strong style={{ color: '#1C1611' }}>{E.rsvp.deadline}</strong>
+          </p>
+        )}
         <button className="btn-rsvp reveal" onClick={() => setModalOpen(true)}>
           Confirmar asistencia
         </button>
@@ -570,9 +855,9 @@ export default function PlusTemplate() {
 
       {/* ── FOOTER ── */}
       <footer className="footer">
-        <p className="footer-names">{EVENT.couple.person1} &amp; {EVENT.couple.person2}</p>
+        <p className="footer-names">{E.couple.person1} &amp; {E.couple.person2}</p>
         <p className="label muted" style={{ marginTop: '0.5rem' }}>
-          {EVENT.date.day} · {EVENT.date.month} · {EVENT.date.year} · {EVENT.location}
+          {E.date.day} · {E.date.month} · {E.date.year} · {E.location}
         </p>
       </footer>
 
@@ -584,18 +869,22 @@ export default function PlusTemplate() {
 
             {rsvpSent ? (
               <div className="modal-success">
-                <div className="modal-success-icon">✓</div>
-                <h3 className="modal-title">¡Nos vemos pronto!</h3>
+                <div className="modal-success-icon">{rsvpStatus === 'declined' ? '✕' : '✓'}</div>
+                <h3 className="modal-title">
+                  {rsvpStatus === 'declined' ? 'Gracias por avisarnos' : '¡Nos vemos pronto!'}
+                </h3>
                 <p className="label muted" style={{ textAlign: 'center', lineHeight: '1.8' }}>
-                  Tu confirmación fue recibida. Estamos emocionados de celebrar contigo.
+                  {rsvpStatus === 'declined'
+                    ? 'Lamentamos que no puedas acompañarnos. Tu respuesta fue registrada.'
+                    : 'Tu confirmación fue recibida. Estamos emocionados de celebrar contigo.'}
                 </p>
               </div>
             ) : (
               <form onSubmit={handleRsvpSubmit} className="modal-form">
                 <div className="modal-header">
                   <p className="label gold" style={{ marginBottom: '0.5rem' }}>Confirmación</p>
-                  <h3 className="modal-title">{EVENT.couple.person1} &amp; {EVENT.couple.person2}</h3>
-                  <p className="label muted">{EVENT.date.day} · {EVENT.date.month} · {EVENT.date.year}</p>
+                  <h3 className="modal-title">{E.couple.person1} &amp; {E.couple.person2}</h3>
+                  <p className="label muted">{E.date.day} · {E.date.month} · {E.date.year}</p>
                 </div>
 
                 {/* Nombre */}
@@ -608,79 +897,89 @@ export default function PlusTemplate() {
                     placeholder="Ej. Juan García"
                     value={rsvpName}
                     onChange={(e) => setRsvpName(e.target.value)}
+                    readOnly={!!guestToken}
+                    style={guestToken ? { opacity: 0.6, cursor: 'default' } : undefined}
                   />
                 </div>
 
                 {/* Acompañantes */}
-                <div className="form-field">
-                  <label className="form-label">
-                    Acompañantes
-                    <span className="form-label-hint"> (máx. {EVENT.rsvp.maxPlusOnes})</span>
-                  </label>
-                  <div className="counter">
-                    <button
-                      type="button"
-                      className="counter-btn"
-                      onClick={() => {
-                        setPlusOnes((n) => Math.max(0, n - 1));
-                        setCompanionNames((names) => names.slice(0, -1));
-                      }}
-                      disabled={plusOnes === 0}
-                    >−</button>
-                    <span className="counter-value">{plusOnes}</span>
-                    <button
-                      type="button"
-                      className="counter-btn"
-                      onClick={() => {
-                        setPlusOnes((n) => Math.min(EVENT.rsvp.maxPlusOnes, n + 1));
-                        setCompanionNames((names) => [...names, '']);
-                      }}
-                      disabled={plusOnes === EVENT.rsvp.maxPlusOnes}
-                    >+</button>
-                  </div>
-
-                  {/* Nombres de acompañantes */}
-                  {companionNames.length > 0 && (
-                    <div className="companions-list">
-                      {companionNames.map((name, i) => (
-                        <div key={i} className="companion-field">
-                          <span className="companion-num">{i + 1}</span>
-                          <input
-                            className="form-input companion-input"
-                            type="text"
-                            placeholder={`Nombre del acompañante ${i + 1}`}
-                            value={name}
-                            onChange={(e) => {
-                              const updated = [...companionNames];
-                              updated[i] = e.target.value;
-                              setCompanionNames(updated);
-                            }}
-                          />
-                        </div>
-                      ))}
+                {effectiveMaxCompanions > 0 && (
+                  <div className="form-field">
+                    <label className="form-label">
+                      Acompañantes
+                      <span className="form-label-hint"> (máx. {effectiveMaxCompanions})</span>
+                    </label>
+                    <div className="counter">
+                      <button
+                        type="button"
+                        className="counter-btn"
+                        onClick={() => handleCompanionCountChange(companionInputs.length - 1)}
+                        disabled={companionInputs.length === 0}
+                      >−</button>
+                      <span className="counter-value">{companionInputs.length}</span>
+                      <button
+                        type="button"
+                        className="counter-btn"
+                        onClick={() => handleCompanionCountChange(companionInputs.length + 1)}
+                        disabled={companionInputs.length === effectiveMaxCompanions}
+                      >+</button>
                     </div>
-                  )}
-                </div>
+
+                    {companionInputs.length > 0 && (
+                      <div className="companions-list">
+                        {companionInputs.map((name, i) => (
+                          <div key={i} className="companion-field">
+                            <span className="companion-num">{i + 1}</span>
+                            <input
+                              className="form-input companion-input"
+                              type="text"
+                              placeholder={`Nombre del acompañante ${i + 1}`}
+                              value={name}
+                              onChange={(e) => handleCompanionName(i, e.target.value)}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Restricción alimentaria */}
-                <div className="form-field">
-                  <label className="form-label">Restricción alimentaria</label>
-                  <div className="dietary-grid">
-                    {EVENT.rsvp.dietaryOptions.map((opt) => (
-                      <button
-                        key={opt}
-                        type="button"
-                        className={`dietary-btn${dietary === opt ? ' dietary-btn--active' : ''}`}
-                        onClick={() => setDietary(opt)}
-                      >
-                        {opt}
-                      </button>
-                    ))}
+                {(E.rsvp.dietaryOptions?.length ?? 0) > 0 && (
+                  <div className="form-field">
+                    <label className="form-label">Restricción alimentaria</label>
+                    <div className="dietary-grid">
+                      {E.rsvp.dietaryOptions!.map((opt) => (
+                        <button
+                          key={opt}
+                          type="button"
+                          className={`dietary-btn${dietary === opt ? ' dietary-btn--active' : ''}`}
+                          onClick={() => setDietary(opt)}
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <button type="submit" className="btn-submit" disabled={!rsvpName.trim()}>
-                  Confirmar asistencia
+                {rsvpError && (
+                  <p className="label muted" style={{ color: '#c0392b', textAlign: 'center', marginBottom: '0.5rem' }}>
+                    {rsvpError}
+                  </p>
+                )}
+
+                <button type="submit" className="btn-submit" disabled={!rsvpName.trim() || rsvpLoading}>
+                  {rsvpLoading ? 'Enviando…' : 'Confirmar asistencia'}
+                </button>
+
+                <button
+                  type="button"
+                  className="btn-decline"
+                  onClick={() => submitRsvp('declined')}
+                  disabled={rsvpLoading}
+                >
+                  No podré asistir
                 </button>
               </form>
             )}
@@ -1172,6 +1471,53 @@ const css = `
     bottom: 1.25rem;
     right: 1.5rem;
     z-index: 2;
+  }
+
+  /* ── Bloques de imagen del layout ── */
+
+  /* Full width */
+  .photo-block {
+    width: 100%;
+    overflow: hidden;
+    max-height: 600px;
+    background: var(--charcoal);
+  }
+  .photo-block-img {
+    width: 100%;
+    max-height: 600px;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.6s ease;
+  }
+  .photo-block:hover .photo-block-img { transform: scale(1.02); }
+  @media (max-width: 600px) { .photo-block, .photo-block-img { max-height: 380px; } }
+
+  /* Duo — dos imágenes lado a lado */
+  .duo-block {
+    display: flex;
+    width: 100%;
+    gap: 3px;
+    max-height: 520px;
+    background: var(--charcoal);
+    overflow: hidden;
+  }
+  .duo-block-item {
+    flex: 1;
+    overflow: hidden;
+    min-width: 0;
+  }
+  .duo-block-img {
+    width: 100%;
+    height: 100%;
+    max-height: 520px;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.6s ease;
+  }
+  .duo-block-item:hover .duo-block-img { transform: scale(1.03); }
+  @media (max-width: 600px) {
+    .duo-block { flex-direction: column; max-height: none; gap: 2px; }
+    .duo-block-img { max-height: 300px; }
   }
 
   /* ── Slide animations ── */
@@ -1684,6 +2030,23 @@ const css = `
   }
   .btn-submit:hover:not(:disabled) { background: var(--gold); transform: translateY(-1px); }
   .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-decline {
+    width: 100%;
+    padding: 0.75rem;
+    background: transparent;
+    border: none;
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted-fg);
+    cursor: pointer;
+    margin-top: 0.25rem;
+    transition: color 0.2s;
+  }
+  .btn-decline:hover:not(:disabled) { color: var(--charcoal); }
+  .btn-decline:disabled { opacity: 0.4; cursor: not-allowed; }
 
   /* ── Mobile centering ── */
   @media (max-width: 480px) {
