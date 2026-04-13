@@ -157,7 +157,10 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
   }, []);
 
   const waUrl = `https://wa.me/${c.whatsapp?.number ?? ''}?text=${encodeURIComponent(c.whatsapp?.message ?? '')}`;
-  const heroImage = c.images?.[0] || null;
+  // Nuevo modelo: photos[]. Fallback al modelo antiguo (images[0]).
+  const heroEntry = (c as { photos?: { url: string; role: string | null; objectPosition?: string }[] }).photos?.find(p => p.role === 'hero');
+  const heroImage: string | null = heroEntry?.url ?? c.images?.[0] ?? null;
+  const heroObjectPosition = heroEntry?.objectPosition ?? 'center center';
 
   return (
     <div className={`${allFontVars} essential-root`} style={rootStyle}>
@@ -172,7 +175,7 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
               <source media="(max-width: 768px)" srcSet={cld(heroImage, T.heroMobile)} />
               <source media="(min-width: 769px)" srcSet={cld(heroImage, T.heroDesktop)} />
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={cld(heroImage, T.heroDesktop)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
+              <img src={cld(heroImage, T.heroDesktop)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: heroObjectPosition }} />
             </picture>
           )}
         </div>

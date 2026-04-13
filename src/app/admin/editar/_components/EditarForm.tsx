@@ -1,15 +1,18 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition, useEffect, useRef } from 'react';
 import { updateEventConfig } from '@/app/admin/_actions';
 import ImageUpload from '@/components/ui/ImageUpload';
+import { uploadImage } from '@/components/ui/ImageUpload';
 import ImageLayoutEditor from './ImageLayoutEditor';
-import type { ImageBlock } from '@/lib/imageLayout';
+import type { PhotoEntry } from '@/lib/imageLayout';
+import { PhotoPositionerModal } from './PhotoPositionerModal';
+import { cld, T } from '@/lib/cloudinary';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-interface ItineraryItem { time: string; name: string; venue: string; address: string; mapsUrl?: string; image?: string; }
+interface ItineraryItem { time: string; name: string; venue: string; address: string; mapsUrl?: string; image?: string; imageObjectPosition?: string; imageScale?: number; }
 interface Swatch { color: string; name: string; }
 interface Hotel { name: string; category: string; address: string; note: string; phone: string; }
 interface TransportRow { time: string; detail: string; }
@@ -21,7 +24,7 @@ interface EventConfig {
   date: { day: string; month: string; year: string };
   location: string;
   targetDate: string;
-  images: string[];
+  photos: PhotoEntry[];
   quote: { text: string; reference: string };
   parents: { person1: string; person2: string };
   itinerary: ItineraryItem[];
@@ -52,7 +55,6 @@ interface EventConfig {
     gifts: boolean;
     destination: boolean;
   };
-  imageLayout: ImageBlock[];
 }
 
 // ---------------------------------------------------------------------------
@@ -65,7 +67,7 @@ const DEFAULT: EventConfig = {
   date: { day: '', month: '', year: '' },
   location: '',
   targetDate: '',
-  images: ['', '', '', '', ''],
+  photos: [],
   quote: { text: '', reference: '' },
   parents: { person1: '', person2: '' },
   itinerary: [{ time: '', name: '', venue: '', address: '' }],
@@ -96,7 +98,6 @@ const DEFAULT: EventConfig = {
     displayFont: 'cormorant',
     bodyFont: 'jost',
   },
-  imageLayout: [],
 };
 
 // ---------------------------------------------------------------------------
@@ -195,67 +196,87 @@ function makeStyles(C: Colors) {
 // Sub-components
 // ---------------------------------------------------------------------------
 function Section({
-  title, C, children, visible, onVisibilityChange,
+  title, C, children, visible, onVisibilityChange, summary, defaultOpen = false,
 }: {
   title: string;
   C: Colors;
   children: React.ReactNode;
   visible?: boolean;
   onVisibilityChange?: (v: boolean) => void;
+  summary?: string;
+  defaultOpen?: boolean;
 }) {
+  const [expanded, setExpanded] = useState(defaultOpen);
   const hasToggle = onVisibilityChange !== undefined;
   return (
-    <div style={{ paddingBottom: '32px', borderBottom: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ color: C.accent, fontSize: C.isDark ? '16px' : '14px', fontFamily: C.monoFont }}>
+    <div style={{ borderBottom: `1px solid ${C.border}` }}>
+      {/* Header colapsable */}
+      <div
+        onClick={() => setExpanded(e => !e)}
+        style={{ padding: '14px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none', gap: '8px' }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
+          <span style={{ color: expanded ? C.accent : C.mutedLight, fontSize: C.isDark ? '16px' : '13px', fontFamily: C.monoFont, flexShrink: 0 }}>
             {C.isDark ? '_' : '✦'}
           </span>
           <h2 style={{
             fontFamily: C.isDark ? C.monoFont : 'var(--font-cormorant)',
-            fontSize: C.isDark ? '13px' : '20px',
+            fontSize: C.isDark ? '13px' : '18px',
             fontWeight: 400,
             fontStyle: C.isDark ? 'normal' : 'italic',
             letterSpacing: C.isDark ? '2px' : '0',
             color: C.text,
             textTransform: C.isDark ? 'uppercase' : 'none',
-          }}>
-            {title}
-          </h2>
+            margin: 0, flexShrink: 0,
+          }}>{title}</h2>
+          {!expanded && summary && (
+            <span style={{ fontSize: '12px', color: C.mutedLight, fontFamily: C.font, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {summary}
+            </span>
+          )}
         </div>
-        {hasToggle && (
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', userSelect: 'none' }}>
-            <span style={{
-              fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase',
-              fontFamily: C.font, color: visible ? C.accent : C.mutedLight,
-            }}>
-              {visible ? 'Visible' : 'Oculto'}
-            </span>
-            <span
-              onClick={() => onVisibilityChange(!visible)}
-              style={{
-                display: 'inline-flex', alignItems: 'center',
-                width: '36px', height: '20px', borderRadius: '10px',
-                backgroundColor: visible ? C.accent : C.border,
-                padding: '2px', cursor: 'pointer',
-                transition: 'background 0.2s',
-                flexShrink: 0,
-              }}
-            >
-              <span style={{
-                display: 'block', width: '16px', height: '16px', borderRadius: '50%',
-                backgroundColor: C.card,
-                transform: visible ? 'translateX(16px)' : 'translateX(0)',
-                transition: 'transform 0.2s',
-                flexShrink: 0,
-              }} />
-            </span>
-          </label>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+          {hasToggle && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', userSelect: 'none' }} onClick={e => e.stopPropagation()}>
+              <span style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', fontFamily: C.font, color: visible ? C.accent : C.mutedLight }}>
+                {visible ? 'Visible' : 'Oculto'}
+              </span>
+              <span
+                onClick={e => { e.stopPropagation(); onVisibilityChange!(!visible); }}
+                style={{ display: 'inline-flex', alignItems: 'center', width: '32px', height: '18px', borderRadius: '9px', backgroundColor: visible ? C.accent : C.border, padding: '2px', cursor: 'pointer', transition: 'background 0.2s', flexShrink: 0 }}
+              >
+                <span style={{ display: 'block', width: '14px', height: '14px', borderRadius: '50%', backgroundColor: C.card, transform: visible ? 'translateX(14px)' : 'translateX(0)', transition: 'transform 0.2s', flexShrink: 0 }} />
+              </span>
+            </label>
+          )}
+          <span style={{ fontSize: '14px', color: C.mutedLight, display: 'inline-block', transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▾</span>
+        </div>
       </div>
-      <div style={{ opacity: hasToggle && !visible ? 0.45 : 1, pointerEvents: hasToggle && !visible ? 'none' : undefined, transition: 'opacity 0.2s' }}>
-        {children}
+      {/* Contenido colapsable */}
+      {expanded && (
+        <div style={{ paddingBottom: '28px', display: 'flex', flexDirection: 'column', gap: '14px', opacity: hasToggle && !visible ? 0.45 : 1, pointerEvents: hasToggle && !visible ? 'none' : undefined, transition: 'opacity 0.2s' }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Item colapsable para listas (itinerario, hoteles) */
+function CollapsibleItem({ summary, C, onRemove, canRemove = true, children }: {
+  summary: string; C: Colors; onRemove: () => void; canRemove?: boolean; children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ border: `1px solid ${C.border}`, borderRadius: '10px', backgroundColor: C.card, overflow: 'hidden' }}>
+      <div onClick={() => setOpen(o => !o)} style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none', gap: '8px' }}>
+        <span style={{ fontSize: '13px', color: C.text, fontFamily: C.font, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{summary}</span>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
+          {canRemove && <button style={{ padding: '3px 10px', border: `1px solid ${C.border}`, borderRadius: '6px', backgroundColor: 'transparent', color: C.mutedLight, fontSize: '11px', cursor: 'pointer', fontFamily: C.font }} onClick={e => { e.stopPropagation(); onRemove(); }}>Eliminar</button>}
+          <span style={{ fontSize: '14px', color: C.mutedLight, display: 'inline-block', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>▾</span>
+        </div>
       </div>
+      {open && <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>{children}</div>}
     </div>
   );
 }
@@ -284,6 +305,129 @@ function Field({ label, C, children }: { label: string; C: Colors; children: Rea
 }
 
 // ---------------------------------------------------------------------------
+// PhotosModal — carga de fotos sin asignación de roles
+// ---------------------------------------------------------------------------
+function PhotosModal({
+  photos, onChange, C, S, eventSlug, photoLimit, onClose,
+}: {
+  photos: PhotoEntry[];
+  onChange: (photos: PhotoEntry[]) => void;
+  C: Colors;
+  S: ReturnType<typeof makeStyles>;
+  eventSlug: string;
+  photoLimit: number | null;
+  onClose: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [pending, setPending] = useState(0);
+  const [error, setError] = useState('');
+
+  const filled   = photos.length;
+  const atLimit  = photoLimit !== null && filled >= photoLimit;
+
+  async function handleFiles(fileList: FileList) {
+    const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+    if (!files.length) return;
+
+    const slots = photoLimit !== null ? photoLimit - filled : Infinity;
+    const toUpload = files.slice(0, slots);
+
+    if (files.length > toUpload.length) {
+      setError(`Solo puedes subir ${slots} foto${slots !== 1 ? 's' : ''} más (límite de plan).`);
+    } else {
+      setError('');
+    }
+    if (!toUpload.length) return;
+
+    setPending(p => p + toUpload.length);
+    try {
+      const urls = await Promise.all(toUpload.map(f => uploadImage(f, `moments/${eventSlug}`)));
+      onChange([...photos, ...urls.map(url => ({ url, role: null as null }))]);
+    } catch {
+      setError('Error al subir una o más fotos.');
+    } finally {
+      setPending(p => p - toUpload.length);
+    }
+  }
+
+  function removePhoto(idx: number) {
+    onChange(photos.filter((_, i) => i !== idx));
+  }
+
+  return (
+    <div
+      onClick={onClose}
+      style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.55)', zIndex: 200, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 16px', overflowY: 'auto' }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{ width: '100%', maxWidth: '560px', backgroundColor: C.bg, borderRadius: '14px', border: `1px solid ${C.border}`, padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: '20px' }}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h2 style={{ fontFamily: C.isDark ? C.monoFont : 'var(--font-cormorant)', fontSize: C.isDark ? '13px' : '22px', fontWeight: 400, fontStyle: C.isDark ? 'normal' : 'italic', letterSpacing: C.isDark ? '2px' : '0', color: C.text, textTransform: C.isDark ? 'uppercase' : 'none', margin: 0 }}>
+            Fotos
+          </h2>
+          <button onClick={onClose} style={{ padding: '4px 12px', border: `1px solid ${C.border}`, borderRadius: '8px', backgroundColor: 'transparent', color: C.muted, fontSize: '12px', cursor: 'pointer', fontFamily: C.font }}>
+            Cerrar
+          </button>
+        </div>
+
+        {/* Counter */}
+        {photoLimit !== null ? (
+          <span style={{ fontSize: '12px', fontFamily: C.font, color: atLimit ? '#C0392B' : C.muted, marginTop: '-12px' }}>
+            {filled} / {photoLimit} fotos{atLimit ? ' · Límite alcanzado' : ''}
+          </span>
+        ) : filled > 0 ? (
+          <span style={{ fontSize: '12px', fontFamily: C.font, color: C.muted, marginTop: '-12px' }}>
+            {filled} foto{filled !== 1 ? 's' : ''}
+          </span>
+        ) : null}
+
+        {/* Thumbnail grid */}
+        {filled > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+            {photos.map((p, i) => (
+              <div key={i} style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', border: `1px solid ${C.border}` }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={cld(p.url, T.thumb)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <button type="button" onClick={() => removePhoto(i)}
+                  style={{ position: 'absolute', top: '4px', right: '4px', width: '22px', height: '22px', borderRadius: '50%', border: 'none', backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+                >×</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Drop zone */}
+        {!atLimit && (
+          <div
+            onDragOver={e => e.preventDefault()}
+            onDrop={e => { e.preventDefault(); if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); }}
+            onClick={() => inputRef.current?.click()}
+            style={{ border: `1px dashed ${C.border}`, borderRadius: '10px', padding: '28px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer', backgroundColor: C.card }}
+          >
+            {pending > 0 ? (
+              <span style={{ fontSize: '13px', color: C.muted, fontFamily: C.font }}>Subiendo {pending} foto{pending !== 1 ? 's' : ''}…</span>
+            ) : (
+              <>
+                <span style={{ fontSize: '13px', color: C.text, fontFamily: C.font }}>Arrastra fotos aquí o haz clic</span>
+                <span style={{ fontSize: '11px', color: C.mutedLight, fontFamily: C.font }}>JPG, PNG, WebP · puedes seleccionar varias a la vez</span>
+              </>
+            )}
+          </div>
+        )}
+
+        {error && <span style={{ fontSize: '12px', color: '#C0392B', fontFamily: C.font }}>{error}</span>}
+
+        <input ref={inputRef} type="file" accept="image/*" multiple style={{ display: 'none' }}
+          onChange={e => { if (e.target.files?.length) handleFiles(e.target.files); e.target.value = ''; }} />
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 export default function EditarForm({
@@ -304,10 +448,8 @@ export default function EditarForm({
   const C = theme === 'dark' ? DARK : LIGHT;
   const S = makeStyles(C);
 
-  // galleryMax = límite de imágenes de galería (sin contar el hero)
-  // null = ilimitado (Deluxe)
-  const galleryMax: number | null = isDeluxe ? null : (isPlus ? 10 : 5);
-  const totalSlots = galleryMax !== null ? galleryMax + 1 : null; // +1 por el hero
+  // Límite total de fotos por plan (hero incluida)
+  const photoLimit: number | null = isDeluxe ? null : (isPlus ? 11 : 6);
 
   const [cfg, setCfg] = useState<EventConfig>(() => ({
     ...DEFAULT,
@@ -325,27 +467,36 @@ export default function EditarForm({
     },
     whatsapp:    { ...DEFAULT.whatsapp,  ...initialConfig.whatsapp },
     rsvp:        { ...DEFAULT.rsvp,      ...(initialConfig as Partial<EventConfig>).rsvp },
-    images: (() => {
-      const src = initialConfig.images ?? [];
-      if (isDeluxe) {
-        // Deluxe: conservar todas las imágenes existentes; mínimo el slot del hero
-        return src.length >= 1 ? src : [''];
+    photos: (() => {
+      // Si ya tiene el nuevo formato, usarlo directamente
+      const ic = initialConfig as Partial<EventConfig> & { photos?: PhotoEntry[]; images?: string[]; imageLayout?: { afterSection: string; layout: string; imageIndexes?: number[] }[] };
+      if (ic.photos?.length) return ic.photos;
+      // Migrar formato antiguo (images[] + imageLayout[])
+      const imgs = ic.images ?? [];
+      const layout = ic.imageLayout ?? [];
+      const usedIdx = new Set<number>(layout.flatMap(b => b.imageIndexes ?? []));
+      const result: PhotoEntry[] = [];
+      if (imgs[0]) result.push({ url: imgs[0], role: 'hero' });
+      for (const block of layout) {
+        (block.imageIndexes ?? []).forEach((idx, order) => {
+          if (imgs[idx]) result.push({ url: imgs[idx], role: 'block', afterSection: block.afterSection, layout: block.layout as PhotoEntry['layout'], blockGroup: 0, orderInBlock: order });
+        });
       }
-      return [...src, ...Array(totalSlots!).fill('')].slice(0, totalSlots!);
+      imgs.forEach((url: string, i: number) => {
+        if (i > 0 && url && !usedIdx.has(i)) result.push({ url, role: null });
+      });
+      return result;
     })(),
     itinerary: initialConfig.itinerary?.length ? initialConfig.itinerary : DEFAULT.itinerary,
     notes:     initialConfig.notes?.length    ? initialConfig.notes      : DEFAULT.notes,
-    theme:        { ...DEFAULT.theme, ...initialConfig.theme },
-    sections:     { ...DEFAULT.sections, ...(initialConfig as Partial<EventConfig>).sections },
-    imageLayout:  (initialConfig as Partial<EventConfig>).imageLayout ?? [],
+    theme:     { ...DEFAULT.theme, ...initialConfig.theme },
+    sections:  { ...DEFAULT.sections, ...(initialConfig as Partial<EventConfig>).sections },
   }));
 
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
-
-  // Contador de imágenes de galería (excluye el hero en índice 0)
-  const galleryFilled = cfg.images.filter((url, i) => i > 0 && url !== '').length;
-  const atGalleryLimit = galleryMax !== null && galleryFilled >= galleryMax;
+  const [photosOpen, setPhotosOpen] = useState(false);
+  const [repositioningItinIdx, setRepositioningItinIdx] = useState<number | null>(null);
 
   useEffect(() => {
     const existing = document.getElementById('editarform-gfonts');
@@ -371,6 +522,25 @@ export default function EditarForm({
 
   return (
     <div style={{ fontFamily: C.font, backgroundColor: C.bg }}>
+
+      {/* ── Itinerary photo repositioner modal ── */}
+      {repositioningItinIdx !== null && cfg.itinerary[repositioningItinIdx]?.image && (
+        <PhotoPositionerModal
+          url={cfg.itinerary[repositioningItinIdx].image!}
+          objectPosition={cfg.itinerary[repositioningItinIdx].imageObjectPosition}
+          scale={cfg.itinerary[repositioningItinIdx].imageScale}
+          label={`Ajustar: ${cfg.itinerary[repositioningItinIdx].name || 'foto del lugar'}`}
+          aspectRatio="4/3"
+          aspectRatioDesktop="16/9"
+          onConfirm={(pos, s) => {
+            const it = [...cfg.itinerary];
+            it[repositioningItinIdx] = { ...it[repositioningItinIdx], imageObjectPosition: pos, imageScale: s };
+            set('itinerary', it);
+          }}
+          onClose={() => setRepositioningItinIdx(null)}
+          C={C}
+        />
+      )}
 
       {/* ── Save bar ── */}
       <div style={{
@@ -403,7 +573,9 @@ export default function EditarForm({
       <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
 
         {/* ── 1. Portada ── */}
-        <Section title="Portada" C={C}>
+        <Section title="Portada" C={C} defaultOpen={true}
+          summary={cfg.couple.person1 && cfg.couple.person2 ? `${cfg.couple.person1} & ${cfg.couple.person2}` : cfg.couple.person1 || cfg.couple.person2 || '—'}
+        >
           <Field label="Frase de introducción (aparece encima de los nombres)" C={C}>
             <input style={S.input} value={cfg.heroLabel} onChange={e => set('heroLabel', e.target.value)} placeholder="Nuestro gran día" />
           </Field>
@@ -453,111 +625,72 @@ export default function EditarForm({
         </Section>
 
         {/* ── 2. Fotos ── */}
-        <Section title="Fotos" C={C}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '-8px' }}>
-            <p style={{ fontSize: '13px', color: C.muted, margin: 0 }}>
-              {isDeluxe
-                ? 'Imágenes para el carrusel. La primera es la portada principal (hero). Sin límite.'
-                : isPlus
-                  ? 'Hasta 10 imágenes adicionales para el carrusel (el hero no cuenta).'
-                  : 'Hasta 5 imágenes adicionales (el hero no cuenta).'}
-            </p>
-            {galleryMax !== null && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                <span style={{
-                  fontSize: '12px',
-                  fontFamily: C.font,
-                  color: atGalleryLimit ? '#C0392B' : C.muted,
-                  fontWeight: atGalleryLimit ? 600 : 400,
-                }}>
-                  {galleryFilled} / {galleryMax} imágenes
-                </span>
-                {atGalleryLimit && (
-                  <span style={{ fontSize: '12px', color: '#C0392B', fontFamily: C.font }}>
-                    · Alcanzaste el límite de imágenes de tu plan
-                  </span>
+        {(() => {
+          const total = cfg.photos.length;
+          const atLimit = photoLimit !== null && total >= photoLimit;
+          return (
+            <Section title="Fotos" C={C}
+              summary={total > 0 ? `${total} foto${total !== 1 ? 's' : ''}` : '—'}
+            >
+              {/* Thumbnail strip */}
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                {cfg.photos.map((p, i) => p.url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={i} src={cld(p.url, T.thumb)} alt=""
+                    style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '6px', border: `1px solid ${C.border}` }} />
+                ) : null)}
+                {total === 0 && (
+                  <span style={{ fontSize: '12px', color: C.mutedLight, fontFamily: C.font }}>Sin fotos aún</span>
                 )}
               </div>
-            )}
-          </div>
-
-          {/* Hero — siempre en índice 0, no cuenta en el límite */}
-          <ImageUpload
-            label="Portada (hero — ancho completo)"
-            folder={`moments/${eventSlug}`}
-            value={cfg.images[0] ?? ''}
-            onChange={url => {
-              const imgs = [...cfg.images];
-              imgs[0] = url;
-              set('images', imgs);
-            }}
-          />
-
-          {/* Galería */}
-          {(isDeluxe
-            ? Array.from({ length: cfg.images.length - 1 }, (_, relIdx) => relIdx)
-            : Array.from({ length: galleryMax! }, (_, relIdx) => relIdx)
-          ).map(relIdx => {
-            const idx = relIdx + 1;
-            const isEmpty = !cfg.images[idx];
-            return (
-              <ImageUpload
-                key={idx}
-                label={`Imagen ${idx + 1}`}
-                folder={`moments/${eventSlug}`}
-                value={cfg.images[idx] ?? ''}
-                disabled={atGalleryLimit && isEmpty}
-                onChange={url => {
-                  const imgs = [...cfg.images];
-                  imgs[idx] = url;
-                  set('images', imgs);
-                }}
-              />
-            );
-          })}
-
-          {/* Deluxe: botón para agregar más imágenes */}
-          {isDeluxe && (
-            <button
-              type="button"
-              style={S.addBtn}
-              onClick={() => set('images', [...cfg.images, ''])}
-            >
-              + Agregar imagen
-            </button>
-          )}
-        </Section>
+              {photoLimit !== null && (
+                <span style={{ fontSize: '12px', fontFamily: C.font, color: atLimit ? '#C0392B' : C.muted }}>
+                  {total} / {photoLimit} fotos{atLimit ? ' · Límite alcanzado' : ''}
+                </span>
+              )}
+              <button type="button" onClick={() => setPhotosOpen(true)}
+                style={{ padding: '9px 20px', border: `1px solid ${C.border}`, borderRadius: '8px', backgroundColor: 'transparent', color: C.text, fontSize: '12px', letterSpacing: '1px', cursor: 'pointer', fontFamily: C.font, alignSelf: 'flex-start' }}
+              >
+                Gestionar fotos
+              </button>
+            </Section>
+          );
+        })()}
 
         {/* ── Layout de Fotos (Plus / Deluxe) ── */}
-        {isPlus && (
-          <Section title="Layout de Fotos" C={C}>
-            <p style={{ fontSize: '13px', color: C.muted, marginTop: '-8px', margin: '0 0 4px' }}>
-              Posiciona tus imágenes entre las secciones. Arrastra los bloques para reordenarlos.
-            </p>
-            <ImageLayoutEditor
-              images={cfg.images}
-              layout={cfg.imageLayout}
-              onChange={layout => set('imageLayout', layout)}
-              activeSections={{
-                hero:        true,
-                quote:       cfg.sections.quote       ?? false,
-                parents:     cfg.sections.parents     ?? false,
-                itinerary:   cfg.itinerary.some(i => i.name.trim() !== ''),
-                destination: cfg.sections.destination ?? false,
-                dressCode:   cfg.sections.dressCode   ?? false,
-                notes:       cfg.sections.notes       ?? false,
-                gifts:       cfg.sections.gifts       ?? false,
-                noChildren:  cfg.noChildren           ?? false,
-              }}
-              C={C}
-            />
-          </Section>
-        )}
+        {isPlus && (() => {
+          const heroOk  = cfg.photos.some(p => p.role === 'hero');
+          const blocks  = cfg.photos.filter(p => p.role === 'block').length;
+          const summary = heroOk
+            ? `Portada ✓${blocks > 0 ? ` · ${blocks} en bloques` : ''}`
+            : `Sin portada${blocks > 0 ? ` · ${blocks} en bloques` : ''}`;
+          return (
+            <Section title="Layout de Fotos" C={C} summary={summary}>
+              <ImageLayoutEditor
+                photos={cfg.photos}
+                onChange={photos => set('photos', photos)}
+                activeSections={{
+                  hero:        true,
+                  quote:       cfg.sections.quote       ?? false,
+                  parents:     cfg.sections.parents     ?? false,
+                  itinerary:   cfg.itinerary.some(i => i.name.trim() !== ''),
+                  destination: cfg.sections.destination ?? false,
+                  dressCode:   cfg.sections.dressCode   ?? false,
+                  notes:       cfg.sections.notes       ?? false,
+                  gifts:       cfg.sections.gifts       ?? false,
+                  noChildren:  cfg.noChildren           ?? false,
+                }}
+                C={C}
+              />
+            </Section>
+          );
+        })()}
 
         {/* ── 3. Cita ── */}
         <Section title="Cita o frase" C={C}
           visible={cfg.sections.quote}
           onVisibilityChange={v => set('sections', { ...cfg.sections, quote: v })}
+          summary={cfg.quote.text ? `${cfg.quote.text.slice(0, 45)}${cfg.quote.text.length > 45 ? '…' : ''}` : '—'}
         >
           <Field label="Texto" C={C}>
             <textarea style={S.textarea} value={cfg.quote.text} onChange={e => set('quote', { ...cfg.quote, text: e.target.value })} placeholder="Lo que Dios unió, que no lo separe el hombre." />
@@ -571,6 +704,7 @@ export default function EditarForm({
         <Section title="Padres" C={C}
           visible={cfg.sections.parents}
           onVisibilityChange={v => set('sections', { ...cfg.sections, parents: v })}
+          summary={cfg.parents.person1 ? cfg.parents.person1.split('\n')[0].slice(0, 40) : '—'}
         >
           <Field label="Padres — persona 1 (usa \n para nueva línea)" C={C}>
             <textarea style={{ ...S.textarea, minHeight: '64px' }} value={cfg.parents.person1} onChange={e => set('parents', { ...cfg.parents, person1: e.target.value })} placeholder={'Roberto Herrera &\nCarmen López de Herrera'} />
@@ -581,15 +715,17 @@ export default function EditarForm({
         </Section>
 
         {/* ── 5. Itinerario ── */}
-        <Section title="Itinerario" C={C}>
+        <Section title="Itinerario" C={C}
+          summary={(() => { const n = cfg.itinerary.filter(i => i.name.trim()).length; return n > 0 ? `${n} evento${n !== 1 ? 's' : ''}` : '—'; })()}
+        >
           {cfg.itinerary.map((item, i) => (
-            <div key={i} style={{ padding: '16px', border: `1px solid ${C.border}`, borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '12px', backgroundColor: C.card }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '11px', color: C.mutedLight, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: C.font }}>Evento {i + 1}</span>
-                {cfg.itinerary.length > 1 && (
-                  <button style={S.removeBtn} onClick={() => set('itinerary', cfg.itinerary.filter((_, j) => j !== i))}>Eliminar</button>
-                )}
-              </div>
+            <CollapsibleItem
+              key={i}
+              summary={`${item.time ? `${item.time} · ` : ''}${item.name || 'Nuevo evento'}`}
+              C={C}
+              canRemove={cfg.itinerary.length > 1}
+              onRemove={() => set('itinerary', cfg.itinerary.filter((_, j) => j !== i))}
+            >
               <Row>
                 <Field label="Hora" C={C}>
                   <input style={S.input} value={item.time} onChange={e => { const it = [...cfg.itinerary]; it[i] = { ...it[i], time: e.target.value }; set('itinerary', it); }} placeholder="16:00" />
@@ -619,14 +755,27 @@ export default function EditarForm({
                 </Field>
               )}
               {isPlus && (
-                <ImageUpload
-                  label="Foto del lugar (opcional)"
-                  folder={`moments/${eventSlug}`}
-                  value={item.image ?? ''}
-                  onChange={url => { const it = [...cfg.itinerary]; it[i] = { ...it[i], image: url }; set('itinerary', it); }}
-                />
+                <Field label="Foto del lugar (opcional)" C={C}>
+                  <ImageUpload
+                    folder={`moments/${eventSlug}`}
+                    value={item.image ?? ''}
+                    onChange={url => { const it = [...cfg.itinerary]; it[i] = { ...it[i], image: url }; set('itinerary', it); }}
+                  />
+                  {item.image && (
+                    <button
+                      type="button"
+                      onClick={() => setRepositioningItinIdx(i)}
+                      style={{
+                        marginTop: '6px', padding: '5px 12px',
+                        border: `1px solid ${C.border}`, borderRadius: '6px',
+                        background: 'transparent', color: C.muted,
+                        fontSize: '11px', cursor: 'pointer', fontFamily: C.font,
+                      }}
+                    >✥ Reposicionar foto</button>
+                  )}
+                </Field>
               )}
-            </div>
+            </CollapsibleItem>
           ))}
           <button style={S.addBtn} onClick={() => set('itinerary', [...cfg.itinerary, { time: '', name: '', venue: '', address: '' }])}>
             + Agregar evento
@@ -637,6 +786,7 @@ export default function EditarForm({
         <Section title="Dress Code" C={C}
           visible={cfg.sections.dressCode}
           onVisibilityChange={v => set('sections', { ...cfg.sections, dressCode: v })}
+          summary={cfg.dressCode.label || '—'}
         >
           <Field label="Etiqueta (ej: Formal, Cocktail)" C={C}>
             <input style={S.input} value={cfg.dressCode.label} onChange={e => set('dressCode', { ...cfg.dressCode, label: e.target.value })} placeholder="Formal" />
@@ -683,6 +833,7 @@ export default function EditarForm({
         <Section title="Notas adicionales" C={C}
           visible={cfg.sections.notes}
           onVisibilityChange={v => set('sections', { ...cfg.sections, notes: v })}
+          summary={(() => { const n = cfg.notes.filter(x => x.trim()).length; return n > 0 ? `${n} nota${n !== 1 ? 's' : ''}` : '—'; })()}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {cfg.notes.map((note, i) => (
@@ -701,6 +852,7 @@ export default function EditarForm({
         <Section title="Regalos" C={C}
           visible={cfg.sections.gifts}
           onVisibilityChange={v => set('sections', { ...cfg.sections, gifts: v })}
+          summary={cfg.gifts.bank ? `${cfg.gifts.bank}${cfg.gifts.holder ? ` · ${cfg.gifts.holder}` : ''}` : '—'}
         >
           <Row>
             <Field label="Banco" C={C}><input style={S.input} value={cfg.gifts.bank} onChange={e => set('gifts', { ...cfg.gifts, bank: e.target.value })} placeholder="BBVA" /></Field>
@@ -721,6 +873,7 @@ export default function EditarForm({
           <Section title="Boda Destino (hospedaje y transporte)" C={C}
             visible={cfg.sections.destination}
             onVisibilityChange={v => set('sections', { ...cfg.sections, destination: v })}
+            summary={(() => { const n = cfg.destination.hotels.length; return n > 0 ? `${n} hotel${n !== 1 ? 'es' : ''}` : '—'; })()}
           >
             <p style={{ fontSize: '13px', color: C.muted, marginTop: '-8px' }}>
               Agrega hoteles recomendados y detalles de transporte para tus invitados.
@@ -731,11 +884,12 @@ export default function EditarForm({
               <span style={S.lbl}>Hoteles recomendados</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {cfg.destination.hotels.map((h, i) => (
-                  <div key={i} style={{ padding: '16px', border: `1px solid ${C.border}`, borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '10px', backgroundColor: C.card }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '11px', color: C.mutedLight, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: C.font }}>Hotel {i + 1}</span>
-                      <button style={S.removeBtn} onClick={() => set('destination', { ...cfg.destination, hotels: cfg.destination.hotels.filter((_, j) => j !== i) })}>Eliminar</button>
-                    </div>
+                  <CollapsibleItem
+                    key={i}
+                    summary={`${h.name || 'Nuevo hotel'}${h.category ? ` · ${h.category}` : ''}`}
+                    C={C}
+                    onRemove={() => set('destination', { ...cfg.destination, hotels: cfg.destination.hotels.filter((_, j) => j !== i) })}
+                  >
                     <Row>
                       <Field label="Nombre del hotel" C={C}>
                         <input style={S.input} value={h.name} onChange={e => { const hs = [...cfg.destination.hotels]; hs[i] = { ...hs[i], name: e.target.value }; set('destination', { ...cfg.destination, hotels: hs }); }} placeholder="Hotel Santa Clara" />
@@ -755,7 +909,7 @@ export default function EditarForm({
                         <input style={S.input} value={h.phone} onChange={e => { const hs = [...cfg.destination.hotels]; hs[i] = { ...hs[i], phone: e.target.value }; set('destination', { ...cfg.destination, hotels: hs }); }} placeholder="+52 55 1234 5678" />
                       </Field>
                     </Row>
-                  </div>
+                  </CollapsibleItem>
                 ))}
                 <button style={S.addBtn} onClick={() => set('destination', { ...cfg.destination, hotels: [...cfg.destination.hotels, { name: '', category: '', address: '', note: '', phone: '' }] })}>
                   + Agregar hotel
@@ -794,7 +948,9 @@ export default function EditarForm({
         )}
 
         {/* ── 0. Diseño ── */}
-        <Section title="Diseño" C={C}>
+        <Section title="Diseño" C={C}
+          summary={`${DISPLAY_FONT_LABEL[cfg.theme.displayFont] ?? '—'} · ${cfg.theme.accentColor}`}
+        >
           <Row>
             <Field label="Tipografía display (títulos)" C={C}>
               <select
@@ -894,7 +1050,11 @@ export default function EditarForm({
         </Section>
 
         {/* ── 9. Confirmación ── */}
-        <Section title="Confirmación de asistencia" C={C}>
+        <Section title="Confirmación de asistencia" C={C}
+          summary={!isPlus
+            ? (cfg.whatsapp.number ? `WhatsApp · ${cfg.whatsapp.number}` : 'WhatsApp')
+            : (cfg.rsvp.deadline ? `RSVP · ${cfg.rsvp.deadline}` : 'RSVP')}
+        >
           {!isPlus ? (
             /* Essential: WhatsApp */
             <>
@@ -913,24 +1073,9 @@ export default function EditarForm({
           ) : (
             /* Plus / Deluxe: RSVP modal */
             <>
-              <Row>
-                <Field label="Fecha límite de confirmación" C={C}>
-                  <input style={S.input} value={cfg.rsvp.deadline} onChange={e => set('rsvp', { ...cfg.rsvp, deadline: e.target.value })} placeholder="15 de mayo de 2026" />
-                </Field>
-                <Field label="Máximo de acompañantes por invitación" C={C}>
-                  <input
-                    style={S.input}
-                    type="number"
-                    min={0}
-                    max={20}
-                    value={cfg.rsvp.maxPlusOnes}
-                    onChange={e => set('rsvp', { ...cfg.rsvp, maxPlusOnes: Math.max(0, parseInt(e.target.value) || 0) })}
-                  />
-                  <p style={{ fontSize: '11px', color: C.muted, marginTop: '4px' }}>
-                    Número de personas adicionales que puede traer cada invitado (0 = solo el titular).
-                  </p>
-                </Field>
-              </Row>
+              <Field label="Fecha límite de confirmación" C={C}>
+                <input style={S.input} value={cfg.rsvp.deadline} onChange={e => set('rsvp', { ...cfg.rsvp, deadline: e.target.value })} placeholder="15 de mayo de 2026" />
+              </Field>
               <div>
                 <span style={S.lbl}>Opciones de restricción alimentaria</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -971,6 +1116,17 @@ export default function EditarForm({
         </Section>
 
       </div>
+
+      {/* ── Modal: Gestionar fotos ── */}
+      {photosOpen && <PhotosModal
+        photos={cfg.photos}
+        onChange={photos => set('photos', photos)}
+        C={C}
+        S={S}
+        eventSlug={eventSlug}
+        photoLimit={photoLimit}
+        onClose={() => setPhotosOpen(false)}
+      />}
     </div>
   );
 }

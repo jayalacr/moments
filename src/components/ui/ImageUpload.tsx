@@ -261,3 +261,20 @@ export default function ImageUpload({ value, onChange, label, folder = 'moments'
     </div>
   );
 }
+
+/** Sube un archivo a Cloudinary y devuelve la URL limpia. */
+export async function uploadImage(file: File, folder: string): Promise<string> {
+  const prepared = await prepareForUpload(file);
+  const formData = new FormData();
+  formData.append('file', prepared, 'image.jpg');
+  formData.append('upload_preset', UPLOAD_PRESET);
+  formData.append('folder', folder);
+
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+    { method: 'POST', body: formData },
+  );
+  if (!res.ok) throw new Error('Error al subir la imagen.');
+  const data = await res.json();
+  return data.secure_url as string;
+}

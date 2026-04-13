@@ -120,10 +120,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               Invitados
             </Link>
           )}
-          <div className="admin-nav-link" style={{ opacity: 0.4, cursor: 'not-allowed' }}>
-            <span className="dot" />
-            Confirmaciones
-          </div>
+          {showGuests && (
+            <Link href="/admin/confirmaciones" className="admin-nav-link">
+              <span className="dot" />
+              Confirmaciones
+            </Link>
+          )}
         </nav>
 
         {/* User + Logout */}

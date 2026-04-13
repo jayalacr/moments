@@ -2,7 +2,7 @@
 
 import { Cormorant_Garamond, Jost } from 'next/font/google';
 import React, { useEffect, useState, useRef } from 'react';
-import type { ImageBlock } from '@/lib/imageLayout';
+import type { ImageBlock, PhotoEntry } from '@/lib/imageLayout';
 
 // ---------------------------------------------------------------------------
 // Config type
@@ -24,6 +24,7 @@ export interface PlusConfig {
     address?: string;
     mapsUrl?: string;
     image?: string;
+    imageObjectPosition?: string;
   }>;
   dressCode?: {
     label?: string;
@@ -75,7 +76,8 @@ export interface PlusConfig {
     backgroundColor?: string;
     textColor?: string;
   };
-  imageLayout?: ImageBlock[];
+  imageLayout?: ImageBlock[];  // @deprecated — usar photos
+  photos?: PhotoEntry[];
 }
 
 const cormorant = Cormorant_Garamond({
@@ -220,14 +222,14 @@ const EVENT = {
 // ---------------------------------------------------------------------------
 // DuoBlock — dos imágenes lado a lado (colapsa en mobile)
 // ---------------------------------------------------------------------------
-function DuoBlock({ src1, src2 }: { src1: string; src2: string }) {
+function DuoBlock({ src1, src2, pos1, pos2, scale1, scale2 }: { src1: string; src2: string; pos1?: string; pos2?: string; scale1?: number; scale2?: number }) {
   return (
     <div className="duo-block">
       <div className="duo-block-item">
-        <img src={src1} alt="" className="duo-block-img" />
+        <img src={src1} alt="" className="duo-block-img" style={{ objectPosition: pos1 ?? 'center center', transform: `scale(${scale1 ?? 1})`, transformOrigin: pos1 ?? 'center center' }} />
       </div>
       <div className="duo-block-item">
-        <img src={src2} alt="" className="duo-block-img" />
+        <img src={src2} alt="" className="duo-block-img" style={{ objectPosition: pos2 ?? 'center center', transform: `scale(${scale2 ?? 1})`, transformOrigin: pos2 ?? 'center center' }} />
       </div>
     </div>
   );
@@ -236,7 +238,7 @@ function DuoBlock({ src1, src2 }: { src1: string; src2: string }) {
 // ---------------------------------------------------------------------------
 // CarouselBlock — carrusel inline para bloques de imageLayout
 // ---------------------------------------------------------------------------
-function CarouselBlock({ srcs }: { srcs: string[] }) {
+function CarouselBlock({ srcs, positions, scales }: { srcs: string[]; positions?: string[]; scales?: number[] }) {
   const [idx, setIdx] = useState(0);
   const total = srcs.length;
   const touchStartX = useRef<number | null>(null);
@@ -259,7 +261,7 @@ function CarouselBlock({ srcs }: { srcs: string[] }) {
       <div className="carousel-track" style={{ transform: `translateX(-${idx * 100}%)` }}>
         {srcs.map((src, i) => (
           <div key={i} className="carousel-slide">
-            <img src={src} alt={`Foto ${i + 1}`} className="carousel-img" />
+            <img src={src} alt={`Foto ${i + 1}`} className="carousel-img" style={{ objectPosition: positions?.[i] ?? 'center center', transform: `scale(${scales?.[i] ?? 1})`, transformOrigin: positions?.[i] ?? 'center center' }} />
           </div>
         ))}
       </div>
@@ -358,6 +360,7 @@ export default function PlusTemplate({
     sections:      config.sections    ?? {},
     theme:         config.theme       ?? {},
     imageLayout:   config.imageLayout ?? [],
+    photos:        config.photos      ?? [],
   };
 
   const accentColor      = E.theme.accentColor      ?? '#B8965A';
@@ -419,29 +422,41 @@ export default function PlusTemplate({
     return () => observer.disconnect();
   }, []);
 
-  /** Renderiza los bloques de imagen configurados para una posición de sección */
+  /** Renderiza los bloques de imagen para una posición de sección */
   function renderBlocks(afterSection: string) {
+    // Nuevo modelo: photos[]
+    if (E.photos.length > 0) {
+      const sp = E.photos.filter(p => p.role === 'block' && p.afterSection === afterSection);
+      if (sp.length === 0) return null;
+      const map = new Map<number, typeof sp>();
+      for (const p of sp) {
+        const g = p.blockGroup ?? 0;
+        map.set(g, [...(map.get(g) ?? []), p]);
+      }
+      return Array.from(map.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([g, ps]) => {
+          const sorted = ps.sort((a, b) => (a.orderInBlock ?? 0) - (b.orderInBlock ?? 0));
+          const srcs      = sorted.map(p => p.url).filter(Boolean);
+          const positions = sorted.map(p => p.objectPosition ?? 'center center');
+          const scales    = sorted.map(p => p.scale ?? 1);
+          if (!srcs.length) return null;
+          if (ps[0].layout === 'full') return <div key={g} className="photo-block"><img src={srcs[0]} alt="" className="photo-block-img" style={{ objectPosition: positions[0], transform: `scale(${scales[0]})`, transformOrigin: positions[0] }} /></div>;
+          if (ps[0].layout === 'duo')  return <DuoBlock key={g} src1={srcs[0]} src2={srcs[1] ?? srcs[0]} pos1={positions[0]} pos2={positions[1]} scale1={scales[0]} scale2={scales[1]} />;
+          return <CarouselBlock key={g} srcs={srcs} positions={positions} scales={scales} />;
+        });
+    }
+
+    // Modelo antiguo: imageLayout[] (fallback)
     const blocks = E.imageLayout.filter(b => b.afterSection === afterSection);
     if (blocks.length === 0) return null;
-
     return blocks.map((block, i) => {
       const srcs = (block.imageIndexes ?? [])
         .map(idx => E.images[idx])
         .filter((s): s is string => !!s && s.trim() !== '');
-
       if (srcs.length === 0) return null;
-
-      if (block.layout === 'full') {
-        return (
-          <div key={i} className="photo-block">
-            <img src={srcs[0]} alt="" className="photo-block-img" />
-          </div>
-        );
-      }
-      if (block.layout === 'duo') {
-        return <DuoBlock key={i} src1={srcs[0]} src2={srcs[1] ?? srcs[0]} />;
-      }
-      // carousel
+      if (block.layout === 'full') return <div key={i} className="photo-block"><img src={srcs[0]} alt="" className="photo-block-img" /></div>;
+      if (block.layout === 'duo')  return <DuoBlock key={i} src1={srcs[0]} src2={srcs[1] ?? srcs[0]} />;
       return <CarouselBlock key={i} srcs={srcs} />;
     });
   }
@@ -481,7 +496,10 @@ export default function PlusTemplate({
     submitRsvp('confirmed');
   };
 
-  const heroImage = E.images[0] || null;
+  // Nuevo modelo: photos[]. Fallback al modelo antiguo (images[0]).
+  const heroEntry = E.photos.find(p => p.role === 'hero');
+  const heroImage: string | null = heroEntry?.url ?? E.images[0] ?? null;
+  const heroBgPosition = heroEntry?.objectPosition ?? 'center center';
 
   return (
     <div 
@@ -511,7 +529,7 @@ export default function PlusTemplate({
 
       {/* ── HERO ── */}
       <section className="hero">
-        <div className="hero-bg" style={heroImage ? { backgroundImage: `url(${heroImage})` } : undefined} />
+        <div className="hero-bg" style={heroImage ? { backgroundImage: `url(${heroImage})`, backgroundPosition: heroBgPosition } : undefined} />
         <div className="hero-overlay" />
         <div className="hero-content">
           <p className="label gold hero-label">{E.heroLabel}</p>
@@ -612,26 +630,24 @@ export default function PlusTemplate({
                 <div className="dlx-irow-node">
                   <div className="dlx-inode" />
                 </div>
-                <div className="dlx-irow-content">
+                <div className="dlx-icard">
                   {item.image && (
                     <div className="dlx-iimg-wrap">
-                      <img src={item.image} alt={item.venue} className="dlx-iimg" />
+                      <img src={item.image} alt={item.venue} className="dlx-iimg" style={{ objectPosition: (item as { imageObjectPosition?: string }).imageObjectPosition ?? 'center center', transform: `scale(${(item as { imageScale?: number }).imageScale ?? 1})`, transformOrigin: (item as { imageObjectPosition?: string }).imageObjectPosition ?? 'center center' }} />
                     </div>
                   )}
-                  <p className="dlx-iname">{item.name}</p>
                   <p className="dlx-ivenue">{item.venue}</p>
+                  <p className="dlx-iname">{item.name}</p>
                   {item.address && (
                     <>
                       <div className="dlx-iaddress">
                         <PinIcon /><span>{item.address}</span>
                       </div>
-                      {mapsUrl && (
-                        <div className="dlx-maps-wrap">
-                          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="dlx-maps-btn">
-                            <MapsIcon /> Ver en Google Maps
-                          </a>
-                        </div>
-                      )}
+                      <div className="dlx-maps-wrap">
+                        <a href={mapsUrl || '#'} target="_blank" rel="noopener noreferrer" className="dlx-maps-btn">
+                          <MapsIcon /> ¿Cómo llegar?
+                        </a>
+                      </div>
                     </>
                   )}
                 </div>
@@ -1540,84 +1556,165 @@ const css = `
   }
   .slide-up.is-visible { opacity: 1; transform: translateY(0); }
 
-  /* ── Itinerary (Deluxe-style) ── */
+  /* ── Itinerary (Modern Editorial) ── */
   .section--itinerary { max-width: 760px; }
 
   .dlx-itinerary {
     position: relative;
     width: 100%;
-    max-width: 600px;
-    padding-left: 2rem;
-    margin-top: 2rem;
+    max-width: 640px;
+    padding-left: 2.5rem;
+    margin-top: 3rem;
   }
   .dlx-axis {
     position: absolute;
     left: 0;
-    top: 0;
+    top: -2rem;
     width: 1px;
     height: 0;
-    background: linear-gradient(to bottom, var(--gold), rgba(184,150,90,0.2));
-    transition: height 2s cubic-bezier(0.16,1,0.3,1);
+    background: linear-gradient(to bottom, var(--gold), rgba(184,150,90,0.1));
+    transition: height 2.5s cubic-bezier(0.16,1,0.3,1);
   }
-  .dlx-axis.axis-grow { height: 100%; }
+  .dlx-axis.axis-grow { height: calc(100% + 2rem); }
+  
   .dlx-irow {
     display: grid;
-    grid-template-columns: 60px 20px 1fr;
-    gap: 0 1rem;
+    grid-template-columns: 75px 40px 1fr;
+    gap: 0;
     align-items: start;
-    margin-bottom: 2.5rem;
+    margin-bottom: 3.5rem;
     position: relative;
   }
-  .dlx-irow-time { text-align: right; padding-top: 0.25rem; }
-  .time-h { font-family: var(--font-cormorant), Georgia, serif; font-size: 1.75rem; font-weight: 300; color: var(--gold); line-height: 1; }
-  .time-m { font-family: var(--font-cormorant), Georgia, serif; font-size: 1rem; font-weight: 300; color: var(--gold); }
-  .dlx-irow-node { display: flex; flex-direction: column; align-items: center; padding-top: 0.5rem; }
-  .dlx-inode {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #EDE5DA;
-    border: 2px solid var(--gold);
-    box-shadow: 0 0 0 3px rgba(184,150,90,0.15);
-    flex-shrink: 0;
+  .dlx-irow-time { 
+    text-align: right; 
+    padding-top: 0.8rem; 
+    padding-right: 0.8rem; 
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1;
   }
-  .dlx-irow-content { padding-bottom: 0.5rem; text-align: center; }
+  
+  /* Media query will handle single line if needed, but for editorial look, 
+     let's try to put them side-by-side now as requested. */
+  .dlx-irow-time {
+    display: block;
+    white-space: nowrap;
+  }
+
+  .time-h { 
+    font-family: var(--font-cormorant), Georgia, serif; 
+    font-size: 2.2rem; 
+    font-weight: 300; 
+    color: var(--gold); 
+    display: inline;
+  }
+  .time-m { 
+    font-family: var(--font-cormorant), Georgia, serif; 
+    font-size: 1.2rem; 
+    font-weight: 300; 
+    color: var(--gold); 
+    opacity: 0.8;
+    display: inline;
+    margin-left: 1px;
+  }
+  
+  .dlx-irow-node { display: flex; flex-direction: column; align-items: center; padding-top: 1.25rem; }
+  .dlx-inode {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--ivory);
+    border: 1px solid var(--gold);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 15%, transparent);
+    flex-shrink: 0;
+    z-index: 2;
+  }
+
+  .dlx-icard {
+    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--gold) 10%, var(--ivory));
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+    text-align: left;
+    box-shadow: 0 8px 30px rgba(28,22,17,0.03);
+  }
+  .dlx-irow:hover .dlx-icard {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(28,22,17,0.06);
+  }
+
   .dlx-iimg-wrap {
     width: 100%;
-    height: 140px;
-    border-radius: 10px;
+    aspect-ratio: 4 / 3;
+    border-radius: 8px;
     overflow: hidden;
-    margin-bottom: 0.75rem;
+    margin-bottom: 1.25rem;
+    background: var(--ivory);
   }
-  .dlx-iimg { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; display: block; }
-  .dlx-iimg-wrap:hover .dlx-iimg { transform: scale(1.05); }
-  .dlx-iname { font-family: var(--font-cormorant), Georgia, serif; font-size: 1.3rem; font-weight: 400; color: var(--charcoal); margin: 0 0 0.2rem; }
-  .dlx-ivenue { font-family: var(--font-jost), system-ui, sans-serif; font-size: 12px; font-weight: 500; color: var(--muted-fg); margin: 0 0 0.35rem; letter-spacing: 0.05em; }
+  .dlx-iimg { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s ease; display: block; }
+  .dlx-irow:hover .dlx-iimg { transform: scale(1.04); }
+
+  .dlx-iname { 
+    font-family: var(--font-cormorant), Georgia, serif; 
+    font-size: 1.6rem; 
+    font-style: italic;
+    font-weight: 400; 
+    color: var(--charcoal); 
+    margin: 0 0 0.5rem; 
+    line-height: 1.2;
+  }
+  .dlx-ivenue { 
+    font-family: var(--font-jost), system-ui, sans-serif; 
+    font-size: 11px; 
+    font-weight: 600; 
+    color: var(--gold); 
+    margin: 0 0 0.75rem; 
+    letter-spacing: 0.12em; 
+    text-transform: uppercase;
+  }
   .dlx-iaddress {
     display: flex;
     align-items: flex-start;
-    justify-content: center;
-    gap: 0.3rem;
-    margin-bottom: 0.75rem;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
   }
-  .dlx-iaddress span { font-family: var(--font-jost), system-ui, sans-serif; font-size: 12px; color: var(--muted-fg); line-height: 1.5; }
-  .dlx-maps-wrap { display: flex; justify-content: center; margin-top: 0.25rem; }
+  .dlx-iaddress span { 
+    font-family: var(--font-jost), system-ui, sans-serif; 
+    font-size: 12px; 
+    color: var(--muted-fg); 
+    line-height: 1.6; 
+  }
+  .dlx-maps-wrap { display: flex; justify-content: flex-start; }
   .dlx-maps-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0.45rem 1rem;
+    gap: 0.5rem;
+    padding: 0.6rem 1.25rem;
     border-radius: 100px;
-    border: 1px solid rgba(184,150,90,0.5);
-    color: var(--gold);
+    background: var(--charcoal);
+    color: var(--ivory) !important;
     font-family: var(--font-jost), system-ui, sans-serif;
-    font-size: 10px;
-    letter-spacing: 0.1em;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
     text-decoration: none;
-    transition: background 0.2s, border-color 0.2s;
+    transition: all 0.3s ease;
   }
-  .dlx-maps-btn:hover { background: rgba(184,150,90,0.15); border-color: var(--gold); }
+  .dlx-maps-btn:hover { 
+    background: var(--gold); 
+    transform: translateX(4px);
+  }
+
+  @media (max-width: 480px) {
+    .dlx-itinerary { padding-left: 1.5rem; }
+    .dlx-irow { grid-template-columns: 60px 30px 1fr; }
+    .time-h { font-size: 1.8rem; }
+    .dlx-icard { padding: 1rem; }
+    .dlx-iname { font-size: 1.35rem; }
+  }
 
   /* ── Destination ── */
   .destination-grid {
