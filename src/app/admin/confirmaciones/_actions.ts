@@ -15,6 +15,22 @@ export interface RsvpRow {
   guests: { name: string | null; token: string } | null;
 }
 
+export interface GuestWithRsvp {
+  id: string;
+  name: string;
+  token: string;
+  max_companions: number;
+  companion_names: string[];
+  rsvp: {
+    id: string;
+    status: 'confirmed' | 'declined' | 'pending';
+    seats: number;
+    companion_names: string[];
+    dietary: string | null;
+    created_at: string;
+  } | null;
+}
+
 export interface RsvpStats {
   confirmed: number;
   declined: number;
@@ -24,11 +40,12 @@ export interface RsvpStats {
 
 export async function getRsvpsForOwnEvent(): Promise<{
   rsvps: RsvpRow[];
+  guestsWithRsvp: GuestWithRsvp[];
   event: { id: string; slug: string; event_type: string; plan: string } | null;
   stats: RsvpStats;
   maxCapacity: number | null;
 }> {
-  const empty = { rsvps: [], event: null, stats: { confirmed: 0, declined: 0, pending: 0, totalSeats: 0 }, maxCapacity: null };
+  const empty = { rsvps: [], guestsWithRsvp: [], event: null, stats: { confirmed: 0, declined: 0, pending: 0, totalSeats: 0 }, maxCapacity: null };
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -71,7 +88,29 @@ export async function getRsvpsForOwnEvent(): Promise<{
     { confirmed: 0, declined: 0, pending: 0, totalSeats: 0 },
   );
 
-  return { rsvps, event, stats, maxCapacity };
+  // Para Deluxe: traer todos los invitados con su RSVP (incluso los que no han respondido)
+  let guestsWithRsvp: GuestWithRsvp[] = [];
+  if (event.plan === 'deluxe') {
+    const { data: guests } = await supabase
+      .from('guests')
+      .select('id, name, token, max_companions, companion_names, rsvps(id, status, seats, companion_names, dietary, created_at)')
+      .eq('event_id', event.id)
+      .order('name', { ascending: true });
+
+    guestsWithRsvp = (guests ?? []).map((g) => {
+      const rsvpArr = (g as unknown as { rsvps: GuestWithRsvp['rsvp'][] }).rsvps;
+      return {
+        id: g.id,
+        name: g.name,
+        token: g.token,
+        max_companions: g.max_companions,
+        companion_names: (g.companion_names as string[]) ?? [],
+        rsvp: (rsvpArr && rsvpArr.length > 0 ? rsvpArr[0] : null) as GuestWithRsvp['rsvp'],
+      };
+    });
+  }
+
+  return { rsvps, guestsWithRsvp, event, stats, maxCapacity };
 }
 
 export async function saveMaxCapacity(capacity: number | null): Promise<{ error?: string }> {
@@ -101,6 +140,36 @@ export async function saveMaxCapacity(capacity: number | null): Promise<{ error?
     .from('events')
     .update({ config: newConfig })
     .eq('id', event.id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath('/admin/confirmaciones');
+  return {};
+}
+
+export async function updateGuestCompanions(
+  guestId: string,
+  maxCompanions: number,
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'No autorizado.' };
+
+  // Verificar que el invitado pertenece a un evento del usuario
+  const { data: guest } = await supabase
+    .from('guests')
+    .select('id, event_id, events(owner_id)')
+    .eq('id', guestId)
+    .single();
+
+  if (!guest) return { error: 'Invitado no encontrado.' };
+  const eventOwner = (guest as unknown as { events: { owner_id: string } }).events?.owner_id;
+  if (eventOwner !== user.id) return { error: 'No autorizado.' };
+
+  const { error } = await supabase
+    .from('guests')
+    .update({ max_companions: maxCompanions })
+    .eq('id', guestId);
 
   if (error) return { error: error.message };
 

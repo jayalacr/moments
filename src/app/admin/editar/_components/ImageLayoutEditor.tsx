@@ -7,9 +7,6 @@ import { LAYOUT_LIMITS } from '@/lib/imageLayout';
 import { PhotoPositionerModal } from './PhotoPositionerModal';
 import type { PositionerColors } from './PhotoPositionerModal';
 
-// ---------------------------------------------------------------------------
-// Secciones de la invitación — orden de aparición
-// ---------------------------------------------------------------------------
 const SECTION_SLOTS = [
   { id: 'hero',        label: 'Después de la portada' },
   { id: 'quote',       label: 'Cita' },
@@ -49,10 +46,20 @@ function IconCarousel() {
     </svg>
   );
 }
+function IconTrio() {
+  return (
+    <svg width="48" height="32" viewBox="0 0 48 32" fill="none" aria-hidden>
+      <rect x="2"  y="6" width="13" height="20" rx="2" fill="currentColor" opacity=".9"/>
+      <rect x="17.5" y="6" width="13" height="20" rx="2" fill="currentColor" opacity=".9"/>
+      <rect x="33" y="6" width="13" height="20" rx="2" fill="currentColor" opacity=".9"/>
+    </svg>
+  );
+}
 
 const LAYOUT_OPTIONS: { id: ImageLayout; label: string; hint: string; Icon: () => React.JSX.Element }[] = [
   { id: 'full',     label: 'Ancho completo', hint: '1 imagen',   Icon: IconFull     },
   { id: 'duo',      label: 'Dos imágenes',   hint: '2 imágenes', Icon: IconDuo      },
+  { id: 'trio',     label: 'Trío retratos',  hint: '3 imágenes', Icon: IconTrio     },
   { id: 'carousel', label: 'Carrusel',       hint: '2 o más',    Icon: IconCarousel },
 ];
 
@@ -105,6 +112,7 @@ function photosAvailableForForm(
     return false;
   });
 }
+
 
 // ---------------------------------------------------------------------------
 // Componente principal
@@ -197,6 +205,7 @@ export default function ImageLayoutEditor({ photos, onChange, activeSections, C 
     setEditingBlock(null);
     setFormSelected([]);
   }
+
 
   function openAdd(section: string) {
     setAddingAtSlot(section);
@@ -400,11 +409,14 @@ export default function ImageLayoutEditor({ photos, onChange, activeSections, C 
           ratioMobile  = '9/19'; 
           ratioDesktop = '16/9';
         } else if (photo?.layout === 'full') {
-          ratioMobile  = '1/1';   // 390/380
-          ratioDesktop = '5/3';   // 1000/600
+          ratioMobile  = '4/3';   
+          ratioDesktop = '21/9';
         } else if (photo?.layout === 'duo') {
-          ratioMobile  = '4/3';   // 390/300 (stacked)
-          ratioDesktop = '1/1';   // 50% width, ~520px height
+          ratioMobile  = '4/3';   
+          ratioDesktop = '1/1';   
+        } else if (photo?.layout === 'trio') {
+          ratioMobile  = '4/3';   
+          ratioDesktop = '4/5';   
         } else if (photo?.layout === 'carousel') {
           ratioMobile  = '2/3';   
           ratioDesktop = '16/9';
@@ -415,7 +427,7 @@ export default function ImageLayoutEditor({ photos, onChange, activeSections, C 
             url={repositioningUrl}
             objectPosition={photo?.objectPosition}
             scale={photo?.scale}
-            label="Ajustar foto"
+            label="Ajustar imagen"
             aspectRatio={ratioMobile}
             aspectRatioDesktop={ratioDesktop}
             onConfirm={(pos, s) => updatePosition(repositioningUrl, pos, s)}

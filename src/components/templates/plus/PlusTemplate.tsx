@@ -55,6 +55,8 @@ export interface PlusConfig {
     clabe?: string;
     giftListUrl?: string;
     giftListLabel?: string;
+    giftTypes?: string[];
+    envelopeMessage?: string;
   };
   noChildren?: boolean;
   noChildrenMessage?: string;
@@ -70,6 +72,7 @@ export interface PlusConfig {
     notes?: boolean;
     gifts?: boolean;
     destination?: boolean;
+    itinerary?: boolean;
   };
   theme?: {
     accentColor?: string;
@@ -224,12 +227,39 @@ const EVENT = {
 // ---------------------------------------------------------------------------
 function DuoBlock({ src1, src2, pos1, pos2, scale1, scale2 }: { src1: string; src2: string; pos1?: string; pos2?: string; scale1?: number; scale2?: number }) {
   return (
-    <div className="duo-block">
-      <div className="duo-block-item">
+    <div className="duo-block reveal">
+      <div className="duo-block-item slide-left">
         <img src={src1} alt="" className="duo-block-img" style={{ objectPosition: pos1 ?? 'center center', transform: `scale(${scale1 ?? 1})`, transformOrigin: pos1 ?? 'center center' }} />
       </div>
-      <div className="duo-block-item">
+      <div className="duo-block-item slide-right">
         <img src={src2} alt="" className="duo-block-img" style={{ objectPosition: pos2 ?? 'center center', transform: `scale(${scale2 ?? 1})`, transformOrigin: pos2 ?? 'center center' }} />
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TrioBlock — tres imágenes (3 columnas en desktop, grid en mobile)
+// ---------------------------------------------------------------------------
+function TrioBlock({
+  src1, src2, src3,
+  pos1, pos2, pos3,
+  scale1, scale2, scale3
+}: {
+  src1: string; src2: string; src3: string;
+  pos1?: string; pos2?: string; pos3?: string;
+  scale1?: number; scale2?: number; scale3?: number;
+}) {
+  return (
+    <div className="trio-block reveal">
+      <div className="trio-block-item slide-up">
+        <img src={src1} alt="" className="trio-block-img" style={{ objectPosition: pos1 ?? 'center center', transform: `scale(${scale1 ?? 1})`, transformOrigin: pos1 ?? 'center center' }} />
+      </div>
+      <div className="trio-block-item slide-up delay-1">
+        <img src={src2} alt="" className="trio-block-img" style={{ objectPosition: pos2 ?? 'center center', transform: `scale(${scale2 ?? 1})`, transformOrigin: pos2 ?? 'center center' }} />
+      </div>
+      <div className="trio-block-item slide-up delay-2">
+        <img src={src3} alt="" className="trio-block-img" style={{ objectPosition: pos3 ?? 'center center', transform: `scale(${scale3 ?? 1})`, transformOrigin: pos3 ?? 'center center' }} />
       </div>
     </div>
   );
@@ -441,8 +471,9 @@ export default function PlusTemplate({
           const positions = sorted.map(p => p.objectPosition ?? 'center center');
           const scales    = sorted.map(p => p.scale ?? 1);
           if (!srcs.length) return null;
-          if (ps[0].layout === 'full') return <div key={g} className="photo-block"><img src={srcs[0]} alt="" className="photo-block-img" style={{ objectPosition: positions[0], transform: `scale(${scales[0]})`, transformOrigin: positions[0] }} /></div>;
+          if (ps[0].layout === 'full') return <div key={g} className="photo-block reveal"><img src={srcs[0]} alt="" className="photo-block-img" style={{ objectPosition: positions[0], transform: `scale(${scales[0]})`, transformOrigin: positions[0] }} /></div>;
           if (ps[0].layout === 'duo')  return <DuoBlock key={g} src1={srcs[0]} src2={srcs[1] ?? srcs[0]} pos1={positions[0]} pos2={positions[1]} scale1={scales[0]} scale2={scales[1]} />;
+          if (ps[0].layout === 'trio') return <TrioBlock key={g} src1={srcs[0]} src2={srcs[1] ?? srcs[0]} src3={srcs[2] ?? srcs[0]} pos1={positions[0]} pos2={positions[1]} pos3={positions[2]} scale1={scales[0]} scale2={scales[1]} scale3={scales[2]} />;
           return <CarouselBlock key={g} srcs={srcs} positions={positions} scales={scales} />;
         });
     }
@@ -512,7 +543,7 @@ export default function PlusTemplate({
         color: textColor,
       } as React.CSSProperties}
     >
-      <style>{css}</style>
+      <style dangerouslySetInnerHTML={{ __html: css }} />
       {/* CSS Dinámico para asegurar que los tokens se sobreescriban en cascada */}
       <style>{`
         .plus-root {
@@ -571,91 +602,97 @@ export default function PlusTemplate({
       {renderBlocks('hero')}
 
       {/* ── CITA ── */}
-      <section className="section reveal">
-        <div className="quote-mark">"</div>
-        <p className="quote-text">{E.quote.text}</p>
-        <div className="inline-sep">
-          <span className="sep-line short" />
-          <span className="label muted">{E.quote.reference}</span>
-          <span className="sep-line short" />
-        </div>
-      </section>
+      {E.sections.quote === true && (
+        <section className="section reveal">
+          <div className="quote-mark">"</div>
+          <p className="quote-text">{E.quote.text}</p>
+          <div className="inline-sep">
+            <span className="sep-line short" />
+            <span className="label muted">{E.quote.reference}</span>
+            <span className="sep-line short" />
+          </div>
+        </section>
+      )}
 
       {renderBlocks('quote')}
 
       <Ornament />
 
       {/* ── NOMBRES Y PADRES ── */}
-      <section className="section">
-        <p className="label muted reveal" style={{ marginBottom: '2.5rem' }}>Con la bendición de nuestras familias</p>
-        <div className="parents-grid">
-          <div className="reveal delay-1 text-center">
-            <p className="display-name">{E.fullNames.person1}</p>
-            <div className="name-sep"><span className="sep-line short" /></div>
-            <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
-              Hija de<br />{E.parents.person1}
-            </p>
+      {E.sections.parents === true && (
+        <section className="section">
+          <p className="label muted reveal" style={{ marginBottom: '2.5rem' }}>Con la bendición de nuestras familias</p>
+          <div className="parents-grid">
+            <div className="reveal delay-1 text-center">
+              <p className="display-name">{E.fullNames.person1}</p>
+              <div className="name-sep"><span className="sep-line short" /></div>
+              <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
+                Hija de<br />{E.parents.person1}
+              </p>
+            </div>
+            <div className="parents-divider" />
+            <div className="reveal delay-2 text-center">
+              <p className="display-name">{E.fullNames.person2}</p>
+              <div className="name-sep"><span className="sep-line short" /></div>
+              <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
+                Hijo de<br />{E.parents.person2}
+              </p>
+            </div>
           </div>
-          <div className="parents-divider" />
-          <div className="reveal delay-2 text-center">
-            <p className="display-name">{E.fullNames.person2}</p>
-            <div className="name-sep"><span className="sep-line short" /></div>
-            <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
-              Hijo de<br />{E.parents.person2}
-            </p>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {renderBlocks('parents')}
 
       <Ornament />
 
       {/* ── ITINERARIO ── */}
-      <section className="section section--itinerary section--tinted-wide">
-        <h2 className="section-heading reveal">Programa del Día</h2>
-        <div className="dlx-itinerary">
-          <div className="dlx-axis" ref={axisRef} />
-          {E.itinerary.map((item, i) => {
-            const [h, m] = item.time.split(':');
-            const manualUrl = (item as { mapsUrl?: string }).mapsUrl?.trim();
-            const mapsUrl = manualUrl
-              || (item.address ? `https://maps.google.com/?q=${encodeURIComponent(item.address)}` : null);
-            return (
-              <div key={i} className={`dlx-irow slide-up delay-${i + 1}`}>
-                <div className="dlx-irow-time">
-                  <span className="time-h">{h}</span>
-                  <span className="time-m">:{m}</span>
-                </div>
-                <div className="dlx-irow-node">
-                  <div className="dlx-inode" />
-                </div>
-                <div className="dlx-icard">
-                  {item.image && (
-                    <div className="dlx-iimg-wrap">
-                      <img src={item.image} alt={item.venue} className="dlx-iimg" style={{ objectPosition: (item as { imageObjectPosition?: string }).imageObjectPosition ?? 'center center', transform: `scale(${(item as { imageScale?: number }).imageScale ?? 1})`, transformOrigin: (item as { imageObjectPosition?: string }).imageObjectPosition ?? 'center center' }} />
-                    </div>
-                  )}
-                  <p className="dlx-ivenue">{item.venue}</p>
-                  <p className="dlx-iname">{item.name}</p>
-                  {item.address && (
-                    <>
-                      <div className="dlx-iaddress">
-                        <PinIcon /><span>{item.address}</span>
+      {E.sections.itinerary === true && (
+        <section className="section section--itinerary section--tinted-wide">
+          <h2 className="section-heading reveal">Programa del Día</h2>
+          <div className="dlx-itinerary">
+            <div className="dlx-axis" ref={axisRef} />
+            {E.itinerary.map((item, i) => {
+              const [h, m] = item.time.split(':');
+              const manualUrl = (item as { mapsUrl?: string }).mapsUrl?.trim();
+              const mapsUrl = manualUrl
+                || (item.address ? `https://maps.google.com/?q=${encodeURIComponent(item.address)}` : null);
+              return (
+                <div key={i} className={`dlx-irow slide-up delay-${i + 1}`}>
+                  <div className="dlx-irow-time">
+                    <span className="time-h">{h}</span>
+                    <span className="time-m">:{m}</span>
+                  </div>
+                  <div className="dlx-irow-node">
+                    <div className="dlx-inode" />
+                  </div>
+                  <div className="dlx-icard">
+                    {item.image && (
+                      <div className="dlx-iimg-wrap">
+                        <img src={item.image} alt={item.venue} className="dlx-iimg" style={{ objectPosition: (item as { imageObjectPosition?: string }).imageObjectPosition ?? 'center center', transform: `scale(${(item as { imageScale?: number }).imageScale ?? 1})`, transformOrigin: (item as { imageObjectPosition?: string }).imageObjectPosition ?? 'center center' }} />
                       </div>
-                      <div className="dlx-maps-wrap">
-                        <a href={mapsUrl || '#'} target="_blank" rel="noopener noreferrer" className="dlx-maps-btn">
-                          <MapsIcon /> ¿Cómo llegar?
-                        </a>
-                      </div>
-                    </>
-                  )}
+                    )}
+                    <p className="dlx-ivenue">{item.venue}</p>
+                    <p className="dlx-iname">{item.name}</p>
+                    {item.address && (
+                      <>
+                        <div className="dlx-iaddress">
+                          <PinIcon /><span>{item.address}</span>
+                        </div>
+                        <div className="dlx-maps-wrap">
+                          <a href={mapsUrl || '#'} target="_blank" rel="noopener noreferrer" className="dlx-maps-btn">
+                            <MapsIcon /> ¿Cómo llegar?
+                          </a>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {renderBlocks('itinerary')}
 
@@ -788,49 +825,66 @@ export default function PlusTemplate({
       {E.sections.gifts === true && <Ornament />}
 
       {/* ── REGALOS ── */}
-      {E.sections.gifts === true && (
-        <section className="section">
-          <div className="reveal" style={{ marginBottom: '1.25rem' }}><EnvelopeIcon /></div>
-          <h2 className="section-heading reveal">Mesa de Regalos</h2>
-          <p className="label muted reveal" style={{ maxWidth: '360px', lineHeight: '1.9', marginBottom: '2.5rem' }}>
-            Tu presencia es el mejor regalo. Si deseas obsequiarnos algo, aquí encontrarás nuestras opciones.
-          </p>
-          <div className="gifts-grid">
-            {(E.gifts.bank || E.gifts.holder || E.gifts.account || E.gifts.clabe) && (
-              <div className="gift-card reveal">
-                <p className="label" style={{ letterSpacing: '0.2em', marginBottom: '1.25rem', color: '#9B8B78' }}>
-                  Transferencia Bancaria
-                </p>
-                {[
-                  { label: 'Banco', value: E.gifts.bank },
-                  { label: 'Nombre', value: E.gifts.holder },
-                  { label: 'No. de cuenta', value: E.gifts.account },
-                  { label: 'CLABE', value: E.gifts.clabe },
-                ].filter(({ value }) => value).map(({ label, value }) => (
-                  <div key={label} className="gift-row">
-                    <span className="gift-label">{label}</span>
-                    <span className="gift-value">{value}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {E.gifts.giftListUrl && (
-              <div className="gift-card gift-card--list reveal delay-1">
-                <GiftIcon />
-                <p className="label" style={{ letterSpacing: '0.2em', margin: '1.25rem 0 0.5rem', color: '#9B8B78' }}>
-                  Mesa de Regalos
-                </p>
-                <p className="gift-value" style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-                  {E.gifts.giftListLabel}
-                </p>
-                <a href={E.gifts.giftListUrl} target="_blank" rel="noopener noreferrer" className="btn-outline btn-outline--sm">
-                  Ver mesa de regalos →
-                </a>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
+      {E.sections.gifts === true && (() => {
+        const gt = (E.gifts as { giftTypes?: string[] }).giftTypes ?? [];
+        const showTransfer = gt.includes('transfer') || (!gt.length && !!(E.gifts.bank || E.gifts.holder || E.gifts.account || E.gifts.clabe));
+        const showList     = gt.includes('list')     || (!gt.length && !!E.gifts.giftListUrl);
+        const showEnvelope = gt.includes('envelope');
+        if (!showTransfer && !showList && !showEnvelope) return null;
+        return (
+          <section className="section">
+            <h2 className="section-heading reveal">Mesa de Regalos</h2>
+            <p className="label muted reveal" style={{ maxWidth: '360px', lineHeight: '1.9', marginBottom: '2rem' }}>
+              Tu presencia es el mejor regalo. Si deseas obsequiarnos algo, aquí encontrarás las opciones disponibles.
+            </p>
+            <div className="gifts-grid">
+              {showTransfer && (E.gifts.bank || E.gifts.holder || E.gifts.account || E.gifts.clabe) && (
+                <div className="gift-card reveal">
+                  <p className="label" style={{ letterSpacing: '0.18em', marginBottom: '1rem', color: '#9B8B78' }}>
+                    Transferencia
+                  </p>
+                  {[
+                    { label: 'Banco',   value: E.gifts.bank },
+                    { label: 'Nombre',  value: E.gifts.holder },
+                    { label: 'Cuenta',  value: E.gifts.account },
+                    { label: 'CLABE',   value: E.gifts.clabe },
+                  ].filter(({ value }) => value).map(({ label, value }) => (
+                    <div key={label} className="gift-row">
+                      <span className="gift-label">{label}</span>
+                      <span className="gift-value">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {showList && E.gifts.giftListUrl && (
+                <div className="gift-card gift-card--list reveal delay-1">
+                  <GiftIcon />
+                  <p className="label" style={{ letterSpacing: '0.18em', margin: '1rem 0 0.4rem', color: '#9B8B78' }}>
+                    Mesa de Regalos
+                  </p>
+                  {E.gifts.giftListLabel && (
+                    <p className="gift-value" style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+                      {E.gifts.giftListLabel}
+                    </p>
+                  )}
+                  <a href={E.gifts.giftListUrl} target="_blank" rel="noopener noreferrer" className="btn-outline btn-outline--sm">
+                    Ver mesa →
+                  </a>
+                </div>
+              )}
+              {showEnvelope && (
+                <div className="gift-card gift-card--envelope reveal delay-2">
+                  <EnvelopeSmallIcon />
+                  <p className="label" style={{ letterSpacing: '0.18em', margin: '1rem 0 0.4rem', color: '#9B8B78' }}>Sobre de Regalo</p>
+                  <p className="gift-envelope-note">
+                    {(E.gifts as { envelopeMessage?: string }).envelopeMessage || 'Con gusto recibimos sobres el día del evento'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      })()}
 
       {renderBlocks('gifts')}
 
@@ -844,7 +898,7 @@ export default function PlusTemplate({
             <div>
               <p className="no-children-title">Evento solo para adultos</p>
               <p className="no-children-desc">
-                {E.noChildrenMessage ?? 'Con todo nuestro cariño, les pedimos que esta celebración sea exclusiva para adultos. Agradecemos su comprensión.'}
+                {E.noChildrenMessage || 'Con todo nuestro cariño, les pedimos que esta celebración sea exclusiva para adultos. Agradecemos su comprensión.'}
               </p>
             </div>
           </div>
@@ -986,7 +1040,7 @@ export default function PlusTemplate({
                 )}
 
                 <button type="submit" className="btn-submit" disabled={!rsvpName.trim() || rsvpLoading}>
-                  {rsvpLoading ? 'Enviando…' : 'Confirmar asistencia'}
+                  {rsvpLoading ? 'Enviando…' : (hasExistingRsvp ? 'Actualizar mi respuesta' : 'Confirmar mi asistencia')}
                 </button>
 
                 <button
@@ -1119,6 +1173,15 @@ function CarIcon() {
 function EnvelopeIcon() {
   return (
     <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+      <rect x="3" y="9" width="38" height="26" rx="2.5" stroke="#B8965A" strokeWidth="1.4" />
+      <path d="M3 13l19 13 19-13" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function EnvelopeSmallIcon() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 44 44" fill="none">
       <rect x="3" y="9" width="38" height="26" rx="2.5" stroke="#B8965A" strokeWidth="1.4" />
       <path d="M3 13l19 13 19-13" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round" />
     </svg>
@@ -1498,42 +1561,73 @@ const css = `
     max-height: 600px;
     background: var(--charcoal);
   }
+  .photo-block {
+    width: 100%;
+    aspect-ratio: 21 / 9;
+    overflow: hidden;
+    background: var(--ivory);
+  }
   .photo-block-img {
     width: 100%;
-    max-height: 600px;
+    height: 100%;
     object-fit: cover;
     display: block;
     transition: transform 0.6s ease;
   }
   .photo-block:hover .photo-block-img { transform: scale(1.02); }
-  @media (max-width: 600px) { .photo-block, .photo-block-img { max-height: 380px; } }
+  @media (max-width: 600px) { .photo-block { aspect-ratio: 4 / 3; } }
 
   /* Duo — dos imágenes lado a lado */
   .duo-block {
     display: flex;
     width: 100%;
+    aspect-ratio: 2 / 1;
     gap: 3px;
-    max-height: 520px;
-    background: var(--charcoal);
+    background: var(--ivory);
     overflow: hidden;
   }
   .duo-block-item {
     flex: 1;
     overflow: hidden;
-    min-width: 0;
   }
   .duo-block-img {
     width: 100%;
     height: 100%;
-    max-height: 520px;
     object-fit: cover;
     display: block;
     transition: transform 0.6s ease;
   }
   .duo-block-item:hover .duo-block-img { transform: scale(1.03); }
   @media (max-width: 600px) {
-    .duo-block { flex-direction: column; max-height: none; gap: 2px; }
-    .duo-block-img { max-height: 300px; }
+    .duo-block { flex-direction: column; aspect-ratio: auto; gap: 2px; }
+    .duo-block-item { aspect-ratio: 4 / 3; }
+  }
+
+  /* Trio — tres imágenes estilo retrato */
+  .trio-block {
+    display: flex;
+    width: 100%;
+    aspect-ratio: 12 / 5; /* 3 x (4/5) ratio approximately */
+    gap: 4px;
+    background: var(--ivory);
+    overflow: hidden;
+  }
+  .trio-block-item {
+    flex: 1;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+  }
+  .trio-block-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.6s ease;
+  }
+  .trio-block-item:hover .trio-block-img { transform: scale(1.04); }
+  @media (max-width: 600px) {
+    .trio-block { flex-direction: column; aspect-ratio: auto; gap: 3px; }
+    .trio-block-item { aspect-ratio: 4 / 3; }
   }
 
   /* ── Slide animations ── */
@@ -1876,21 +1970,43 @@ const css = `
   .swatch-avoid { border-color: #d4a5a5; opacity: 0.7; }
 
   /* ── Gifts ── */
-  .gifts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; width: 100%; max-width: 640px; }
-  @media (max-width: 600px) { .gifts-grid { grid-template-columns: 1fr; } }
+  .gifts-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    width: 100%;
+    max-width: 420px;
+  }
   .gift-card {
     width: 100%;
-    background: #F0E9DF;
+    background: color-mix(in srgb, var(--ivory) 94%, var(--gold));
     border: 1px solid var(--muted);
-    border-radius: 16px;
-    padding: 2rem;
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
     text-align: left;
+    box-sizing: border-box;
   }
-  .gift-card--list { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem 1.5rem; }
-  .gift-row { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px solid var(--muted); }
+  .gift-card--list {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 1.5rem 1rem;
+  }
+  .gift-card--envelope {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 1.5rem 1rem; gap: 0;
+  }
+  .gift-envelope-note {
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 12px;
+    color: var(--muted-fg);
+    line-height: 1.6;
+    max-width: 140px;
+    text-align: center;
+  }
+  .gift-row { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; padding: 0.45rem 0; border-bottom: 1px solid var(--muted); }
   .gift-row:last-child { border-bottom: none; }
-  .gift-label { font-family: var(--font-jost), system-ui, sans-serif; font-size: 13px; color: var(--muted-fg); flex-shrink: 0; }
-  .gift-value { font-family: var(--font-jost), system-ui, sans-serif; font-size: 14px; font-weight: 500; color: var(--charcoal); text-align: right; }
+  .gift-label { font-family: var(--font-jost), system-ui, sans-serif; font-size: 11px; color: var(--muted-fg); flex-shrink: 0; }
+  .gift-value { font-family: var(--font-jost), system-ui, sans-serif; font-size: 12px; font-weight: 500; color: var(--charcoal); text-align: right; }
 
   /* ── Buttons ── */
   .btn-outline {

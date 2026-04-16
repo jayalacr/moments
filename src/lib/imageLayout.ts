@@ -1,4 +1,4 @@
-export type ImageLayout = 'full' | 'duo' | 'carousel';
+export type ImageLayout = 'full' | 'duo' | 'trio' | 'carousel';
 
 /** @deprecated Usar PhotoEntry */
 export interface ImageBlock {
@@ -11,6 +11,7 @@ export interface ImageBlock {
 export const LAYOUT_LIMITS: Record<ImageLayout, { min: number; max: number; label: string }> = {
   full:     { min: 1, max: 1,        label: 'Ancho completo' },
   duo:      { min: 2, max: 2,        label: 'Dos imágenes'   },
+  trio:     { min: 3, max: 3,        label: 'Trío de fotos'  },
   carousel: { min: 2, max: Infinity, label: 'Carrusel'       },
 };
 

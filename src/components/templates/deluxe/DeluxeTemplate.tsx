@@ -2,6 +2,63 @@
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Cormorant_Garamond, Jost } from 'next/font/google';
+import type { PhotoEntry } from '@/lib/imageLayout';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+interface ItineraryItem { time?: string; name?: string; venue?: string; address?: string; image?: string; }
+interface Swatch { color: string; name: string; }
+interface Hotel { name: string; category: string; address: string; note: string; phone: string; }
+
+interface DeluxeConfig {
+  couple?: { person1?: string; person2?: string };
+  fullNames?: { person1?: string; person2?: string };
+  date?: { day?: string; month?: string; year?: string };
+  location?: string;
+  targetDate?: string;
+  quote?: { text?: string; reference?: string };
+  parents?: { person1?: string; person2?: string };
+  photos?: PhotoEntry[];
+  itinerary?: ItineraryItem[];
+  dressCode?: { label?: string; description?: string; women?: string; men?: string; swatches?: Swatch[]; avoid?: Swatch[] };
+  notes?: string[];
+  gifts?: { bank?: string; holder?: string; account?: string; clabe?: string; giftListUrl?: string; giftListLabel?: string; giftTypes?: string[]; envelopeMessage?: string };
+  music?: { url?: string; title?: string; artist?: string };
+  destination?: {
+    hotels?: Hotel[];
+    transport?: { info?: string; schedule?: Array<{ time: string; detail: string }>; contact?: string };
+  };
+  noChildren?: boolean;
+  noChildrenMessage?: string;
+  rsvpDeadline?: string;
+  heroLabel?: string;
+  whatsapp?: { number?: string; message?: string };
+  rsvp?: {
+    maxPlusOnes?: number;
+    deadline?: string;
+    dietaryOptions?: string[];
+  };
+  sections?: {
+    quote?: boolean;
+    parents?: boolean;
+    itinerary?: boolean;
+    dressCode?: boolean;
+    notes?: boolean;
+    gifts?: boolean;
+    destination?: boolean;
+  };
+}
+
+interface Props {
+  config: DeluxeConfig;
+  eventId?: string;
+  guestToken?: string;
+  maxCompanions?: number;
+  companionNames?: string[];
+  guestName?: string;
+  hasExistingRsvp?: boolean;
+}
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
@@ -17,145 +74,92 @@ const jost = Jost({
 });
 
 // ---------------------------------------------------------------------------
-// Mock data
+// Default photos (fallback when no config provided)
 // ---------------------------------------------------------------------------
-const EVENT = {
-  couple: { person1: 'Isabella', person2: 'Alejandro' },
-  initials: { person1: 'I', person2: 'A' },
-  fullNames: { person1: 'Isabella Montoya Reyes', person2: 'Alejandro Vargas León' },
-  date: { day: '22', month: 'Noviembre', year: '2026', iso: '20261122' },
-  time: { start: '17:00', end: '23:59', isoStart: '20261122T170000', isoEnd: '20261123T000000' },
-  location: 'Valle de Guadalupe, Baja California',
-  targetDate: '2026-11-22T17:00:00',
-  quote: {
-    text: 'Dos almas con un solo pensamiento, dos corazones que laten como uno.',
-    reference: '— John Keats',
-  },
-  parents: {
-    person1: 'Eduardo Montoya &\nLuciana Reyes de Montoya',
-    person2: 'Rodrigo Vargas &\nSofia León de Vargas',
-  },
-  // Fotos distribuidas a lo largo de la invitación
-  photos: {
-    hero: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1600&q=85',
-    trio: [
-      'https://images.unsplash.com/photo-1529636798458-92182e662485?w=800&q=80',
-      'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=800&q=80',
-      'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&q=80',
-    ],
-    wide: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1600&q=85',
-    duo: [
-      'https://images.unsplash.com/photo-1469371670807-013ccf25f16a?w=900&q=80',
-      'https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=900&q=80',
-    ],
-    cinematic: 'https://images.unsplash.com/photo-1478146059778-26028b07395a?w=1600&q=85',
-  },
-  itinerary: [
-    {
-      time: '16:30',
-      name: 'Recepción de Invitados',
-      venue: 'Viñedo Monte Xanic',
-      address: 'Km 56 Carretera Ensenada-Tecate, Valle de Guadalupe',
-      image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80',
-    },
-    {
-      time: '17:00',
-      name: 'Ceremonia',
-      venue: 'Jardín La Lomita',
-      address: 'Rancho La Lomita, Valle de Guadalupe, BC',
-      image: 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=600&q=80',
-    },
-    {
-      time: '19:00',
-      name: 'Coctel al Atardecer',
-      venue: 'Terraza Encuentro Guadalupe',
-      address: 'Km 75 Carretera Tecate-Ensenada, Valle de Guadalupe',
-      image: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600&q=80',
-    },
-    {
-      time: '21:00',
-      name: 'Cena & Celebración',
-      venue: 'Salón Bajo las Estrellas',
-      address: 'Hacienda El Mogor, Valle de Guadalupe',
-      image: 'https://images.unsplash.com/photo-1478146059778-26028b07395a?w=600&q=80',
-    },
+const DEFAULT_PHOTOS = {
+  hero: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1600&q=85',
+  trio: [
+    'https://images.unsplash.com/photo-1529636798458-92182e662485?w=800&q=80',
+    'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=800&q=80',
+    'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&q=80',
   ],
-  dressCode: {
-    label: 'Black Tie Optional',
-    description: 'Celebramos entre viñedos. Te pedimos vestimenta elegante adaptada al campo.',
-    women: 'Vestido largo o midi en tonos tierra, vino o verde oliva. Tacón bajo o cuña recomendado por el terreno.',
-    men: 'Traje oscuro o guayabera de lino en tonos oscuros. Moño o corbata opcional. Zapato cerrado.',
-    swatches: [
-      { color: '#2C2416', name: 'Noche' },
-      { color: '#8B6914', name: 'Ámbar' },
-      { color: '#6B4A2A', name: 'Terracota' },
-      { color: '#3D5A4A', name: 'Bosque' },
-      { color: '#C4A882', name: 'Champagne' },
-    ],
-    avoid: [
-      { color: '#FFFFFF', name: 'Blanco' },
-      { color: '#F5F5DC', name: 'Crema' },
-    ],
-  },
-  notes: [
-    'Evento para adultos — no se permiten niños.',
-    'El terreno del viñedo es irregular; se recomienda tacón bajo o cuña.',
-    'Temperatura fresca en la noche — se sugiere traer un chal o saco ligero.',
-    'Estacionamiento gratuito en el predio con servicio de valet parking.',
+  wide: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1600&q=85',
+  duo: [
+    'https://images.unsplash.com/photo-1469371670807-013ccf25f16a?w=900&q=80',
+    'https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=900&q=80',
   ],
-  gifts: {
-    bank: 'BBVA México',
-    holder: 'Isabella Montoya Reyes',
-    account: '4152 3312 0098 7654',
-    clabe: '012 210 04152331200 9',
-    giftListUrl: 'https://mesaderegalos.liverpool.com.mx/misregalos/99887',
-    giftListLabel: 'Liverpool',
-  },
-  music: {
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-    title: 'Perfect',
-    artist: 'Ed Sheeran',
-  },
-  destination: {
-    hotels: [
-      {
-        name: 'Viñedo Monte Xanic',
-        category: 'Recomendado · Boutique',
-        address: 'Km 56 Carretera Ensenada-Tecate, Valle de Guadalupe',
-        note: 'Tarifa especial con código ISAALEX26',
-        phone: '+52 646 155 2080',
-      },
-      {
-        name: 'Adobe Guadalupe',
-        category: 'Hacienda · 5 estrellas',
-        address: 'Parcela A-1, Ejido Francisco Zarco, Valle de Guadalupe',
-        note: 'Disponibilidad limitada — reservar anticipado',
-        phone: '+52 646 155 2094',
-      },
-      {
-        name: 'Finca La Carrodilla',
-        category: 'Viñedo · Bed & Breakfast',
-        address: 'Ejido El Porvenir, Valle de Guadalupe',
-        note: 'Check-in desde las 3pm',
-        phone: '+52 646 688 3019',
-      },
-    ],
-    transport: {
-      info: 'Contratamos transfer desde el aeropuerto de Ensenada y Tijuana hasta los viñedos del Valle de Guadalupe los días 21 y 22 de noviembre.',
-      schedule: [
-        { time: '10:00 – 15:00', detail: 'Transfers desde aeropuerto Ensenada' },
-        { time: '15:30', detail: 'Último transfer antes de la recepción' },
-      ],
-      contact: 'coordinacion@isabellayalejandro.com',
-    },
-  },
-  noChildren: true,
-  rsvp: {
-    deadline: '1 de octubre de 2026',
-    // Token mock — en producción viene de ?id=TOKEN en la URL
-    mockGuest: { name: 'María González', maxGuests: 2 },
-  },
+  cinematic: 'https://images.unsplash.com/photo-1478146059778-26028b07395a?w=1600&q=85',
 };
+
+// ---------------------------------------------------------------------------
+// DeluxeCarouselBlock — carrusel interactivo con navegación
+// ---------------------------------------------------------------------------
+function DeluxeCarouselBlock({ srcs, positions, scales }: { srcs: string[]; positions?: string[]; scales?: number[] }) {
+  const [idx, setIdx] = useState(0);
+  const total = srcs.length;
+  const touchStartX = useRef<number | null>(null);
+
+  const prev = () => setIdx(i => (i - 1 + total) % total);
+  const next = () => setIdx(i => (i + 1) % total);
+
+  const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) { if (diff > 0) next(); else prev(); }
+    touchStartX.current = null;
+  };
+
+  if (total === 0) return null;
+
+  return (
+    <div className="dlx-carousel reveal" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+      <div className="dlx-carousel-track" style={{ transform: `translateX(-${idx * 100}%)` }}>
+        {srcs.map((src, i) => (
+          <div key={i} className="dlx-carousel-slide">
+            <img
+              src={src}
+              alt={`Foto ${i + 1}`}
+              className="dlx-carousel-img"
+              style={{
+                objectPosition: positions?.[i] ?? 'center center',
+                transform: `scale(${scales?.[i] ?? 1})`,
+                transformOrigin: positions?.[i] ?? 'center center',
+              }}
+            />
+          </div>
+        ))}
+      </div>
+      {total > 1 && (
+        <>
+          <button className="dlx-carousel-btn dlx-carousel-btn--prev" onClick={prev} aria-label="Anterior">
+            <svg width="10" height="17" viewBox="0 0 10 17" fill="none">
+              <path d="M9 1L1 8.5L9 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button className="dlx-carousel-btn dlx-carousel-btn--next" onClick={next} aria-label="Siguiente">
+            <svg width="10" height="17" viewBox="0 0 10 17" fill="none">
+              <path d="M1 1L9 8.5L1 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <div className="dlx-carousel-dots">
+            {srcs.map((_, i) => (
+              <button
+                key={i}
+                className={`dlx-carousel-dot${i === idx ? ' dlx-carousel-dot--active' : ''}`}
+                onClick={() => setIdx(i)}
+                aria-label={`Foto ${i + 1}`}
+              />
+            ))}
+          </div>
+          <div className="dlx-carousel-counter">
+            <span className="label gold">{idx + 1} / {total}</span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Hooks
@@ -183,18 +187,167 @@ function useCountdown(targetDate: string) {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export default function DeluxeTemplate() {
-  const countdown = useCountdown(EVENT.targetDate);
+export default function DeluxeTemplate({
+  config,
+  eventId,
+  guestToken,
+  maxCompanions = 0,
+  companionNames: initialCompanionNames = [],
+  guestName,
+  hasExistingRsvp = false,
+}: Props) {
+  // ── Build data from config with defaults ────────────────────────────────
+  const cfg = (config ?? {}) as DeluxeConfig;
+
+  const couple = {
+    person1: cfg.couple?.person1 || 'Persona 1',
+    person2: cfg.couple?.person2 || 'Persona 2',
+  };
+  const initials = {
+    person1: couple.person1.charAt(0),
+    person2: couple.person2.charAt(0),
+  };
+  const fullNames = {
+    person1: cfg.fullNames?.person1 || couple.person1,
+    person2: cfg.fullNames?.person2 || couple.person2,
+  };
+  const date = {
+    day:   cfg.date?.day   || '',
+    month: cfg.date?.month || '',
+    year:  cfg.date?.year  || '',
+  };
+  const location = cfg.location || '';
+  const targetDate = cfg.targetDate || '';
+  const heroLabel = cfg.heroLabel || 'Matrimonio';
+  const noChildrenMessage = cfg.noChildrenMessage || 'Con todo nuestro cariño, les pedimos que esta celebración sea exclusiva para adultos. Agradecemos su comprensión.';
+  const quote = {
+    text:      cfg.quote?.text      || '',
+    reference: cfg.quote?.reference || '',
+  };
+  const parents = {
+    person1: cfg.parents?.person1 || '',
+    person2: cfg.parents?.person2 || '',
+  };
+  // Hero photo
+  const allPhotos = cfg.photos ?? [];
+  const heroEntry = allPhotos.find(p => p.role === 'hero');
+  const heroUrl   = heroEntry?.url || DEFAULT_PHOTOS.hero;
+
+  /** Renderiza los bloques de imagen para una posición de sección */
+  function renderBlocks(afterSection: string) {
+    const sp = allPhotos.filter(p => p.role === 'block' && p.afterSection === afterSection);
+    if (sp.length === 0) return null;
+    const map = new Map<number, typeof sp>();
+    for (const p of sp) {
+      const g = p.blockGroup ?? 0;
+      map.set(g, [...(map.get(g) ?? []), p]);
+    }
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([g, ps]) => {
+        const sorted    = ps.sort((a, b) => (a.orderInBlock ?? 0) - (b.orderInBlock ?? 0));
+        const srcs      = sorted.map(p => p.url).filter(Boolean);
+        const positions = sorted.map(p => p.objectPosition ?? 'center center');
+        const scales    = sorted.map(p => p.scale ?? 1);
+        if (!srcs.length) return null;
+
+        if (ps[0].layout === 'full') {
+          return (
+            <div key={g} className="photo-block reveal">
+              <img src={srcs[0]} alt="" className="photo-block-img"
+                style={{ objectPosition: positions[0], transform: `scale(${scales[0]})`, transformOrigin: positions[0] }} />
+            </div>
+          );
+        }
+        if (ps[0].layout === 'duo') {
+          return (
+            <div key={g} className="duo-block reveal">
+              <div className="duo-block-item slide-left">
+                <img src={srcs[0]} alt="" className="duo-block-img"
+                  style={{ objectPosition: positions[0], transform: `scale(${scales[0]})`, transformOrigin: positions[0] }} />
+              </div>
+              <div className="duo-block-item slide-right">
+                <img src={srcs[1] ?? srcs[0]} alt="" className="duo-block-img"
+                  style={{ objectPosition: positions[1] ?? positions[0], transform: `scale(${scales[1] ?? scales[1]})`, transformOrigin: positions[1] ?? positions[0] }} />
+              </div>
+            </div>
+          );
+        }
+        if (ps[0].layout === 'trio') {
+          return (
+            <div key={g} className="trio-block reveal">
+              <div className="trio-block-item slide-up">
+                <img src={srcs[0]} alt="" className="trio-block-img"
+                  style={{ objectPosition: positions[0], transform: `scale(${scales[0]})`, transformOrigin: positions[0] }} />
+              </div>
+              <div className="trio-block-item slide-up delay-1">
+                <img src={srcs[1] ?? srcs[0]} alt="" className="trio-block-img"
+                  style={{ objectPosition: positions[1] ?? positions[0], transform: `scale(${scales[1] ?? scales[0]})`, transformOrigin: positions[1] ?? positions[0] }} />
+              </div>
+              <div className="trio-block-item slide-up delay-2">
+                <img src={srcs[2] ?? srcs[0]} alt="" className="trio-block-img"
+                  style={{ objectPosition: positions[2] ?? positions[0], transform: `scale(${scales[2] ?? scales[0]})`, transformOrigin: positions[2] ?? positions[0] }} />
+              </div>
+            </div>
+          );
+        }
+        // carousel
+        return <DeluxeCarouselBlock key={g} srcs={srcs} positions={positions} scales={scales} />;
+      });
+  }
+  const itinerary = cfg.itinerary ?? [];
+  const dressCode = {
+    label:       cfg.dressCode?.label       || '',
+    description: cfg.dressCode?.description || '',
+    women:       cfg.dressCode?.women       || '',
+    men:         cfg.dressCode?.men         || '',
+    swatches:    cfg.dressCode?.swatches    ?? [],
+    avoid:       cfg.dressCode?.avoid       ?? [],
+  };
+  const notes       = cfg.notes  ?? [];
+  const gifts       = cfg.gifts  ?? {};
+  const music       = { url: cfg.music?.url || '', title: cfg.music?.title || '', artist: cfg.music?.artist || '' };
+  const destination = cfg.destination ?? {};
+  const noChildren  = cfg.noChildren ?? false;
+  const rsvpDeadline = cfg.rsvpDeadline || '';
+  const showDestination = cfg.sections?.destination !== false && (
+    (destination.hotels && destination.hotels.length > 0) ||
+    destination.transport?.info
+  );
+
+  // Google Calendar URL
+  const firstItineraryTime = itinerary[0]?.time ?? '17:00';
+  const [startH, startM] = firstItineraryTime.split(':');
+  const dateStr = `${date.year}${String(date.month).padStart(2, '0')}${String(date.day).padStart(2, '0')}`;
+  const isoStart = targetDate
+    ? targetDate.replace(/[-:]/g, '').replace('T', 'T').slice(0, 15)
+    : `${dateStr}T${startH}${startM}00`;
+  const isoEnd = targetDate
+    ? (() => { const d = new Date(targetDate); d.setHours(d.getHours() + 6); return d.toISOString().replace(/[-:]/g, '').slice(0, 15); })()
+    : `${dateStr}T230000`;
+  const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Boda de ${couple.person1} & ${couple.person2}`)}&dates=${isoStart}/${isoEnd}&details=${encodeURIComponent(`Celebración de matrimonio. Dress code: ${dressCode.label}`)}&location=${encodeURIComponent(location)}`;
+
+  // ── State ────────────────────────────────────────────────────────────────
+  const countdown = useCountdown(targetDate);
   const [loading, setLoading] = useState(true);
   const [loaderOut, setLoaderOut] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [rsvpDone, setRsvpDone] = useState(false);
   const [guestConfirmed, setGuestConfirmed] = useState<null | boolean>(null);
-  const [companionNames, setCompanionNames] = useState<string[]>([]);
+  const [attendeeNames, setAttendeeNames] = useState<string[]>([]);
+  const [dietary, setDietary] = useState(cfg.rsvp?.dietaryOptions?.[0] ?? '');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [playing, setPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const axisRef = useRef<HTMLDivElement>(null);
   const itineraryRef = useRef<HTMLDivElement>(null);
+  const [musicMinimized, setMusicMinimized] = useState(false);
+  const [activeSection, setActiveSection] = useState('hero');
+
+  const hasToken = !!guestToken;
+  const displayName = guestName || couple.person1;
+  const totalSeats = 1 + maxCompanions;
 
   // Loader
   useEffect(() => {
@@ -202,6 +355,28 @@ export default function DeluxeTemplate() {
     const t2 = setTimeout(() => setLoading(false), 2800);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
+
+  // Music Auto-minimize
+  useEffect(() => {
+    if (loading) return;
+    const timer = setTimeout(() => setMusicMinimized(true), 4000);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  // Active Section Tracker (for minimal nav)
+  useEffect(() => {
+    if (loading) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) setActiveSection(e.target.id || 'hero');
+        });
+      },
+      { threshold: 0.5 }
+    );
+    document.querySelectorAll('section[id]').forEach((s) => observer.observe(s));
+    return () => observer.disconnect();
+  }, [loading]);
 
   // Scroll reveal
   useEffect(() => {
@@ -220,44 +395,65 @@ export default function DeluxeTemplate() {
     const el = axisRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) el.classList.add('axis-grow');
-      },
+      ([entry]) => { if (entry.isIntersecting) el.classList.add('axis-grow'); },
       { threshold: 0.05 }
     );
     observer.observe(el);
     return () => observer.disconnect();
   }, [loading]);
 
-  // Guest data from URL token (demo: uses mock)
-  const guest = EVENT.rsvp.mockGuest;
-
   // Music toggle
   const toggleMusic = useCallback(() => {
     const audio = audioRef.current;
-    if (audio && EVENT.music.url) {
+    if (audio && music.url) {
       if (playing) { audio.pause(); }
       else { audio.play().catch(() => {}); }
     }
     setPlaying((p) => !p);
-  }, [playing]);
+  }, [playing, music.url]);
 
-  // Google Calendar URL
-  const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Boda de ${EVENT.couple.person1} & ${EVENT.couple.person2}`)}&dates=${EVENT.time.isoStart}/${EVENT.time.isoEnd}&details=${encodeURIComponent(`Celebración de matrimonio. Dress code: ${EVENT.dressCode.label}`)}&location=${encodeURIComponent(EVENT.location)}`;
+  // RSVP submit
+  async function handleSubmitRsvp() {
+    if (!hasToken || !eventId) return;
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const res = await fetch('/api/rsvp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: guestToken,
+          eventId,
+          name: displayName,
+          seats: guestConfirmed ? 1 + attendeeNames.filter(Boolean).length : 0,
+          companionNames: guestConfirmed ? attendeeNames.filter(Boolean) : [],
+          dietary: guestConfirmed ? dietary : undefined,
+          status: guestConfirmed ? 'confirmed' : 'declined',
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setSubmitError(json.error || 'Error al guardar'); return; }
+      setRsvpDone(true);
+    } catch {
+      setSubmitError('Error de conexión. Intenta de nuevo.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   if (loading) {
     return (
       <div className={`${cormorant.variable} ${jost.variable}`}>
-        <style>{css}</style>
+        <style dangerouslySetInnerHTML={{ __html: css }} />
         <div className={`loader ${loaderOut ? 'loader--out' : ''}`}>
           <div className="loader-monogram">
-            <span className="loader-initial">{EVENT.initials.person1}</span>
+            <span className="loader-initial">{initials.person1}</span>
             <span className="loader-amp">&</span>
-            <span className="loader-initial">{EVENT.initials.person2}</span>
+            <span className="loader-initial">{initials.person2}</span>
           </div>
           <div className="loader-line" />
           <p className="loader-date label">
-            {EVENT.date.day} · {EVENT.date.month} · {EVENT.date.year}
+            {date.day} · {date.month} · {date.year}
           </p>
         </div>
       </div>
@@ -266,35 +462,55 @@ export default function DeluxeTemplate() {
 
   return (
     <div className={`${cormorant.variable} ${jost.variable} dlx-root`}>
-      <style>{css}</style>
+      <style dangerouslySetInnerHTML={{ __html: css }} />
 
       {/* Audio */}
-      <audio ref={audioRef} src={EVENT.music.url || undefined} loop preload="none" />
+      {music.url && <audio ref={audioRef} src={music.url} loop preload="none" />}
 
       {/* ── MUSIC PLAYER ── */}
-      <button className={`music-pill ${playing ? 'music-pill--playing' : ''}`} onClick={toggleMusic} aria-label="Música">
-        {playing ? <PauseIcon /> : <PlayIcon />}
-        <span className="music-pill-text">
-          {playing ? `${EVENT.music.title} · ${EVENT.music.artist}` : 'Música'}
-        </span>
-        {playing && <span className="music-pill-wave"><span/><span/><span/><span/></span>}
-      </button>
+      {music.url && (
+        <button 
+          className={`music-pill ${playing ? 'music-pill--playing' : ''} ${musicMinimized ? 'music-pill--minimized' : ''}`} 
+          onClick={() => {
+            if (musicMinimized) setMusicMinimized(false);
+            else toggleMusic();
+          }}
+          aria-label="Música"
+        >
+          <div className="music-pill-icon">
+            {playing ? <PauseIcon /> : <PlayIcon />}
+          </div>
+          <span className="music-pill-text">
+            {playing ? `${music.title || 'Música'} · ${music.artist || ''}` : 'Música'}
+          </span>
+          {playing && <span className="music-pill-wave"><span/><span/><span/><span/></span>}
+        </button>
+      )}
+
+      {/* ── MINIMAL NAV ── */}
+      <nav className={`dlx-min-nav ${loading ? '' : 'is-active'}`}>
+        <a href="#itinerary" className={activeSection === 'itinerary' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">Programa</span></a>
+        <a href="#destination" className={activeSection === 'destination' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">Mapa</span></a>
+        <a href="#gifts" className={activeSection === 'gifts' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">Regalos</span></a>
+        <a href="#rsvp" className={activeSection === 'rsvp' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">RSVP</span></a>
+      </nav>
 
       {/* ── HERO ── */}
-      <section className="dlx-hero">
-        <div className="dlx-hero-bg" style={{ backgroundImage: `url(${EVENT.photos.hero})` }} />
+      <section className="dlx-hero" id="hero">
+        <div className="dlx-hero-bg" style={{ backgroundImage: `url(${heroUrl})` }} />
+        <div className="dlx-hero-glow" />
         <div className="dlx-hero-overlay" />
         <div className="dlx-hero-content">
-          <p className="label gold hero-label reveal">Matrimonio</p>
+          <p className="label gold hero-label reveal">{heroLabel}</p>
           <h1 className="dlx-hero-names reveal">
-            <span>{EVENT.couple.person1}</span>
+            <span>{couple.person1}</span>
             <span className="dlx-hero-amp">&</span>
-            <span>{EVENT.couple.person2}</span>
+            <span>{couple.person2}</span>
           </h1>
           <div className="dlx-hero-meta reveal">
-            <span className="label gold">{EVENT.date.day} · {EVENT.date.month} · {EVENT.date.year}</span>
+            <span className="label gold">{date.day} · {date.month} · {date.year}</span>
             <span className="dlx-meta-dot" />
-            <span className="label muted">{EVENT.location}</span>
+            <span className="label muted">{location}</span>
           </div>
           {/* Countdown */}
           <div className="dlx-countdown reveal">
@@ -320,207 +536,239 @@ export default function DeluxeTemplate() {
         </div>
       </section>
 
-      {/* ── CITA ── */}
-      <section className="section dlx-dark">
-        <div className="quote-mark reveal">"</div>
-        <p className="quote-text reveal">{EVENT.quote.text}</p>
-        <p className="label muted reveal" style={{ marginTop: '1rem' }}>{EVENT.quote.reference}</p>
-      </section>
+      {renderBlocks('hero')}
 
-      {/* ── FOTOS TRÍO ── */}
-      <div className="photo-trio">
-        {EVENT.photos.trio.map((src, i) => (
-          <div key={i} className={`photo-trio-item reveal delay-${i + 1}`}>
-            <img src={src} alt="" className="photo-trio-img" />
-          </div>
-        ))}
-      </div>
+      {/* ── CITA ── */}
+      {cfg.sections?.quote !== false && quote.text && (
+        <section className="section dlx-dark">
+          <div className="quote-mark reveal">"</div>
+          <p className="quote-text reveal">{quote.text}</p>
+          {quote.reference && <p className="label muted reveal" style={{ marginTop: '1rem', color: 'rgba(255,255,255,0.6)' }}>{quote.reference}</p>}
+        </section>
+      )}
+
+      {renderBlocks('quote')}
 
       {/* ── NOMBRES Y PADRES ── */}
-      <section className="section">
-        <p className="label muted reveal" style={{ marginBottom: '2.5rem' }}>Con la bendición de nuestras familias</p>
-        <div className="parents-grid">
-          <div className="slide-left delay-1 text-center">
-            <p className="display-name">{EVENT.fullNames.person1}</p>
-            <div className="name-sep"><span className="sep-line short" /></div>
-            <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
-              Hija de<br />{EVENT.parents.person1}
-            </p>
+      {cfg.sections?.parents !== false && (
+        <section className="section">
+          <p className="label muted reveal" style={{ marginBottom: '2.5rem' }}>Con la bendición de nuestras familias</p>
+          <div className="parents-grid">
+            <div className="slide-left delay-1 text-center">
+              <p className="display-name">{fullNames.person1}</p>
+              <div className="name-sep"><span className="sep-line short" /></div>
+              {parents.person1 && (
+                <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
+                  {parents.person1}
+                </p>
+              )}
+            </div>
+            <div className="parents-monogram reveal">
+              <span>{initials.person1}</span>
+              <span className="pm-amp">&</span>
+              <span>{initials.person2}</span>
+            </div>
+            <div className="slide-right delay-1 text-center">
+              <p className="display-name">{fullNames.person2}</p>
+              <div className="name-sep"><span className="sep-line short" /></div>
+              {parents.person2 && (
+                <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
+                  {parents.person2}
+                </p>
+              )}
+            </div>
           </div>
-          <div className="parents-monogram reveal">
-            <span>{EVENT.initials.person1}</span>
-            <span className="pm-amp">&</span>
-            <span>{EVENT.initials.person2}</span>
-          </div>
-          <div className="slide-right delay-1 text-center">
-            <p className="display-name">{EVENT.fullNames.person2}</p>
-            <div className="name-sep"><span className="sep-line short" /></div>
-            <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
-              Hijo de<br />{EVENT.parents.person2}
-            </p>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* ── FOTO WIDE ── */}
-      <div className="photo-wide reveal">
-        <img src={EVENT.photos.wide} alt="" className="photo-wide-img" />
-        <div className="photo-wide-overlay" />
-      </div>
+      {renderBlocks('parents')}
 
       {/* ── ITINERARIO ── */}
-      <section className="section section--itinerary" ref={itineraryRef}>
-        <h2 className="section-heading reveal">Programa del Día</h2>
-        <div className="dlx-itinerary">
-          <div className="dlx-axis" ref={axisRef} />
-          {EVENT.itinerary.map((item, i) => {
-            const [h, m] = item.time.split(':');
-            const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(item.address)}`;
-            return (
-              <div key={i} className={`dlx-irow slide-up delay-${i + 1}`}>
-                <div className="dlx-irow-time">
-                  <span className="time-h">{h}</span>
-                  <span className="time-m">:{m}</span>
-                </div>
-                <div className="dlx-irow-node">
-                  <div className="dlx-inode" />
-                </div>
-                <div className="dlx-irow-content">
-                  {item.image && (
-                    <div className="dlx-iimg-wrap">
-                      <img src={item.image} alt={item.venue} className="dlx-iimg" />
+      {cfg.sections?.itinerary !== false && itinerary.length > 0 && (
+        <section className="section section--itinerary" ref={itineraryRef} id="itinerary">
+          <h2 className="section-heading reveal">Programa del Día</h2>
+          <div className="dlx-itinerary">
+            {itinerary.map((item, i) => {
+              const [h, m] = (item.time || '00:00').split(':');
+              const mapsUrl = item.address ? `https://maps.google.com/?q=${encodeURIComponent(item.address)}` : '';
+              const isLast = i === itinerary.length - 1;
+              return (
+                <React.Fragment key={i}>
+                  <div className={`dlx-irow slide-up delay-${i + 1}`}>
+                    {/* Hora centrada */}
+                    <div className="dlx-irow-time">
+                      <span className="time-h">{h}</span>
+                      <span className="time-m">:{m}</span>
                     </div>
-                  )}
-                  <p className="dlx-iname">{item.name}</p>
-                  <p className="dlx-ivenue">{item.venue}</p>
-                  <div className="dlx-iaddress">
-                    <PinIcon /><span>{item.address}</span>
+                    {/* Nodo central */}
+                    <div className="dlx-irow-node">
+                      <div className="dlx-inode" />
+                    </div>
+                    {/* Tarjeta de contenido */}
+                    <div className="dlx-irow-content">
+                      {item.image && (
+                        <div className="dlx-iimg-wrap">
+                          <img src={item.image} alt={item.venue} className="dlx-iimg" />
+                        </div>
+                      )}
+                      <div className="dlx-icard-body">
+                        <p className="dlx-iname">{item.name}</p>
+                        {item.venue && <p className="dlx-ivenue">{item.venue}</p>}
+                        {item.address && (
+                          <div className="dlx-iaddress">
+                            <PinIcon /><span>{item.address}</span>
+                          </div>
+                        )}
+                        {mapsUrl && (
+                          <div className="dlx-maps-wrap">
+                            <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="dlx-maps-btn">
+                              <MapsIcon /> Ver en Google Maps
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="dlx-maps-wrap">
-                    <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="dlx-maps-btn">
-                      <MapsIcon /> Ver en Google Maps
-                    </a>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+                  {/* Conector entre items */}
+                  {!isLast && <div className="dlx-iconnector" />}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
-      <Ornament />
+      {renderBlocks('itinerary')}
+
+      {/* Solo mostramos ornamento si la siguiente sección (Destino) está activa */}
+      {cfg.sections?.destination !== false && showDestination && <Ornament />}
 
       {/* ── DESTINO ── */}
-      <section className="section section--wide">
-        <h2 className="section-heading reveal">Boda Destino</h2>
-        <p className="label muted reveal" style={{ marginBottom: '3rem' }}>
-          Te ayudamos a organizar tu estadía en el Valle de Guadalupe
-        </p>
+      {cfg.sections?.destination !== false && showDestination && (
+        <section className="section section--wide" id="destination">
+          <h2 className="section-heading reveal">Boda Destino</h2>
+          <p className="label muted reveal" style={{ marginBottom: '3rem' }}>
+            Te ayudamos a organizar tu estadía
+          </p>
 
-        <p className="label gold reveal" style={{ marginBottom: '1.5rem' }}>Hospedaje</p>
-        <div className="destination-grid reveal">
-          {EVENT.destination.hotels.map((hotel, i) => (
-            <div key={i} className={`dest-card delay-${i + 1}`}>
-              <div className="dest-card-icon"><HotelIcon /></div>
-              <p className="dest-card-name">{hotel.name}</p>
-              <p className="label muted dest-card-category">{hotel.category}</p>
-              <div className="dest-card-divider" />
-              <div className="dest-card-address">
-                <PinIcon />
-                <span>{hotel.address}</span>
+          {destination.hotels && destination.hotels.length > 0 && (
+            <>
+              <p className="label gold reveal" style={{ marginBottom: '1.5rem' }}>Hospedaje</p>
+              <div className="destination-grid reveal">
+                {destination.hotels.map((hotel, i) => (
+                  <div key={i} className={`dest-card delay-${i + 1}`}>
+                    <div className="dest-card-icon"><HotelIcon /></div>
+                    <p className="dest-card-name">{hotel.name}</p>
+                    <p className="label muted dest-card-category">{hotel.category}</p>
+                    <div className="dest-card-divider" />
+                    <div className="dest-card-address"><PinIcon /><span>{hotel.address}</span></div>
+                    {hotel.note && <p className="dest-card-note">{hotel.note}</p>}
+                    {hotel.phone && <a href={`tel:${hotel.phone}`} className="dest-card-phone">{hotel.phone}</a>}
+                  </div>
+                ))}
               </div>
-              <p className="dest-card-note">{hotel.note}</p>
-              <a href={`tel:${hotel.phone}`} className="dest-card-phone">{hotel.phone}</a>
-            </div>
-          ))}
-        </div>
+            </>
+          )}
 
-        <p className="label gold reveal" style={{ margin: '3.5rem 0 1.5rem' }}>Transporte</p>
-        <div className="transport-card reveal">
-          <div className="transport-header">
-            <CarIcon />
-            <p className="dest-card-name" style={{ margin: 0 }}>Transfer aeropuerto → viñedo</p>
-          </div>
-          <p className="transport-info">{EVENT.destination.transport.info}</p>
-          <div className="transport-schedule">
-            {EVENT.destination.transport.schedule.map((s, i) => (
-              <div key={i} className="transport-row">
-                <span className="transport-time">{s.time}</span>
-                <span className="transport-detail">{s.detail}</span>
+          {destination.transport?.info && (
+            <>
+              <p className="label gold reveal" style={{ margin: '3.5rem 0 1.5rem' }}>Transporte</p>
+              <div className="transport-card reveal">
+                <div className="transport-header">
+                  <CarIcon />
+                  <p className="dest-card-name" style={{ margin: 0 }}>Información de transporte</p>
+                </div>
+                <p className="transport-info">{destination.transport.info}</p>
+                {destination.transport.schedule && destination.transport.schedule.length > 0 && (
+                  <div className="transport-schedule">
+                    {destination.transport.schedule.map((s, i) => (
+                      <div key={i} className="transport-row">
+                        <span className="transport-time">{s.time}</span>
+                        <span className="transport-detail">{s.detail}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {destination.transport.contact && (
+                  <div className="transport-contact">
+                    <EnvelopeIcon />
+                    <a href={`mailto:${destination.transport.contact}`} className="dest-card-phone">
+                      {destination.transport.contact}
+                    </a>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-          <div className="transport-contact">
-            <EnvelopeIcon />
-            <a href={`mailto:${EVENT.destination.transport.contact}`} className="dest-card-phone">
-              {EVENT.destination.transport.contact}
-            </a>
-          </div>
-        </div>
-      </section>
+            </>
+          )}
+        </section>
+      )}
 
-      {/* ── FOTOS DÚO ── */}
-      <div className="photo-duo">
-        {EVENT.photos.duo.map((src, i) => (
-          <div key={i} className={`photo-duo-item ${i === 0 ? 'slide-left' : 'slide-right'}`}>
-            <img src={src} alt="" className="photo-duo-img" />
-          </div>
-        ))}
-      </div>
+      {renderBlocks('destination')}
 
       {/* ── DRESS CODE ── */}
-      <section className="section section--tinted">
-        <h2 className="section-heading reveal">Dress Code</h2>
-        <p className="label gold reveal" style={{ marginBottom: '0.75rem' }}>{EVENT.dressCode.label}</p>
-        <p className="label muted reveal" style={{ marginBottom: '2rem', maxWidth: '360px', lineHeight: '1.8', textTransform: 'none', letterSpacing: '0' }}>
-          {EVENT.dressCode.description}
-        </p>
+      {cfg.sections?.dressCode !== false && dressCode.label && (
+        <section className="section section--contrast">
+          <h2 className="section-heading reveal">Dress Code</h2>
+          <p className="label gold reveal" style={{ marginBottom: '0.75rem' }}>{dressCode.label}</p>
+          {dressCode.description && (
+            <p className="label muted reveal" style={{ marginBottom: '2rem', maxWidth: '360px', lineHeight: '1.8', textTransform: 'none', letterSpacing: '0' }}>
+              {dressCode.description}
+            </p>
+          )}
 
-        <div className="dresscode-gender reveal">
-          <div className="dc-gender-block">
-            <div className="dc-gender-icon"><WomenIcon /></div>
-            <p className="label muted dc-gender-label">Ellas</p>
-            <p className="dc-gender-text">{EVENT.dressCode.women}</p>
-          </div>
-          <div className="dc-gender-divider" />
-          <div className="dc-gender-block">
-            <div className="dc-gender-icon"><MenIcon /></div>
-            <p className="label muted dc-gender-label">Ellos</p>
-            <p className="dc-gender-text">{EVENT.dressCode.men}</p>
-          </div>
-        </div>
-
-        <div className="swatches reveal" style={{ marginTop: '2rem' }}>
-          {EVENT.dressCode.swatches.map((s, i) => (
-            <div key={i} className="swatch-item">
-              <div className="swatch-circle" style={{ backgroundColor: s.color }} />
-              <span className="label muted">{s.name}</span>
+          {(dressCode.women || dressCode.men) && (
+            <div className="dresscode-gender reveal">
+              <div className="dc-gender-block">
+                <div className="dc-gender-icon"><WomenIcon /></div>
+                <p className="label muted dc-gender-label">Ellas</p>
+                <p className="dc-gender-text">{dressCode.women}</p>
+              </div>
+              <div className="dc-gender-divider" />
+              <div className="dc-gender-block">
+                <div className="dc-gender-icon"><MenIcon /></div>
+                <p className="label muted dc-gender-label">Ellos</p>
+                <p className="dc-gender-text">{dressCode.men}</p>
+              </div>
             </div>
-          ))}
-        </div>
-        {EVENT.dressCode.avoid.length > 0 && (
-          <div className="reveal" style={{ marginTop: '2rem', textAlign: 'center' }}>
-            <p className="label muted" style={{ marginBottom: '1rem' }}>Por favor evita</p>
-            <div className="swatches" style={{ justifyContent: 'center' }}>
-              {EVENT.dressCode.avoid.map((s, i) => (
+          )}
+
+          {dressCode.swatches.length > 0 && (
+            <div className="swatches reveal" style={{ marginTop: '2rem' }}>
+              {dressCode.swatches.map((s, i) => (
                 <div key={i} className="swatch-item">
-                  <div className="swatch-circle swatch-avoid" style={{ backgroundColor: s.color }} />
+                  <div className="swatch-circle" style={{ backgroundColor: s.color }} />
                   <span className="label muted">{s.name}</span>
                 </div>
               ))}
             </div>
-          </div>
-        )}
-      </section>
+          )}
+          {dressCode.avoid.length > 0 && (
+            <div className="reveal" style={{ marginTop: '2rem', textAlign: 'center' }}>
+              <p className="label muted" style={{ marginBottom: '1rem' }}>Por favor evita</p>
+              <div className="swatches" style={{ justifyContent: 'center' }}>
+                {dressCode.avoid.map((s, i) => (
+                  <div key={i} className="swatch-item">
+                    <div className="swatch-circle swatch-avoid" style={{ backgroundColor: s.color }} />
+                    <span className="label muted">{s.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
-      <Ornament />
+      {renderBlocks('dressCode')}
+
+      {/* Ornamento condicional antes de Notas */}
+      {cfg.sections?.notes !== false && notes.length > 0 && <Ornament />}
 
       {/* ── INDICACIONES ── */}
-      {EVENT.notes.length > 0 && (
+      {cfg.sections?.notes !== false && notes.length > 0 && (
         <section className="section">
           <h2 className="section-heading reveal">Toma nota</h2>
           <div className="notes-list">
-            {EVENT.notes.map((note, i) => (
+            {notes.map((note, i) => (
               <div key={i} className={`note-item reveal delay-${i + 1}`}>
                 <span className="note-dot" />
                 <p className="note-text">{note}</p>
@@ -530,79 +778,121 @@ export default function DeluxeTemplate() {
         </section>
       )}
 
-      <Ornament />
+      {renderBlocks('notes')}
+
+      {/* Ornamento condicional antes de Regalos */}
+      {cfg.sections?.gifts !== false && (() => {
+        const gt = gifts.giftTypes ?? [];
+        return gt.length > 0 || gifts.bank || gifts.giftListUrl;
+      })() && <Ornament />}
 
       {/* ── REGALOS ── */}
-      <section className="section">
-        <div className="reveal" style={{ marginBottom: '1.25rem' }}><EnvelopeIcon /></div>
-        <h2 className="section-heading reveal">Mesa de Regalos</h2>
-        <p className="label muted reveal" style={{ maxWidth: '360px', lineHeight: '1.9', marginBottom: '2.5rem' }}>
-          Tu presencia es el mejor regalo. Si deseas obsequiarnos algo, aquí encontrarás nuestras opciones.
-        </p>
-        <div className="gifts-grid">
-          <div className="gift-card reveal">
-            <p className="label" style={{ letterSpacing: '0.2em', marginBottom: '1.25rem', color: '#9B8B78' }}>Transferencia Bancaria</p>
-            {[
-              { label: 'Banco', value: EVENT.gifts.bank },
-              { label: 'Nombre', value: EVENT.gifts.holder },
-              { label: 'No. de cuenta', value: EVENT.gifts.account },
-              { label: 'CLABE', value: EVENT.gifts.clabe },
-            ].map(({ label, value }) => (
-              <div key={label} className="gift-row">
-                <span className="gift-label">{label}</span>
-                <span className="gift-value">{value}</span>
-              </div>
-            ))}
-          </div>
-          {EVENT.gifts.giftListUrl && (
-            <div className="gift-card gift-card--list reveal delay-1">
-              <GiftIcon />
-              <p className="label" style={{ letterSpacing: '0.2em', margin: '1.25rem 0 0.5rem', color: '#9B8B78' }}>Mesa de Regalos</p>
-              <p className="gift-value" style={{ textAlign: 'center', marginBottom: '1.75rem' }}>{EVENT.gifts.giftListLabel}</p>
-              <a href={EVENT.gifts.giftListUrl} target="_blank" rel="noopener noreferrer" className="btn-outline btn-outline--sm">
-                Ver mesa de regalos →
-              </a>
+      {cfg.sections?.gifts !== false && (() => {
+        const gt = gifts.giftTypes ?? [];
+        const showTransfer = gt.includes('transfer') || (!gt.length && !!gifts.bank);
+        const showList     = gt.includes('list')     || (!gt.length && !!gifts.giftListUrl);
+        const showEnvelope = gt.includes('envelope');
+        if (!showTransfer && !showList && !showEnvelope) return null;
+        return (
+          <section className="section" id="gifts">
+            <h2 className="section-heading reveal">Mesa de Regalos</h2>
+            <p className="label muted reveal" style={{ maxWidth: '340px', lineHeight: '1.9', marginBottom: '2rem' }}>
+              Tu presencia es el mejor regalo. Si deseas obsequiarnos algo, aquí encontrarás las opciones disponibles.
+            </p>
+            <div className="gifts-grid">
+              {showTransfer && gifts.bank && (
+                <div className="gift-card reveal">
+                  <p className="label" style={{ letterSpacing: '0.18em', marginBottom: '1rem', color: '#9B8B78' }}>Transferencia</p>
+                  {[
+                    { label: 'Banco',   value: gifts.bank },
+                    { label: 'Nombre',  value: gifts.holder },
+                    { label: 'Cuenta',  value: gifts.account },
+                    { label: 'CLABE',   value: gifts.clabe },
+                  ].filter(r => r.value).map(({ label, value }) => (
+                    <div key={label} className="gift-row">
+                      <span className="gift-label">{label}</span>
+                      <span className="gift-value">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {showList && gifts.giftListUrl && (
+                <div className="gift-card gift-card--list reveal delay-1">
+                  <GiftIcon />
+                  <p className="label" style={{ letterSpacing: '0.18em', margin: '1rem 0 0.4rem', color: '#9B8B78' }}>Mesa de Regalos</p>
+                  {gifts.giftListLabel && <p className="gift-value" style={{ textAlign: 'center', marginBottom: '1.25rem' }}>{gifts.giftListLabel}</p>}
+                  <a href={gifts.giftListUrl} target="_blank" rel="noopener noreferrer" className="btn-outline btn-outline--sm">
+                    Ver mesa →
+                  </a>
+                </div>
+              )}
+              {showEnvelope && (
+                <div className="gift-card gift-card--envelope reveal delay-2">
+                  <EnvelopeSmallIcon />
+                  <p className="label" style={{ letterSpacing: '0.18em', margin: '1rem 0 0.4rem', color: '#9B8B78' }}>Sobre de Regalo</p>
+                  <p className="gift-envelope-note">
+                    {gifts.envelopeMessage || 'Con gusto recibimos sobres el día del evento'}
+                  </p>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </section>
+          </section>
+        );
+      })()}
 
-      {/* ── FOTO CINEMÁTICA ── */}
-      <div className="photo-cinematic reveal">
-        <img src={EVENT.photos.cinematic} alt="" className="photo-cinematic-img" />
-        <div className="photo-cinematic-overlay">
-          <p className="dlx-cinematic-quote">
-            {EVENT.couple.person1} &amp; {EVENT.couple.person2}
-          </p>
-          <p className="label gold">{EVENT.date.day} · {EVENT.date.month} · {EVENT.date.year}</p>
-        </div>
-      </div>
+      {renderBlocks('gifts')}
+
+      {/* Ornamento condicional antes de No Niños */}
+      {noChildren && <Ornament />}
 
       {/* ── NO NIÑOS ── */}
-      {EVENT.noChildren && (
+      {noChildren && (
         <section className="section">
           <div className="no-children-block reveal">
             <NoChildrenIcon />
             <div>
               <p className="no-children-title">Evento solo para adultos</p>
-              <p className="no-children-desc">Con todo nuestro cariño, les pedimos que esta celebración sea exclusiva para adultos. Agradecemos su comprensión.</p>
+              <p className="no-children-desc">{noChildrenMessage}</p>
             </div>
           </div>
         </section>
       )}
 
+      {renderBlocks('noChildren')}
+
+      {/* Ornamento final antes del RSVP */}
       <Ornament />
 
       {/* ── RSVP ── */}
-      <section className="section">
+      <section className="section" id="rsvp">
         <h2 className="section-heading reveal">¿Nos acompañas?</h2>
-        <p className="label muted reveal" style={{ marginBottom: '1rem' }}>
-          Confirma antes del <strong style={{ color: '#1C1611' }}>{EVENT.rsvp.deadline}</strong>
-        </p>
+        {rsvpDeadline && (
+          <p className="label muted reveal" style={{ marginBottom: '1.5rem', textTransform: 'none', letterSpacing: '0.05em' }}>
+            Nos encantaría contar contigo. Por favor, confírmanos antes del <strong style={{ color: 'var(--gold)' }}>{rsvpDeadline}</strong>
+          </p>
+        )}
         <div className="dlx-rsvp-actions reveal">
-          <button className="btn-rsvp" onClick={() => setModalOpen(true)}>
-            Confirmar asistencia
-          </button>
+          {hasToken ? (
+            <button className="btn-rsvp" onClick={() => setModalOpen(true)}>
+              {hasExistingRsvp ? 'Actualizar mi respuesta' : 'Confirmar mi asistencia'}
+            </button>
+          ) : (
+            <div style={{ textAlign: 'center' }}>
+              <p style={{
+                fontFamily: 'var(--font-jost)',
+                fontSize: '12px',
+                letterSpacing: '0.05em',
+                color: '#9B8B78',
+                padding: '1.25rem 2rem',
+                border: '1px solid color-mix(in srgb, var(--gold), transparent 80%)',
+                borderRadius: '0',
+                maxWidth: '400px',
+                lineHeight: '1.8'
+              }}>
+                Para confirmar, por favor utiliza el enlace personal que te enviamos.
+              </p>
+            </div>
+          )}
           <a href={calendarUrl} target="_blank" rel="noopener noreferrer" className="btn-calendar">
             <CalendarIcon />
             Agendar en Google Calendar
@@ -612,48 +902,56 @@ export default function DeluxeTemplate() {
 
       {/* ── FOOTER ── */}
       <footer className="footer">
-        <p className="footer-monogram">{EVENT.initials.person1} &amp; {EVENT.initials.person2}</p>
-        <p className="footer-names">{EVENT.couple.person1} &amp; {EVENT.couple.person2}</p>
+        <p className="footer-monogram">{initials.person1} &amp; {initials.person2}</p>
+        <p className="footer-names">{couple.person1} &amp; {couple.person2}</p>
         <p className="label muted" style={{ marginTop: '0.5rem' }}>
-          {EVENT.date.day} · {EVENT.date.month} · {EVENT.date.year} · {EVENT.location}
+          {date.day} · {date.month} · {date.year}{location ? ` · ${location}` : ''}
         </p>
       </footer>
 
       {/* ── MODAL RSVP (pre-cargado) ── */}
-      {modalOpen && (
+      {modalOpen && hasToken && (
         <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}>
           <div className="modal">
             <button className="modal-close" onClick={() => setModalOpen(false)} aria-label="Cerrar">×</button>
             {rsvpDone ? (
               <div className="modal-success">
                 <div className="modal-success-icon">✓</div>
-                <h3 className="modal-title">¡Hasta pronto!</h3>
+                <h3 className="modal-title">
+                  {guestConfirmed ? '¡Hasta pronto!' : 'Respuesta registrada'}
+                </h3>
                 <p className="label muted" style={{ textAlign: 'center', lineHeight: '1.8' }}>
-                  Tu confirmación fue registrada. Estamos emocionados de celebrar contigo.
+                  {guestConfirmed
+                    ? 'Tu confirmación fue registrada. Estamos emocionados de celebrar contigo.'
+                    : 'Lamentamos no poder verte. Gracias por avisarnos.'}
                 </p>
               </div>
             ) : (
               <div className="modal-form">
                 <div className="modal-header">
                   <p className="label gold" style={{ marginBottom: '0.5rem' }}>Confirmación de Asistencia</p>
-                  <h3 className="modal-title">{EVENT.couple.person1} &amp; {EVENT.couple.person2}</h3>
-                  <p className="label muted">{EVENT.date.day} · {EVENT.date.month} · {EVENT.date.year}</p>
+                  <h3 className="modal-title">{couple.person1} &amp; {couple.person2}</h3>
+                  {date.day && <p className="label muted">{date.day} · {date.month} · {date.year}</p>}
                 </div>
 
                 {/* Datos pre-cargados del invitado */}
                 <div className="modal-guest-card">
-                  <div className="mgc-avatar">
-                    {guest.name.charAt(0)}
-                  </div>
+                  <div className="mgc-avatar">{displayName.charAt(0)}</div>
                   <div>
-                    <p className="mgc-name">{guest.name}</p>
-                    <p className="label muted">{guest.maxGuests} {guest.maxGuests === 1 ? 'lugar' : 'lugares'} reservados</p>
+                    <p className="mgc-name">{displayName}</p>
+                    <p className="label muted">{totalSeats} {totalSeats === 1 ? 'lugar' : 'lugares'} reservados</p>
                   </div>
                 </div>
 
-                <p className="label muted" style={{ textAlign: 'center', lineHeight: '1.8' }}>
-                  Tu invitación fue personalizada. Solo confirma o declina tu asistencia.
-                </p>
+                {hasExistingRsvp && guestConfirmed === null && (
+                  <p className="label muted" style={{ textAlign: 'center', lineHeight: '1.8', color: '#B8965A' }}>
+                    Ya tienes una confirmación registrada. Puedes actualizarla.
+                  </p>
+                )}
+
+                {submitError && (
+                  <p style={{ color: '#9C3A3A', fontSize: '12px', textAlign: 'center' }}>{submitError}</p>
+                )}
 
                 {guestConfirmed === null ? (
                   <div className="rsvp-choice">
@@ -661,8 +959,10 @@ export default function DeluxeTemplate() {
                       className="rsvp-yes"
                       onClick={() => {
                         setGuestConfirmed(true);
-                        const companions = guest.maxGuests - 1;
-                        setCompanionNames(companions > 0 ? Array(companions).fill('') : []);
+                        const pre = initialCompanionNames.length > 0
+                          ? initialCompanionNames
+                          : Array(maxCompanions).fill('');
+                        setAttendeeNames(pre);
                       }}
                     >
                       Sí, asistiré
@@ -675,15 +975,14 @@ export default function DeluxeTemplate() {
                   <div className="rsvp-confirmed">
                     <p className="rsvp-confirmed-text">¡Perfecto! Te esperamos.</p>
 
-                    {/* Quién asistirá */}
                     <div className="attendees-list">
                       <p className="label muted" style={{ marginBottom: '0.75rem' }}>Asistentes confirmados</p>
                       <div className="attendee-row attendee-row--main">
                         <div className="attendee-num">✓</div>
-                        <span className="attendee-name">{guest.name}</span>
+                        <span className="attendee-name">{displayName}</span>
                         <span className="label muted">Titular</span>
                       </div>
-                      {companionNames.map((name, i) => (
+                      {attendeeNames.map((name, i) => (
                         <div key={i} className="attendee-row">
                           <div className="attendee-num">{i + 1}</div>
                           <input
@@ -692,19 +991,42 @@ export default function DeluxeTemplate() {
                             placeholder={`Nombre del acompañante ${i + 1}`}
                             value={name}
                             onChange={(e) => {
-                              const updated = [...companionNames];
+                              const updated = [...attendeeNames];
                               updated[i] = e.target.value;
-                              setCompanionNames(updated);
+                              setAttendeeNames(updated);
                             }}
                           />
                         </div>
                       ))}
                     </div>
 
-                    <button className="btn-submit" onClick={() => setRsvpDone(true)}>
-                      Confirmar asistencia
+                    {/* Opciones Dietéticas */}
+                    {(cfg.rsvp?.dietaryOptions?.length ?? 0) > 0 && (
+                      <div className="dlx-dietary-wrap">
+                        <p className="label muted" style={{ marginBottom: '0.75rem', textAlign: 'center' }}>Restricción alimentaria</p>
+                        <div className="dietary-grid">
+                          {cfg.rsvp!.dietaryOptions!.map((opt) => (
+                            <button
+                              key={opt}
+                              type="button"
+                              className={`dietary-btn${dietary === opt ? ' dietary-btn--active' : ''}`}
+                              onClick={() => setDietary(opt)}
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      className="btn-submit"
+                      onClick={handleSubmitRsvp}
+                      disabled={submitting}
+                    >
+                      {submitting ? 'Guardando…' : 'Confirmar asistencia'}
                     </button>
-                    <button className="rsvp-change" onClick={() => { setGuestConfirmed(null); setCompanionNames([]); }}>
+                    <button className="rsvp-change" onClick={() => { setGuestConfirmed(null); setAttendeeNames([]); setSubmitError(''); }}>
                       Cambiar respuesta
                     </button>
                   </div>
@@ -713,10 +1035,14 @@ export default function DeluxeTemplate() {
                     <p className="rsvp-confirmed-text" style={{ color: '#9B8B78' }}>
                       Lamentamos no poder verte, gracias por avisarnos.
                     </p>
-                    <button className="btn-submit" onClick={() => setRsvpDone(true)}>
-                      Enviar respuesta
+                    <button
+                      className="btn-submit"
+                      onClick={handleSubmitRsvp}
+                      disabled={submitting}
+                    >
+                      {submitting ? 'Guardando…' : 'Enviar respuesta'}
                     </button>
-                    <button className="rsvp-change" onClick={() => setGuestConfirmed(null)}>
+                    <button className="rsvp-change" onClick={() => { setGuestConfirmed(null); setSubmitError(''); }}>
                       Cambiar respuesta
                     </button>
                   </div>
@@ -854,6 +1180,14 @@ function EnvelopeIcon() {
     </svg>
   );
 }
+function EnvelopeSmallIcon() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 44 44" fill="none">
+      <rect x="3" y="9" width="38" height="26" rx="2.5" stroke="#B8965A" strokeWidth="1.4" />
+      <path d="M3 13l19 13 19-13" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
 function GiftIcon() {
   return (
     <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
@@ -963,29 +1297,43 @@ const css = `
   }
   @keyframes loaderReveal { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* ── Music pill ── */
+  /* ── Music pill Evolution ── */
   .music-pill {
     position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
-    z-index: 50;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 100;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.6rem 1rem 0.6rem 0.75rem;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
     border-radius: 100px;
     background: rgba(20,16,12,0.85);
-    border: 1px solid rgba(184,150,90,0.4);
+    border: 1px solid rgba(184,150,90,0.3);
     color: var(--ivory);
     font-family: var(--font-jost), system-ui, sans-serif;
     font-size: 11px;
     letter-spacing: 0.1em;
     cursor: pointer;
-    backdrop-filter: blur(10px);
-    transition: border-color 0.2s, background 0.2s;
-    max-width: 240px;
+    backdrop-filter: blur(16px);
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    max-width: 320px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
   }
-  .music-pill:hover { border-color: var(--gold); background: rgba(20,16,12,0.95); }
+  .music-pill--minimized {
+    padding: 0.75rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    max-width: 44px;
+    background: rgba(184,150,90,0.9);
+    border-color: var(--gold);
+  }
+  .music-pill--minimized .music-pill-text,
+  .music-pill--minimized .music-pill-wave { display: none; }
+  .music-pill-icon { display: flex; align-items: center; justify-content: center; }
+  .music-pill:hover { border-color: var(--gold); transform: scale(1.05); }
   .music-pill--playing { border-color: var(--gold); }
   .music-pill-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .music-pill-wave {
@@ -1027,18 +1375,29 @@ const css = `
     background-position: center;
     background-color: var(--dark);
     z-index: 0;
-    transform: scale(1.04);
-    animation: heroZoom 12s ease-in-out infinite alternate;
+    transform: scale(1.05);
+    animation: heroZoom 15s ease-in-out infinite alternate;
   }
   @keyframes heroZoom {
-    from { transform: scale(1.04); }
-    to   { transform: scale(1.08); }
+    0% { transform: scale(1.05); }
+    100% { transform: scale(1.1); }
+  }
+  .dlx-hero-glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 30%, rgba(184,150,90,0.15) 0%, transparent 60%);
+    z-index: 1;
+    animation: glowPulse 8s ease-in-out infinite alternate;
+  }
+  @keyframes glowPulse {
+    0% { opacity: 0.3; transform: scale(1); }
+    100% { opacity: 0.6; transform: scale(1.1); }
   }
   .dlx-hero-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, rgba(20,16,12,0.45) 0%, rgba(20,16,12,0.25) 40%, rgba(20,16,12,0.65) 100%);
-    z-index: 1;
+    background: linear-gradient(to bottom, rgba(20,16,12,0.5) 0%, rgba(20,16,12,0.2) 40%, rgba(20,16,12,0.8) 100%);
+    z-index: 2;
   }
   .dlx-hero::before {
     content: '';
@@ -1269,15 +1628,64 @@ const css = `
   }
   .section-heading {
     font-family: var(--font-cormorant), Georgia, serif;
-    font-size: clamp(2.25rem, 5.5vw, 3.5rem);
+    font-size: clamp(2.5rem, 6vw, 4rem);
     font-weight: 300;
     font-style: italic;
-    margin: 0 0 1rem;
+    margin: 0 0 1.5rem;
     color: var(--charcoal);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
   }
 
+  /* ── Minimal Nav ── */
+  .dlx-min-nav {
+    position: fixed;
+    left: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .dlx-min-nav.is-active { opacity: 1; pointer-events: auto; }
+  .dlx-min-nav a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    group;
+  }
+  .nav-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    opacity: 0.3;
+    transition: all 0.3s ease;
+  }
+  .nav-label {
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(-- gold);
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all 0.3s ease;
+  }
+  .dlx-min-nav a:hover .nav-dot,
+  .dlx-min-nav a.active .nav-dot { opacity: 1; transform: scale(1.4); }
+  .dlx-min-nav a:hover .nav-label,
+  .dlx-min-nav a.active .nav-label { opacity: 0.6; transform: translateX(0); }
+
+  @media (max-width: 1000px) { .dlx-min-nav { display: none; } }
+
   /* ── Ornament ── */
-  .ornament { display: flex; align-items: center; gap: 1rem; padding: 0 3rem; max-width: 480px; margin: 0 auto; }
+  .ornament { display: flex; align-items: center; gap: 1rem; padding: 0 3rem; max-width: 480px; margin: 0 auto; opacity: 0.6; }
 
   /* ── Quote (dark) ── */
   .quote-mark {
@@ -1299,38 +1707,165 @@ const css = `
     max-width: 560px;
   }
 
-  /* ── Photo layouts ── */
-  .photo-trio {
-    display: grid;
-    grid-template-columns: 1.2fr 0.9fr 1fr;
-    gap: 4px;
+  /* ── Photo blocks (dynamic engine) ── */
+  .photo-block {
     width: 100%;
-    height: 480px;
+    aspect-ratio: 21 / 9;
+    overflow: hidden;
+    background: var(--ivory);
   }
-  @media (max-width: 600px) { .photo-trio { grid-template-columns: 1fr; height: auto; gap: 3px; } }
-  .photo-trio-item { overflow: hidden; height: 100%; }
-  @media (max-width: 600px) { .photo-trio-item { height: 260px; } }
-  .photo-trio-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; display: block; }
-  .photo-trio-item:hover .photo-trio-img { transform: scale(1.04); }
+  .photo-block-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.6s ease;
+  }
+  .photo-block:hover .photo-block-img { transform: scale(1.02); }
+  @media (max-width: 600px) { .photo-block { aspect-ratio: 4 / 3; } }
 
-  .photo-wide { width: 100%; height: 480px; overflow: hidden; position: relative; }
-  @media (max-width: 600px) { .photo-wide { height: 280px; } }
-  .photo-wide-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .photo-wide-overlay {
+  .duo-block {
+    display: flex;
+    width: 100%;
+    aspect-ratio: 2 / 1;
+    gap: 4px;
+    background: var(--ivory);
+    overflow: hidden;
+  }
+  .duo-block-item { flex: 1; overflow: hidden; }
+  .duo-block-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.6s ease;
+  }
+  .duo-block-item:hover .duo-block-img { transform: scale(1.04); }
+  @media (max-width: 600px) {
+    .duo-block { flex-direction: column; aspect-ratio: auto; gap: 3px; }
+    .duo-block-item { aspect-ratio: 4 / 3; }
+  }
+
+  .trio-block {
+    display: flex;
+    width: 100%;
+    aspect-ratio: 12 / 5;
+    gap: 4px;
+    background: var(--ivory);
+    overflow: hidden;
+  }
+  .trio-block-item { flex: 1; aspect-ratio: 4 / 5; overflow: hidden; }
+  .trio-block-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.6s ease;
+  }
+  .trio-block-item:hover .trio-block-img { transform: scale(1.04); }
+  @media (max-width: 600px) {
+    .trio-block { flex-direction: column; aspect-ratio: auto; gap: 3px; }
+    .trio-block-item { aspect-ratio: 4 / 3; }
+  }
+
+  /* ── Carousel Deluxe ── */
+  .dlx-carousel {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    background: var(--dark);
+  }
+  @media (max-width: 600px) { .dlx-carousel { aspect-ratio: 3 / 4; } }
+  .dlx-carousel-track {
+    display: flex;
+    height: 100%;
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .dlx-carousel-slide {
+    flex: 0 0 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  .dlx-carousel-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .dlx-carousel-btn {
     position: absolute;
-    inset: 0;
-    background: linear-gradient(to right, rgba(20,16,12,0.3) 0%, transparent 40%, transparent 60%, rgba(20,16,12,0.3) 100%);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(20, 16, 12, 0.65);
+    border: 1px solid rgba(184, 150, 90, 0.45);
+    color: var(--ivory);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    transition: background 0.25s, border-color 0.25s, transform 0.25s;
+    z-index: 2;
+  }
+  .dlx-carousel-btn--prev { left: 1.25rem; }
+  .dlx-carousel-btn--next { right: 1.25rem; }
+  .dlx-carousel-btn:hover { background: rgba(184, 150, 90, 0.75); border-color: var(--gold); transform: translateY(-50%) scale(1.08); }
+  .dlx-carousel-dots {
+    position: absolute;
+    bottom: 1.25rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.45rem;
+    z-index: 2;
+  }
+  .dlx-carousel-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    padding: 0;
+  }
+  .dlx-carousel-dot--active {
+    background: var(--gold);
+    width: 20px;
+    border-radius: 3px;
+  }
+  .dlx-carousel-counter {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.5rem;
+    z-index: 2;
+    background: rgba(20, 16, 12, 0.5);
+    padding: 0.25rem 0.6rem;
+    border-radius: 100px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(184, 150, 90, 0.2);
   }
 
-  .photo-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 100%; }
-  .photo-duo-item { height: 440px; overflow: hidden; }
-  @media (max-width: 600px) { .photo-duo-item { height: 240px; } }
-  .photo-duo-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; display: block; }
-  .photo-duo-item:hover .photo-duo-img { transform: scale(1.04); }
-
-  .photo-cinematic { position: relative; width: 100%; height: 380px; overflow: hidden; }
-  @media (max-width: 600px) { .photo-cinematic { height: 240px; } }
-  .photo-cinematic-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* ── Dietary ── */
+  .dlx-dietary-wrap { width: 100%; text-align: center; padding-top: 0.25rem; }
+  .dietary-grid { display: flex; flex-wrap: wrap; gap: 0.45rem; justify-content: center; }
+  .dietary-btn {
+    padding: 0.45rem 0.9rem;
+    border-radius: 100px;
+    border: 1px solid rgba(184, 150, 90, 0.3);
+    background: rgba(184, 150, 90, 0.04);
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 11px;
+    color: var(--muted-fg);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.06em;
+  }
+  .dietary-btn:hover { border-color: var(--gold); color: var(--charcoal); background: rgba(184, 150, 90, 0.08); }
+  .dietary-btn--active { border-color: var(--gold); background: var(--gold); color: #fff; }
   .photo-cinematic-overlay {
     position: absolute;
     inset: 0;
@@ -1371,73 +1906,94 @@ const css = `
   .name-sep { display: flex; justify-content: center; margin: 0.75rem 0; }
 
   /* ── Itinerary Deluxe ── */
+  /* ── Itinerario (centrado) ── */
   .dlx-itinerary {
-    position: relative;
     width: 100%;
-    max-width: 600px;
-    padding-left: 2rem;
-    margin-top: 2rem;
+    max-width: 420px;
+    margin: 2rem auto 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
-
-  /* Línea vertical que crece al hacer scroll */
-  .dlx-axis {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 1px;
-    height: 0;
-    background: linear-gradient(to bottom, var(--gold), rgba(184,150,90,0.2));
-    transition: height 2s cubic-bezier(0.16,1,0.3,1);
-  }
-  .dlx-axis.axis-grow { height: 100%; }
 
   .dlx-irow {
-    display: grid;
-    grid-template-columns: 60px 20px 1fr;
-    gap: 0 1rem;
-    align-items: start;
-    margin-bottom: 2.5rem;
-    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
-  .dlx-irow-time { text-align: right; padding-top: 0.25rem; }
-  .time-h { font-family: var(--font-cormorant), Georgia, serif; font-size: 1.75rem; font-weight: 300; color: var(--gold); line-height: 1; }
-  .time-m { font-family: var(--font-cormorant), Georgia, serif; font-size: 1rem; font-weight: 300; color: var(--gold); }
-  .dlx-irow-node { display: flex; flex-direction: column; align-items: center; padding-top: 0.5rem; }
+
+  /* Hora */
+  .dlx-irow-time {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0;
+    padding: 1.5rem 0 0.5rem;
+  }
+  .time-h { font-family: var(--font-cormorant), Georgia, serif; font-size: 2.25rem; font-weight: 300; color: var(--gold); line-height: 1; }
+  .time-m { font-family: var(--font-cormorant), Georgia, serif; font-size: 1.25rem; font-weight: 300; color: var(--gold); }
+
+  /* Nodo */
+  .dlx-irow-node { display: flex; flex-direction: column; align-items: center; padding-bottom: 0.5rem; }
   .dlx-inode {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: var(--dark);
+    background: var(--ivory);
     border: 2px solid var(--gold);
-    box-shadow: 0 0 0 3px rgba(184,150,90,0.15);
-    flex-shrink: 0;
+    box-shadow: 0 0 0 4px rgba(184,150,90,0.12);
   }
-  .dlx-irow-content { padding-bottom: 0.5rem; text-align: center; }
+
+  /* Tarjeta de contenido */
+  .dlx-irow-content {
+    width: 100%;
+    border: 1px solid var(--muted);
+    border-radius: 16px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--ivory) 96%, var(--gold));
+    text-align: center;
+  }
+  .dlx-icard-body {
+    padding: 1.25rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  /* Conector entre items */
+  .dlx-iconnector {
+    width: 1px;
+    height: 1.75rem;
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--gold), transparent 10%), color-mix(in srgb, var(--gold), transparent 80%));
+  }
+
   .dlx-iimg-wrap {
     width: 100%;
-    height: 140px;
-    border-radius: 10px;
+    aspect-ratio: 16 / 7;
     overflow: hidden;
-    margin-bottom: 0.75rem;
+    border-radius: 0;
+    margin-bottom: 0;
   }
-  .dlx-iimg { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; display: block; }
+  .dlx-iimg { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); display: block; }
   .dlx-iimg-wrap:hover .dlx-iimg { transform: scale(1.05); }
-  .dlx-iname { font-family: var(--font-cormorant), Georgia, serif; font-size: 1.3rem; font-weight: 400; color: var(--charcoal); margin: 0 0 0.2rem; }
-  .dlx-ivenue { font-family: var(--font-jost), system-ui, sans-serif; font-size: 12px; font-weight: 500; color: var(--muted-fg); margin: 0 0 0.35rem; letter-spacing: 0.05em; }
+  .dlx-iname { font-family: var(--font-cormorant), Georgia, serif; font-size: 1.35rem; font-weight: 400; color: var(--charcoal); margin: 0; }
+  .dlx-ivenue { font-family: var(--font-jost), system-ui, sans-serif; font-size: 11px; font-weight: 500; color: var(--muted-fg); margin: 0; letter-spacing: 0.08em; text-transform: uppercase; }
   .dlx-iaddress {
     display: flex;
     align-items: flex-start;
     justify-content: center;
     gap: 0.3rem;
-    margin-bottom: 0.75rem;
+    margin-top: 0.1rem;
   }
   .dlx-iaddress span { font-family: var(--font-jost), system-ui, sans-serif; font-size: 12px; color: var(--muted-fg); line-height: 1.5; }
-  .dlx-maps-wrap { display: flex; justify-content: center; margin-top: 0.25rem; }
+  .dlx-maps-wrap { display: flex; justify-content: center; margin-top: 0.5rem; }
   .dlx-maps-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    padding: 0.45rem 1rem;
+    padding: 0.4rem 0.9rem;
     border-radius: 100px;
     border: 1px solid rgba(184,150,90,0.5);
     color: var(--gold);
@@ -1448,15 +2004,30 @@ const css = `
     text-decoration: none;
     transition: background 0.2s, border-color 0.2s;
   }
-  .dlx-maps-btn:hover { background: rgba(184,150,90,0.15); border-color: var(--gold); }
+  .dlx-maps-btn:hover { background: rgba(184,150,90,0.12); border-color: var(--gold); }
 
-  /* ── Section tinted ── */
+  /* ── Section tinted / Contrast ── */
   .section--tinted {
-    background: #EDE5DA;
+    background: color-mix(in srgb, var(--ivory) 92%, var(--gold));
     width: 100%;
     max-width: 100%;
     padding-left: max(2rem, calc((100vw - 680px) / 2));
     padding-right: max(2rem, calc((100vw - 680px) / 2));
+  }
+  .section--contrast {
+    background: color-mix(in srgb, var(--ivory) 95%, var(--charcoal));
+    width: 100%;
+    max-width: 100%;
+    padding-left: max(2rem, calc((100vw - 680px) / 2));
+    padding-right: max(2rem, calc((100vw - 680px) / 2));
+  }
+  .label.gold {
+    letter-spacing: 0.25em;
+    font-weight: 400;
+  }
+  .label.muted {
+    letter-spacing: 0.15em;
+    font-weight: 300;
   }
 
   /* ── Dress code gender ── */
@@ -1498,24 +2069,53 @@ const css = `
   .swatch-avoid { border-color: #d4a5a5; opacity: 0.7; }
 
   /* ── Gifts ── */
-  .gifts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; width: 100%; max-width: 640px; }
-  @media (max-width: 600px) { .gifts-grid { grid-template-columns: 1fr; } }
-  .gift-card { width: 100%; background: #F0E9DF; border: 1px solid var(--muted); border-radius: 16px; padding: 2rem; text-align: left; }
-  .gift-card--list { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem 1.5rem; }
-  .gift-row { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px solid var(--muted); }
+  .gifts-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    width: 100%;
+    max-width: 420px;
+  }
+  .gift-card {
+    width: 100%;
+    background: color-mix(in srgb, var(--ivory) 95%, var(--gold));
+    border: 1px solid var(--muted);
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    text-align: left;
+    box-sizing: border-box;
+  }
+  .gift-card--list {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 1.5rem 1rem;
+  }
+  .gift-card--envelope {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 1.5rem 1rem; gap: 0;
+  }
+  .gift-envelope-note {
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 12px;
+    color: var(--muted-fg);
+    line-height: 1.6;
+    max-width: 140px;
+    text-align: center;
+  }
+  .gift-row { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; padding: 0.5rem 0; border-bottom: 1px solid var(--muted); }
   .gift-row:last-child { border-bottom: none; }
-  .gift-label { font-family: var(--font-jost), system-ui, sans-serif; font-size: 13px; color: var(--muted-fg); flex-shrink: 0; }
-  .gift-value { font-family: var(--font-jost), system-ui, sans-serif; font-size: 14px; font-weight: 500; color: var(--charcoal); text-align: right; }
+  .gift-label { font-family: var(--font-jost), system-ui, sans-serif; font-size: 10px; color: var(--gold); text-transform: uppercase; letter-spacing: 0.1em; flex-shrink: 0; }
+  .gift-value { font-family: var(--font-jost), system-ui, sans-serif; font-size: 12px; font-weight: 500; color: var(--charcoal); text-align: right; }
   .btn-outline {
     display: inline-flex; align-items: center; gap: 0.5rem;
-    padding: 0.875rem 2.25rem; border-radius: 100px;
+    padding: 0.625rem 1.5rem; border-radius: 100px;
     border: 1px solid var(--gold); color: var(--gold);
     font-family: var(--font-jost), system-ui, sans-serif;
-    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
     text-decoration: none; transition: background 0.2s, color 0.2s; cursor: pointer; background: transparent;
   }
   .btn-outline:hover { background: var(--gold); color: #fff; }
-  .btn-outline--sm { padding: 0.625rem 1.5rem; font-size: 10px; }
+  .btn-outline--sm { padding: 0.5rem 1.25rem; font-size: 10px; }
 
   /* ── RSVP actions ── */
   .dlx-rsvp-actions { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
@@ -1584,8 +2184,16 @@ const css = `
   }
   .modal-close:hover { background: var(--muted); }
   .modal-form { padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
-  .modal-header { text-align: center; padding-bottom: 0.5rem; border-bottom: 1px solid var(--muted); }
-  .modal-title { font-family: var(--font-cormorant), Georgia, serif; font-size: 1.75rem; font-style: italic; font-weight: 300; color: var(--charcoal); margin: 0.25rem 0; }
+  .modal-header { text-align: center; padding-bottom: 1rem; border-bottom: 1px solid var(--muted); }
+  .modal-title { 
+    font-family: var(--font-cormorant), Georgia, serif; 
+    font-size: 2rem; 
+    font-style: italic; 
+    font-weight: 300; 
+    color: var(--charcoal); 
+    margin: 0.5rem 0; 
+    letter-spacing: -0.01em;
+  }
   .modal-success { padding: 3rem 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
   .modal-success-icon { width: 56px; height: 56px; border-radius: 50%; background: #EDE5D8; border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--gold); }
 
@@ -1682,15 +2290,52 @@ const css = `
   }
   .btn-submit:hover { background: var(--gold); transform: translateY(-1px); }
 
-  /* ── Mobile centering ── */
+  /* ── Reveal Animations defined ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+  .slide-left {
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+  .slide-right {
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+  .slide-up {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+  .reveal.is-visible,
+  .slide-left.is-visible,
+  .slide-right.is-visible,
+  .slide-up.is-visible {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+
+  .delay-1 { transition-delay: 0.1s; }
+  .delay-2 { transition-delay: 0.2s; }
+  .delay-3 { transition-delay: 0.3s; }
+  .delay-4 { transition-delay: 0.4s; }
+
+  /* ── Mobile adjustments ── */
   @media (max-width: 480px) {
     .dlx-hero-meta { flex-direction: column; gap: 0.4rem; }
     .dlx-meta-dot { display: none; }
-    .section { padding: 4rem 1.5rem; }
+    .section { padding: 5rem 1.5rem; }
     .dresscode-gender { grid-template-columns: 1fr; }
     .dc-gender-divider { width: 80%; height: 1px; margin: 0.5rem auto; }
-    .dlx-itinerary { padding-left: 1.25rem; }
-    .dlx-irow { grid-template-columns: 50px 16px 1fr; }
+    .dlx-itinerary { max-width: 100%; padding: 0 1rem; }
     .destination-grid { grid-template-columns: 1fr; }
   }
 `;

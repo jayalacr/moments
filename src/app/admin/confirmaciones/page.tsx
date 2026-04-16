@@ -12,7 +12,7 @@ const C = {
 };
 
 export default async function ConfirmacionesPage() {
-  const { rsvps, event, stats, maxCapacity } = await getRsvpsForOwnEvent();
+  const { rsvps, guestsWithRsvp, event, stats, maxCapacity } = await getRsvpsForOwnEvent();
 
   if (!event) redirect('/admin');
 
@@ -85,7 +85,7 @@ export default async function ConfirmacionesPage() {
         </div>
       </div>
 
-      <ConfirmacionesClient rsvps={rsvps} stats={stats} plan={event.plan} maxCapacity={maxCapacity} />
+      <ConfirmacionesClient rsvps={rsvps} guestsWithRsvp={guestsWithRsvp} stats={stats} plan={event.plan} maxCapacity={maxCapacity} eventSlug={event.slug} eventType={event.event_type} />
     </div>
   );
 }

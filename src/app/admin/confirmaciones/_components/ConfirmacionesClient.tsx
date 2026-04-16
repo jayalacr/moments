@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import type { RsvpRow, RsvpStats } from '../_actions';
-import { saveMaxCapacity } from '../_actions';
+import type { RsvpRow, RsvpStats, GuestWithRsvp } from '../_actions';
+import { saveMaxCapacity, updateGuestCompanions } from '../_actions';
 
 const C = {
   bg: '#F8F3EC',
@@ -270,16 +270,199 @@ function CapacityWidget({
   );
 }
 
+// ---------------------------------------------------------------------------
+// Deluxe: Inline cupo editor
+// ---------------------------------------------------------------------------
+function InlineCupoEditor({ guestId, current }: { guestId: string; current: number }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(String(current));
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState('');
+
+  function handleSave() {
+    const num = parseInt(value, 10);
+    if (isNaN(num) || num < 0) { setError('Número inválido'); return; }
+    setError('');
+    startTransition(async () => {
+      const res = await updateGuestCompanions(guestId, num);
+      if (res.error) { setError(res.error); return; }
+      setEditing(false);
+    });
+  }
+
+  if (!editing) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <span style={{ fontSize: '13px', color: C.text }}>+{current}</span>
+        <button
+          onClick={() => setEditing(true)}
+          style={{ padding: '2px 8px', border: `1px solid ${C.border}`, borderRadius: '6px', background: 'transparent', color: C.muted, fontSize: '10px', cursor: 'pointer', fontFamily: 'var(--font-jost)' }}
+        >
+          editar
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+      <input
+        type="number" min={0} max={20} value={value}
+        onChange={e => setValue(e.target.value)}
+        autoFocus
+        style={{ width: '60px', padding: '4px 8px', border: `1px solid ${C.accent}`, borderRadius: '6px', fontSize: '13px', color: C.text, fontFamily: 'var(--font-jost)', outline: 'none', backgroundColor: '#fff' }}
+        onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') { setEditing(false); setValue(String(current)); } }}
+      />
+      <button onClick={handleSave} disabled={isPending} style={{ padding: '4px 10px', backgroundColor: C.text, color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontFamily: 'var(--font-jost)', cursor: isPending ? 'wait' : 'pointer', opacity: isPending ? 0.6 : 1 }}>
+        {isPending ? '…' : 'OK'}
+      </button>
+      <button onClick={() => { setEditing(false); setValue(String(current)); setError(''); }} style={{ padding: '4px 8px', background: 'transparent', border: `1px solid ${C.border}`, borderRadius: '6px', fontSize: '11px', color: C.muted, cursor: 'pointer', fontFamily: 'var(--font-jost)' }}>
+        ×
+      </button>
+      {error && <span style={{ fontSize: '11px', color: '#9C3A3A', width: '100%' }}>{error}</span>}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Deluxe: tabla de invitados con estado y acciones
+// ---------------------------------------------------------------------------
+function DeluxeGuestTable({
+  guests,
+  eventSlug,
+  eventType,
+}: {
+  guests: GuestWithRsvp[];
+  eventSlug: string;
+  eventType: string;
+}) {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  function buildLink(token: string): string {
+    if (typeof window === 'undefined') return '';
+    return `${window.location.origin}/${eventType}/${eventSlug}?id=${token}`;
+  }
+
+  function buildWhatsAppUrl(guest: GuestWithRsvp): string {
+    const link = buildLink(guest.token);
+    const msg = `Hola ${guest.name} 👋 Te compartimos tu link personalizado de confirmación para nuestra boda:\n\n${link}\n\nEsperamos contar con tu presencia 🌸`;
+    return `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  }
+
+  async function copyLink(guest: GuestWithRsvp) {
+    const link = buildLink(guest.token);
+    await navigator.clipboard.writeText(link);
+    setCopiedId(guest.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  }
+
+  const statusMeta = {
+    confirmed: { label: 'Confirmó', color: C.confirmed, bg: C.confirmedBg },
+    declined:  { label: 'Declinó',  color: C.declined,  bg: C.declinedBg },
+    pending:   { label: 'Pendiente',color: C.accent,    bg: C.pendingBg },
+  };
+
+  return (
+    <div style={{ backgroundColor: '#fff', border: `1px solid ${C.border}`, borderRadius: '12px', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 110px 80px 1fr 180px', padding: '12px 20px', borderBottom: `1px solid ${C.border}`, backgroundColor: C.bg }}>
+        {['Invitado', 'Estado', 'Cupo', 'Acompañantes', 'Acciones'].map(h => (
+          <p key={h} style={{ fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', color: C.mutedLight, margin: 0 }}>{h}</p>
+        ))}
+      </div>
+
+      {guests.length === 0 ? (
+        <div style={{ padding: '48px 24px', textAlign: 'center' }}>
+          <p style={{ fontFamily: 'var(--font-cormorant)', fontSize: '18px', fontStyle: 'italic', color: C.mutedLight }}>
+            Aún no hay invitados agregados
+          </p>
+          <p style={{ fontSize: '13px', color: C.muted, marginTop: '8px' }}>
+            Agrega invitados desde la sección &quot;Invitados&quot;.
+          </p>
+        </div>
+      ) : guests.map((guest, i) => {
+        const status = guest.rsvp?.status ?? 'pending';
+        const meta = statusMeta[status];
+        const isLast = i === guests.length - 1;
+        const confirmedNames = guest.rsvp?.companion_names ?? [];
+
+        return (
+          <div
+            key={guest.id}
+            style={{ display: 'grid', gridTemplateColumns: '1.5fr 110px 80px 1fr 180px', padding: '14px 20px', borderBottom: isLast ? 'none' : `1px solid ${C.border}`, alignItems: 'start', transition: 'background 0.1s' }}
+            onMouseEnter={e => (e.currentTarget.style.backgroundColor = C.bg)}
+            onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            {/* Nombre */}
+            <div>
+              <p style={{ fontSize: '14px', color: C.text, margin: 0 }}>{guest.name}</p>
+              {guest.rsvp?.seats != null && guest.rsvp.status === 'confirmed' && (
+                <p style={{ fontSize: '11px', color: C.muted, marginTop: '2px' }}>{guest.rsvp.seats} {guest.rsvp.seats === 1 ? 'persona' : 'personas'}</p>
+              )}
+            </div>
+
+            {/* Estado */}
+            <div>
+              <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: '12px', backgroundColor: meta.bg, color: meta.color, fontSize: '11px' }}>
+                {meta.label}
+              </span>
+            </div>
+
+            {/* Cupo (editable inline) */}
+            <InlineCupoEditor guestId={guest.id} current={guest.max_companions} />
+
+            {/* Acompañantes confirmados */}
+            <div>
+              {confirmedNames.length > 0 ? (
+                <p style={{ fontSize: '12px', color: C.muted, lineHeight: 1.5, margin: 0 }}>
+                  {confirmedNames.join(', ')}
+                </p>
+              ) : (
+                <p style={{ fontSize: '13px', color: C.mutedLight, margin: 0 }}>—</p>
+              )}
+            </div>
+
+            {/* Acciones */}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              <a
+                href={buildWhatsAppUrl(guest)}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 10px', borderRadius: '6px', backgroundColor: 'rgba(37,211,102,0.1)', color: '#128C7E', border: '1px solid rgba(37,211,102,0.25)', fontSize: '11px', fontFamily: 'var(--font-jost)', textDecoration: 'none', cursor: 'pointer', letterSpacing: '0.03em' }}
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Enviar
+              </a>
+              <button
+                onClick={() => copyLink(guest)}
+                style={{ padding: '6px 10px', border: `1px solid ${C.border}`, borderRadius: '6px', background: 'transparent', color: copiedId === guest.id ? C.confirmed : C.muted, fontSize: '11px', fontFamily: 'var(--font-jost)', cursor: 'pointer', letterSpacing: '0.03em', borderColor: copiedId === guest.id ? C.confirmed : C.border }}
+              >
+                {copiedId === guest.id ? '✓' : 'Copiar'}
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function ConfirmacionesClient({
   rsvps,
+  guestsWithRsvp,
   stats,
   plan,
   maxCapacity,
+  eventSlug,
+  eventType,
 }: {
   rsvps: RsvpRow[];
+  guestsWithRsvp: GuestWithRsvp[];
   stats: RsvpStats;
   plan: string;
   maxCapacity: number | null;
+  eventSlug: string;
+  eventType: string;
 }) {
   const [filter, setFilter] = useState<Filter>('all');
 
@@ -325,7 +508,17 @@ export default function ConfirmacionesClient({
         ))}
       </div>
 
-      {/* Filtros */}
+      {/* Deluxe: tabla por invitado */}
+      {plan === 'deluxe' && (
+        <div style={{ marginBottom: '40px' }}>
+          <p style={{ fontSize: '10px', letterSpacing: '2.5px', textTransform: 'uppercase', color: C.mutedLight, marginBottom: '16px' }}>
+            Invitados individuales
+          </p>
+          <DeluxeGuestTable guests={guestsWithRsvp} eventSlug={eventSlug} eventType={eventType} />
+        </div>
+      )}
+
+      {/* Filtros (Plus/Deluxe RSVP list) */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
         {filters.map(f => (
           <button

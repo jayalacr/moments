@@ -29,6 +29,7 @@ export interface TemplateEntry {
 
 import EssentialTemplate from '@/components/templates/essential/EssentialTemplate';
 import PlusTemplate from '@/components/templates/plus/PlusTemplate';
+import DeluxeTemplate from '@/components/templates/deluxe/DeluxeTemplate';
 import WeddingDarkTemplate from '@/components/templates/wedding-dark/WeddingDarkTemplate';
 import WeddingBeachTemplate from '@/components/templates/wedding-beach/WeddingBeachTemplate';
 
@@ -43,6 +44,12 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
     component: PlusTemplate as TemplateComponent,
     label: 'Plus — Clásico',
     plan: 'plus',
+  },
+
+  'deluxe-classic': {
+    component: DeluxeTemplate as TemplateComponent,
+    label: 'Deluxe — Clásico',
+    plan: 'deluxe',
   },
 
   'wedding-dark-deluxe': {

@@ -28,13 +28,14 @@ interface EventConfig {
   quote: { text: string; reference: string };
   parents: { person1: string; person2: string };
   itinerary: ItineraryItem[];
-  dressCode: { label: string; women: string; men: string; swatches: Swatch[]; avoid: Swatch[] };
+  dressCode: { label: string; description: string; women: string; men: string; swatches: Swatch[]; avoid: Swatch[] };
   notes: string[];
-  gifts: { bank: string; holder: string; account: string; clabe: string; giftListUrl: string; giftListLabel: string };
+  gifts: { bank: string; holder: string; account: string; clabe: string; giftListUrl: string; giftListLabel: string; giftTypes: string[]; envelopeMessage: string };
   destination: {
     hotels: Hotel[];
     transport: { info: string; schedule: TransportRow[]; contact: string };
   };
+  music: { url: string; title: string; artist: string };
   whatsapp: { number: string; message: string };
   noChildren: boolean;
   noChildrenMessage: string;
@@ -54,6 +55,7 @@ interface EventConfig {
     notes: boolean;
     gifts: boolean;
     destination: boolean;
+    itinerary: boolean;
   };
 }
 
@@ -71,13 +73,14 @@ const DEFAULT: EventConfig = {
   quote: { text: '', reference: '' },
   parents: { person1: '', person2: '' },
   itinerary: [{ time: '', name: '', venue: '', address: '' }],
-  dressCode: { label: '', women: '', men: '', swatches: [{ color: '#C9A87C', name: '' }], avoid: [{ color: '#FFFFFF', name: 'Blanco' }] },
+  dressCode: { label: '', description: '', women: '', men: '', swatches: [{ color: '#C9A87C', name: '' }], avoid: [{ color: '#FFFFFF', name: 'Blanco' }] },
   notes: [''],
-  gifts: { bank: '', holder: '', account: '', clabe: '', giftListUrl: '', giftListLabel: '' },
+  gifts: { bank: '', holder: '', account: '', clabe: '', giftListUrl: '', giftListLabel: '', giftTypes: [], envelopeMessage: '' },
   destination: {
     hotels: [],
     transport: { info: '', schedule: [], contact: '' },
   },
+  music: { url: '', title: '', artist: '' },
   whatsapp: { number: '', message: '' },
   noChildren: false,
   noChildrenMessage: '',
@@ -90,6 +93,7 @@ const DEFAULT: EventConfig = {
     notes: false,
     gifts: false,
     destination: false,
+    itinerary: true,
   },
   theme: {
     accentColor: '#B8965A',
@@ -460,6 +464,7 @@ export default function EditarForm({
     quote:       { ...DEFAULT.quote,     ...initialConfig.quote },
     parents:     { ...DEFAULT.parents,   ...initialConfig.parents },
     dressCode:   { ...DEFAULT.dressCode, ...initialConfig.dressCode },
+    music:       { ...DEFAULT.music,       ...(initialConfig as Partial<EventConfig>).music },
     gifts:       { ...DEFAULT.gifts,     ...initialConfig.gifts },
     destination: {
       hotels:    (initialConfig as Partial<EventConfig>).destination?.hotels    ?? DEFAULT.destination.hotels,
@@ -716,6 +721,8 @@ export default function EditarForm({
 
         {/* ── 5. Itinerario ── */}
         <Section title="Itinerario" C={C}
+          visible={cfg.sections.itinerary}
+          onVisibilityChange={v => set('sections', { ...cfg.sections, itinerary: v })}
           summary={(() => { const n = cfg.itinerary.filter(i => i.name.trim()).length; return n > 0 ? `${n} evento${n !== 1 ? 's' : ''}` : '—'; })()}
         >
           {cfg.itinerary.map((item, i) => (
@@ -791,6 +798,11 @@ export default function EditarForm({
           <Field label="Etiqueta (ej: Formal, Cocktail)" C={C}>
             <input style={S.input} value={cfg.dressCode.label} onChange={e => set('dressCode', { ...cfg.dressCode, label: e.target.value })} placeholder="Formal" />
           </Field>
+          {isDeluxe && (
+            <Field label="Descripción del dress code" C={C}>
+              <textarea style={S.textarea} value={cfg.dressCode.description} onChange={e => set('dressCode', { ...cfg.dressCode, description: e.target.value })} placeholder="Celebramos entre viñedos. Te pedimos vestimenta elegante adaptada al campo." />
+            </Field>
+          )}
           <Field label="Indicaciones para damas" C={C}>
             <textarea style={S.textarea} value={cfg.dressCode.women} onChange={e => set('dressCode', { ...cfg.dressCode, women: e.target.value })} placeholder="Vestido largo o midi en tonos de la paleta..." />
           </Field>
@@ -849,24 +861,97 @@ export default function EditarForm({
         </Section>
 
         {/* ── 8. Regalos ── */}
-        <Section title="Regalos" C={C}
-          visible={cfg.sections.gifts}
-          onVisibilityChange={v => set('sections', { ...cfg.sections, gifts: v })}
-          summary={cfg.gifts.bank ? `${cfg.gifts.bank}${cfg.gifts.holder ? ` · ${cfg.gifts.holder}` : ''}` : '—'}
-        >
-          <Row>
-            <Field label="Banco" C={C}><input style={S.input} value={cfg.gifts.bank} onChange={e => set('gifts', { ...cfg.gifts, bank: e.target.value })} placeholder="BBVA" /></Field>
-            <Field label="Titular" C={C}><input style={S.input} value={cfg.gifts.holder} onChange={e => set('gifts', { ...cfg.gifts, holder: e.target.value })} placeholder="Sofía Herrera López" /></Field>
-          </Row>
-          <Row>
-            <Field label="Número de cuenta" C={C}><input style={S.input} value={cfg.gifts.account} onChange={e => set('gifts', { ...cfg.gifts, account: e.target.value })} placeholder="4152 3140 7823 9012" /></Field>
-            <Field label="CLABE interbancaria" C={C}><input style={S.input} value={cfg.gifts.clabe} onChange={e => set('gifts', { ...cfg.gifts, clabe: e.target.value })} placeholder="012 180 00412345678 9" /></Field>
-          </Row>
-          <Row>
-            <Field label="Nombre mesa de regalos (ej: Liverpool)" C={C}><input style={S.input} value={cfg.gifts.giftListLabel} onChange={e => set('gifts', { ...cfg.gifts, giftListLabel: e.target.value })} placeholder="Liverpool" /></Field>
-            <Field label="Link mesa de regalos" C={C}><input style={S.input} type="url" value={cfg.gifts.giftListUrl} onChange={e => set('gifts', { ...cfg.gifts, giftListUrl: e.target.value })} placeholder="https://mesaderegalos.liverpool.com.mx/..." /></Field>
-          </Row>
-        </Section>
+        {(() => {
+          const giftTypes: string[] = cfg.gifts.giftTypes ?? [];
+          const toggle = (type: string) => {
+            const next = giftTypes.includes(type)
+              ? giftTypes.filter(t => t !== type)
+              : [...giftTypes, type];
+            set('gifts', { ...cfg.gifts, giftTypes: next });
+          };
+          const hasTransfer = giftTypes.includes('transfer');
+          const hasList    = giftTypes.includes('list');
+          const summary = giftTypes.length
+            ? giftTypes.map(t => t === 'transfer' ? 'Transferencia' : t === 'list' ? 'Mesa de regalos' : 'Sobres').join(' · ')
+            : '—';
+          return (
+            <Section title="Regalos" C={C}
+              visible={cfg.sections.gifts}
+              onVisibilityChange={v => set('sections', { ...cfg.sections, gifts: v })}
+              summary={summary}
+            >
+              {/* Selector de tipos */}
+              <div>
+                <span style={S.lbl}>¿Qué opciones de regalo ofrecer?</span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' }}>
+                  {[
+                    { key: 'transfer', label: 'Transferencia bancaria' },
+                    { key: 'list',     label: 'Mesa de regalos' },
+                    { key: 'envelope', label: 'Sobres' },
+                  ].map(({ key, label }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => toggle(key)}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '100px',
+                        border: `1px solid ${giftTypes.includes(key) ? C.accent : C.border}`,
+                        background: giftTypes.includes(key) ? C.accentLight : 'transparent',
+                        color: giftTypes.includes(key) ? C.accent : C.muted,
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        fontFamily: C.font,
+                        letterSpacing: '0.03em',
+                        transition: 'all 0.15s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      {giftTypes.includes(key) && <span style={{ fontSize: '10px' }}>✓</span>}
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Campos de transferencia */}
+              {hasTransfer && (
+                <>
+                  <Row>
+                    <Field label="Banco" C={C}><input style={S.input} value={cfg.gifts.bank} onChange={e => set('gifts', { ...cfg.gifts, bank: e.target.value })} placeholder="BBVA" /></Field>
+                    <Field label="Titular" C={C}><input style={S.input} value={cfg.gifts.holder} onChange={e => set('gifts', { ...cfg.gifts, holder: e.target.value })} placeholder="Sofía Herrera López" /></Field>
+                  </Row>
+                  <Row>
+                    <Field label="Número de cuenta" C={C}><input style={S.input} value={cfg.gifts.account} onChange={e => set('gifts', { ...cfg.gifts, account: e.target.value })} placeholder="4152 3140 7823 9012" /></Field>
+                    <Field label="CLABE interbancaria" C={C}><input style={S.input} value={cfg.gifts.clabe} onChange={e => set('gifts', { ...cfg.gifts, clabe: e.target.value })} placeholder="012 180 00412345678 9" /></Field>
+                  </Row>
+                </>
+              )}
+
+              {/* Campos de mesa de regalos */}
+              {hasList && (
+                <Row>
+                  <Field label="Nombre (ej: Liverpool)" C={C}><input style={S.input} value={cfg.gifts.giftListLabel} onChange={e => set('gifts', { ...cfg.gifts, giftListLabel: e.target.value })} placeholder="Liverpool" /></Field>
+                  <Field label="Link mesa de regalos" C={C}><input style={S.input} type="url" value={cfg.gifts.giftListUrl} onChange={e => set('gifts', { ...cfg.gifts, giftListUrl: e.target.value })} placeholder="https://mesaderegalos.liverpool.com.mx/..." /></Field>
+                </Row>
+              )}
+
+              {/* Mensaje de sobre */}
+              {giftTypes.includes('envelope') && (
+                <Field label="Mensaje para sobres" C={C}>
+                  <input
+                    style={S.input}
+                    value={cfg.gifts.envelopeMessage}
+                    onChange={e => set('gifts', { ...cfg.gifts, envelopeMessage: e.target.value })}
+                    placeholder="Con gusto recibimos sobres el día del evento"
+                  />
+                </Field>
+              )}
+            </Section>
+          );
+        })()}
 
         {/* ── Plus: Boda Destino ── */}
         {isPlus && (
@@ -944,6 +1029,28 @@ export default function EditarForm({
                 </Field>
               </div>
             </div>
+          </Section>
+        )}
+
+        {/* ── Deluxe: Música ── */}
+        {isDeluxe && (
+          <Section title="Música de fondo" C={C}
+            summary={cfg.music.title ? `${cfg.music.title}${cfg.music.artist ? ` · ${cfg.music.artist}` : ''}` : '—'}
+          >
+            <p style={{ fontSize: '13px', color: C.muted, marginTop: '-8px' }}>
+              Pega la URL directa de un archivo MP3 (Google Drive, Dropbox, etc.). La canción se reproduce en loop con controles visibles para el invitado.
+            </p>
+            <Field label="URL del archivo MP3" C={C}>
+              <input style={S.input} type="url" value={cfg.music.url} onChange={e => set('music', { ...cfg.music, url: e.target.value })} placeholder="https://drive.google.com/uc?export=download&id=..." />
+            </Field>
+            <Row>
+              <Field label="Nombre de la canción" C={C}>
+                <input style={S.input} value={cfg.music.title} onChange={e => set('music', { ...cfg.music, title: e.target.value })} placeholder="Perfect" />
+              </Field>
+              <Field label="Artista" C={C}>
+                <input style={S.input} value={cfg.music.artist} onChange={e => set('music', { ...cfg.music, artist: e.target.value })} placeholder="Ed Sheeran" />
+              </Field>
+            </Row>
           </Section>
         )}
 
