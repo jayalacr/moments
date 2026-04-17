@@ -73,7 +73,7 @@ const DEFAULT: EventConfig = {
   quote: { text: '', reference: '' },
   parents: { person1: '', person2: '' },
   itinerary: [{ time: '', name: '', venue: '', address: '' }],
-  dressCode: { label: '', description: '', women: '', men: '', swatches: [{ color: '#C9A87C', name: '' }], avoid: [{ color: '#FFFFFF', name: 'Blanco' }] },
+  dressCode: { label: '', description: '', women: '', men: '', swatches: [], avoid: [] },
   notes: [''],
   gifts: { bank: '', holder: '', account: '', clabe: '', giftListUrl: '', giftListLabel: '', giftTypes: [], envelopeMessage: '' },
   destination: {
@@ -817,9 +817,7 @@ export default function EditarForm({
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input type="color" style={{ ...S.input, width: '48px', padding: '2px 4px', flexShrink: 0 }} value={s.color} onChange={e => { const sw = [...cfg.dressCode.swatches]; sw[i] = { ...sw[i], color: e.target.value }; set('dressCode', { ...cfg.dressCode, swatches: sw }); }} />
                   <input style={{ ...S.input, flex: 1 }} value={s.name} onChange={e => { const sw = [...cfg.dressCode.swatches]; sw[i] = { ...sw[i], name: e.target.value }; set('dressCode', { ...cfg.dressCode, swatches: sw }); }} placeholder="Champagne" />
-                  {cfg.dressCode.swatches.length > 1 && (
-                    <button style={S.removeBtn} onClick={() => set('dressCode', { ...cfg.dressCode, swatches: cfg.dressCode.swatches.filter((_, j) => j !== i) })}>×</button>
-                  )}
+                  <button style={S.removeBtn} onClick={() => set('dressCode', { ...cfg.dressCode, swatches: cfg.dressCode.swatches.filter((_, j) => j !== i) })}>×</button>
                 </div>
               ))}
               <button style={S.addBtn} onClick={() => set('dressCode', { ...cfg.dressCode, swatches: [...cfg.dressCode.swatches, { color: '#C9A87C', name: '' }] })}>+ Color</button>

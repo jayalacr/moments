@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Cormorant_Garamond, Jost } from 'next/font/google';
+import { Cormorant_Garamond, Jost, Playfair_Display, EB_Garamond, Raleway, Montserrat } from 'next/font/google';
+import { MapPin, Play, Pause, CalendarDays, Hotel, Car, Mail, Gift, Flower2, Shirt, UserX } from 'lucide-react';
 import type { PhotoEntry } from '@/lib/imageLayout';
 
 // ---------------------------------------------------------------------------
@@ -12,6 +13,13 @@ interface Swatch { color: string; name: string; }
 interface Hotel { name: string; category: string; address: string; note: string; phone: string; }
 
 interface DeluxeConfig {
+  theme?: {
+    accentColor?:     string;
+    backgroundColor?: string;
+    textColor?:       string;
+    displayFont?:     'cormorant' | 'playfair' | 'eb-garamond';
+    bodyFont?:        'jost' | 'raleway' | 'montserrat';
+  };
   couple?: { person1?: string; person2?: string };
   fullNames?: { person1?: string; person2?: string };
   date?: { day?: string; month?: string; year?: string };
@@ -73,6 +81,44 @@ const jost = Jost({
   variable: '--font-jost',
 });
 
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-playfair',
+});
+
+const ebGaramond = EB_Garamond({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  style: ['normal', 'italic'],
+  variable: '--font-eb-garamond',
+});
+
+const raleway = Raleway({
+  subsets: ['latin'],
+  weight: ['300', '400', '500'],
+  variable: '--font-raleway',
+});
+
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  weight: ['300', '400', '500'],
+  variable: '--font-montserrat',
+});
+
+const DISPLAY_FONT_VAR: Record<string, string> = {
+  cormorant:    'var(--font-cormorant)',
+  playfair:     'var(--font-playfair)',
+  'eb-garamond':'var(--font-eb-garamond)',
+};
+
+const BODY_FONT_VAR: Record<string, string> = {
+  jost:       'var(--font-jost)',
+  raleway:    'var(--font-raleway)',
+  montserrat: 'var(--font-montserrat)',
+};
+
 // ---------------------------------------------------------------------------
 // Default photos (fallback when no config provided)
 // ---------------------------------------------------------------------------
@@ -90,1116 +136,6 @@ const DEFAULT_PHOTOS = {
   ],
   cinematic: 'https://images.unsplash.com/photo-1478146059778-26028b07395a?w=1600&q=85',
 };
-
-// ---------------------------------------------------------------------------
-// DeluxeCarouselBlock — carrusel interactivo con navegación
-// ---------------------------------------------------------------------------
-function DeluxeCarouselBlock({ srcs, positions, scales }: { srcs: string[]; positions?: string[]; scales?: number[] }) {
-  const [idx, setIdx] = useState(0);
-  const total = srcs.length;
-  const touchStartX = useRef<number | null>(null);
-
-  const prev = () => setIdx(i => (i - 1 + total) % total);
-  const next = () => setIdx(i => (i + 1) % total);
-
-  const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const diff = touchStartX.current - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 50) { if (diff > 0) next(); else prev(); }
-    touchStartX.current = null;
-  };
-
-  if (total === 0) return null;
-
-  return (
-    <div className="dlx-carousel reveal" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-      <div className="dlx-carousel-track" style={{ transform: `translateX(-${idx * 100}%)` }}>
-        {srcs.map((src, i) => (
-          <div key={i} className="dlx-carousel-slide">
-            <img
-              src={src}
-              alt={`Foto ${i + 1}`}
-              className="dlx-carousel-img"
-              style={{
-                objectPosition: positions?.[i] ?? 'center center',
-                transform: `scale(${scales?.[i] ?? 1})`,
-                transformOrigin: positions?.[i] ?? 'center center',
-              }}
-            />
-          </div>
-        ))}
-      </div>
-      {total > 1 && (
-        <>
-          <button className="dlx-carousel-btn dlx-carousel-btn--prev" onClick={prev} aria-label="Anterior">
-            <svg width="10" height="17" viewBox="0 0 10 17" fill="none">
-              <path d="M9 1L1 8.5L9 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <button className="dlx-carousel-btn dlx-carousel-btn--next" onClick={next} aria-label="Siguiente">
-            <svg width="10" height="17" viewBox="0 0 10 17" fill="none">
-              <path d="M1 1L9 8.5L1 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <div className="dlx-carousel-dots">
-            {srcs.map((_, i) => (
-              <button
-                key={i}
-                className={`dlx-carousel-dot${i === idx ? ' dlx-carousel-dot--active' : ''}`}
-                onClick={() => setIdx(i)}
-                aria-label={`Foto ${i + 1}`}
-              />
-            ))}
-          </div>
-          <div className="dlx-carousel-counter">
-            <span className="label gold">{idx + 1} / {total}</span>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Hooks
-// ---------------------------------------------------------------------------
-function useCountdown(targetDate: string) {
-  const calc = () => {
-    const diff = new Date(targetDate).getTime() - Date.now();
-    if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-    return {
-      days: Math.floor(diff / 86400000),
-      hours: Math.floor((diff % 86400000) / 3600000),
-      minutes: Math.floor((diff % 3600000) / 60000),
-      seconds: Math.floor((diff % 60000) / 1000),
-    };
-  };
-  const [time, setTime] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  useEffect(() => {
-    setTime(calc());
-    const id = setInterval(() => setTime(calc()), 1000);
-    return () => clearInterval(id);
-  }, [targetDate]);
-  return time;
-}
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-export default function DeluxeTemplate({
-  config,
-  eventId,
-  guestToken,
-  maxCompanions = 0,
-  companionNames: initialCompanionNames = [],
-  guestName,
-  hasExistingRsvp = false,
-}: Props) {
-  // ── Build data from config with defaults ────────────────────────────────
-  const cfg = (config ?? {}) as DeluxeConfig;
-
-  const couple = {
-    person1: cfg.couple?.person1 || 'Persona 1',
-    person2: cfg.couple?.person2 || 'Persona 2',
-  };
-  const initials = {
-    person1: couple.person1.charAt(0),
-    person2: couple.person2.charAt(0),
-  };
-  const fullNames = {
-    person1: cfg.fullNames?.person1 || couple.person1,
-    person2: cfg.fullNames?.person2 || couple.person2,
-  };
-  const date = {
-    day:   cfg.date?.day   || '',
-    month: cfg.date?.month || '',
-    year:  cfg.date?.year  || '',
-  };
-  const location = cfg.location || '';
-  const targetDate = cfg.targetDate || '';
-  const heroLabel = cfg.heroLabel || 'Matrimonio';
-  const noChildrenMessage = cfg.noChildrenMessage || 'Con todo nuestro cariño, les pedimos que esta celebración sea exclusiva para adultos. Agradecemos su comprensión.';
-  const quote = {
-    text:      cfg.quote?.text      || '',
-    reference: cfg.quote?.reference || '',
-  };
-  const parents = {
-    person1: cfg.parents?.person1 || '',
-    person2: cfg.parents?.person2 || '',
-  };
-  // Hero photo
-  const allPhotos = cfg.photos ?? [];
-  const heroEntry = allPhotos.find(p => p.role === 'hero');
-  const heroUrl   = heroEntry?.url || DEFAULT_PHOTOS.hero;
-
-  /** Renderiza los bloques de imagen para una posición de sección */
-  function renderBlocks(afterSection: string) {
-    const sp = allPhotos.filter(p => p.role === 'block' && p.afterSection === afterSection);
-    if (sp.length === 0) return null;
-    const map = new Map<number, typeof sp>();
-    for (const p of sp) {
-      const g = p.blockGroup ?? 0;
-      map.set(g, [...(map.get(g) ?? []), p]);
-    }
-    return Array.from(map.entries())
-      .sort(([a], [b]) => a - b)
-      .map(([g, ps]) => {
-        const sorted    = ps.sort((a, b) => (a.orderInBlock ?? 0) - (b.orderInBlock ?? 0));
-        const srcs      = sorted.map(p => p.url).filter(Boolean);
-        const positions = sorted.map(p => p.objectPosition ?? 'center center');
-        const scales    = sorted.map(p => p.scale ?? 1);
-        if (!srcs.length) return null;
-
-        if (ps[0].layout === 'full') {
-          return (
-            <div key={g} className="photo-block reveal">
-              <img src={srcs[0]} alt="" className="photo-block-img"
-                style={{ objectPosition: positions[0], transform: `scale(${scales[0]})`, transformOrigin: positions[0] }} />
-            </div>
-          );
-        }
-        if (ps[0].layout === 'duo') {
-          return (
-            <div key={g} className="duo-block reveal">
-              <div className="duo-block-item slide-left">
-                <img src={srcs[0]} alt="" className="duo-block-img"
-                  style={{ objectPosition: positions[0], transform: `scale(${scales[0]})`, transformOrigin: positions[0] }} />
-              </div>
-              <div className="duo-block-item slide-right">
-                <img src={srcs[1] ?? srcs[0]} alt="" className="duo-block-img"
-                  style={{ objectPosition: positions[1] ?? positions[0], transform: `scale(${scales[1] ?? scales[1]})`, transformOrigin: positions[1] ?? positions[0] }} />
-              </div>
-            </div>
-          );
-        }
-        if (ps[0].layout === 'trio') {
-          return (
-            <div key={g} className="trio-block reveal">
-              <div className="trio-block-item slide-up">
-                <img src={srcs[0]} alt="" className="trio-block-img"
-                  style={{ objectPosition: positions[0], transform: `scale(${scales[0]})`, transformOrigin: positions[0] }} />
-              </div>
-              <div className="trio-block-item slide-up delay-1">
-                <img src={srcs[1] ?? srcs[0]} alt="" className="trio-block-img"
-                  style={{ objectPosition: positions[1] ?? positions[0], transform: `scale(${scales[1] ?? scales[0]})`, transformOrigin: positions[1] ?? positions[0] }} />
-              </div>
-              <div className="trio-block-item slide-up delay-2">
-                <img src={srcs[2] ?? srcs[0]} alt="" className="trio-block-img"
-                  style={{ objectPosition: positions[2] ?? positions[0], transform: `scale(${scales[2] ?? scales[0]})`, transformOrigin: positions[2] ?? positions[0] }} />
-              </div>
-            </div>
-          );
-        }
-        // carousel
-        return <DeluxeCarouselBlock key={g} srcs={srcs} positions={positions} scales={scales} />;
-      });
-  }
-  const itinerary = cfg.itinerary ?? [];
-  const dressCode = {
-    label:       cfg.dressCode?.label       || '',
-    description: cfg.dressCode?.description || '',
-    women:       cfg.dressCode?.women       || '',
-    men:         cfg.dressCode?.men         || '',
-    swatches:    cfg.dressCode?.swatches    ?? [],
-    avoid:       cfg.dressCode?.avoid       ?? [],
-  };
-  const notes       = cfg.notes  ?? [];
-  const gifts       = cfg.gifts  ?? {};
-  const music       = { url: cfg.music?.url || '', title: cfg.music?.title || '', artist: cfg.music?.artist || '' };
-  const destination = cfg.destination ?? {};
-  const noChildren  = cfg.noChildren ?? false;
-  const rsvpDeadline = cfg.rsvpDeadline || '';
-  const showDestination = cfg.sections?.destination !== false && (
-    (destination.hotels && destination.hotels.length > 0) ||
-    destination.transport?.info
-  );
-
-  // Google Calendar URL
-  const firstItineraryTime = itinerary[0]?.time ?? '17:00';
-  const [startH, startM] = firstItineraryTime.split(':');
-  const dateStr = `${date.year}${String(date.month).padStart(2, '0')}${String(date.day).padStart(2, '0')}`;
-  const isoStart = targetDate
-    ? targetDate.replace(/[-:]/g, '').replace('T', 'T').slice(0, 15)
-    : `${dateStr}T${startH}${startM}00`;
-  const isoEnd = targetDate
-    ? (() => { const d = new Date(targetDate); d.setHours(d.getHours() + 6); return d.toISOString().replace(/[-:]/g, '').slice(0, 15); })()
-    : `${dateStr}T230000`;
-  const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Boda de ${couple.person1} & ${couple.person2}`)}&dates=${isoStart}/${isoEnd}&details=${encodeURIComponent(`Celebración de matrimonio. Dress code: ${dressCode.label}`)}&location=${encodeURIComponent(location)}`;
-
-  // ── State ────────────────────────────────────────────────────────────────
-  const countdown = useCountdown(targetDate);
-  const [loading, setLoading] = useState(true);
-  const [loaderOut, setLoaderOut] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [rsvpDone, setRsvpDone] = useState(false);
-  const [guestConfirmed, setGuestConfirmed] = useState<null | boolean>(null);
-  const [attendeeNames, setAttendeeNames] = useState<string[]>([]);
-  const [dietary, setDietary] = useState(cfg.rsvp?.dietaryOptions?.[0] ?? '');
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState('');
-  const [playing, setPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const axisRef = useRef<HTMLDivElement>(null);
-  const itineraryRef = useRef<HTMLDivElement>(null);
-  const [musicMinimized, setMusicMinimized] = useState(false);
-  const [activeSection, setActiveSection] = useState('hero');
-
-  const hasToken = !!guestToken;
-  const displayName = guestName || couple.person1;
-  const totalSeats = 1 + maxCompanions;
-
-  // Loader
-  useEffect(() => {
-    const t1 = setTimeout(() => setLoaderOut(true), 2200);
-    const t2 = setTimeout(() => setLoading(false), 2800);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, []);
-
-  // Music Auto-minimize
-  useEffect(() => {
-    if (loading) return;
-    const timer = setTimeout(() => setMusicMinimized(true), 4000);
-    return () => clearTimeout(timer);
-  }, [loading]);
-
-  // Active Section Tracker (for minimal nav)
-  useEffect(() => {
-    if (loading) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) setActiveSection(e.target.id || 'hero');
-        });
-      },
-      { threshold: 0.5 }
-    );
-    document.querySelectorAll('section[id]').forEach((s) => observer.observe(s));
-    return () => observer.disconnect();
-  }, [loading]);
-
-  // Scroll reveal
-  useEffect(() => {
-    if (loading) return;
-    const observer = new IntersectionObserver(
-      (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('is-visible'); }),
-      { threshold: 0.08 }
-    );
-    document.querySelectorAll('.reveal, .slide-left, .slide-right, .slide-up').forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [loading]);
-
-  // Itinerary axis growing line
-  useEffect(() => {
-    if (loading) return;
-    const el = axisRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) el.classList.add('axis-grow'); },
-      { threshold: 0.05 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [loading]);
-
-  // Music toggle
-  const toggleMusic = useCallback(() => {
-    const audio = audioRef.current;
-    if (audio && music.url) {
-      if (playing) { audio.pause(); }
-      else { audio.play().catch(() => {}); }
-    }
-    setPlaying((p) => !p);
-  }, [playing, music.url]);
-
-  // RSVP submit
-  async function handleSubmitRsvp() {
-    if (!hasToken || !eventId) return;
-    setSubmitting(true);
-    setSubmitError('');
-    try {
-      const res = await fetch('/api/rsvp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token: guestToken,
-          eventId,
-          name: displayName,
-          seats: guestConfirmed ? 1 + attendeeNames.filter(Boolean).length : 0,
-          companionNames: guestConfirmed ? attendeeNames.filter(Boolean) : [],
-          dietary: guestConfirmed ? dietary : undefined,
-          status: guestConfirmed ? 'confirmed' : 'declined',
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) { setSubmitError(json.error || 'Error al guardar'); return; }
-      setRsvpDone(true);
-    } catch {
-      setSubmitError('Error de conexión. Intenta de nuevo.');
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className={`${cormorant.variable} ${jost.variable}`}>
-        <style dangerouslySetInnerHTML={{ __html: css }} />
-        <div className={`loader ${loaderOut ? 'loader--out' : ''}`}>
-          <div className="loader-monogram">
-            <span className="loader-initial">{initials.person1}</span>
-            <span className="loader-amp">&</span>
-            <span className="loader-initial">{initials.person2}</span>
-          </div>
-          <div className="loader-line" />
-          <p className="loader-date label">
-            {date.day} · {date.month} · {date.year}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`${cormorant.variable} ${jost.variable} dlx-root`}>
-      <style dangerouslySetInnerHTML={{ __html: css }} />
-
-      {/* Audio */}
-      {music.url && <audio ref={audioRef} src={music.url} loop preload="none" />}
-
-      {/* ── MUSIC PLAYER ── */}
-      {music.url && (
-        <button 
-          className={`music-pill ${playing ? 'music-pill--playing' : ''} ${musicMinimized ? 'music-pill--minimized' : ''}`} 
-          onClick={() => {
-            if (musicMinimized) setMusicMinimized(false);
-            else toggleMusic();
-          }}
-          aria-label="Música"
-        >
-          <div className="music-pill-icon">
-            {playing ? <PauseIcon /> : <PlayIcon />}
-          </div>
-          <span className="music-pill-text">
-            {playing ? `${music.title || 'Música'} · ${music.artist || ''}` : 'Música'}
-          </span>
-          {playing && <span className="music-pill-wave"><span/><span/><span/><span/></span>}
-        </button>
-      )}
-
-      {/* ── MINIMAL NAV ── */}
-      <nav className={`dlx-min-nav ${loading ? '' : 'is-active'}`}>
-        <a href="#itinerary" className={activeSection === 'itinerary' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">Programa</span></a>
-        <a href="#destination" className={activeSection === 'destination' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">Mapa</span></a>
-        <a href="#gifts" className={activeSection === 'gifts' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">Regalos</span></a>
-        <a href="#rsvp" className={activeSection === 'rsvp' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">RSVP</span></a>
-      </nav>
-
-      {/* ── HERO ── */}
-      <section className="dlx-hero" id="hero">
-        <div className="dlx-hero-bg" style={{ backgroundImage: `url(${heroUrl})` }} />
-        <div className="dlx-hero-glow" />
-        <div className="dlx-hero-overlay" />
-        <div className="dlx-hero-content">
-          <p className="label gold hero-label reveal">{heroLabel}</p>
-          <h1 className="dlx-hero-names reveal">
-            <span>{couple.person1}</span>
-            <span className="dlx-hero-amp">&</span>
-            <span>{couple.person2}</span>
-          </h1>
-          <div className="dlx-hero-meta reveal">
-            <span className="label gold">{date.day} · {date.month} · {date.year}</span>
-            <span className="dlx-meta-dot" />
-            <span className="label muted">{location}</span>
-          </div>
-          {/* Countdown */}
-          <div className="dlx-countdown reveal">
-            {[
-              { value: countdown.days, label: 'Días' },
-              { value: countdown.hours, label: 'Horas' },
-              { value: countdown.minutes, label: 'Min' },
-              { value: countdown.seconds, label: 'Seg' },
-            ].map(({ value, label }, i) => (
-              <React.Fragment key={label}>
-                <div className="dlx-cd-unit">
-                  <span className="dlx-cd-value">{String(value).padStart(2, '0')}</span>
-                  <span className="dlx-cd-label">{label}</span>
-                </div>
-                {i < 3 && <span className="dlx-cd-sep">:</span>}
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
-        <div className="hero-scroll-indicator">
-          <span className="label muted" style={{ fontSize: '10px' }}>Desliza</span>
-          <div className="scroll-bar"><div className="scroll-thumb" /></div>
-        </div>
-      </section>
-
-      {renderBlocks('hero')}
-
-      {/* ── CITA ── */}
-      {cfg.sections?.quote !== false && quote.text && (
-        <section className="section dlx-dark">
-          <div className="quote-mark reveal">"</div>
-          <p className="quote-text reveal">{quote.text}</p>
-          {quote.reference && <p className="label muted reveal" style={{ marginTop: '1rem', color: 'rgba(255,255,255,0.6)' }}>{quote.reference}</p>}
-        </section>
-      )}
-
-      {renderBlocks('quote')}
-
-      {/* ── NOMBRES Y PADRES ── */}
-      {cfg.sections?.parents !== false && (
-        <section className="section">
-          <p className="label muted reveal" style={{ marginBottom: '2.5rem' }}>Con la bendición de nuestras familias</p>
-          <div className="parents-grid">
-            <div className="slide-left delay-1 text-center">
-              <p className="display-name">{fullNames.person1}</p>
-              <div className="name-sep"><span className="sep-line short" /></div>
-              {parents.person1 && (
-                <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
-                  {parents.person1}
-                </p>
-              )}
-            </div>
-            <div className="parents-monogram reveal">
-              <span>{initials.person1}</span>
-              <span className="pm-amp">&</span>
-              <span>{initials.person2}</span>
-            </div>
-            <div className="slide-right delay-1 text-center">
-              <p className="display-name">{fullNames.person2}</p>
-              <div className="name-sep"><span className="sep-line short" /></div>
-              {parents.person2 && (
-                <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
-                  {parents.person2}
-                </p>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {renderBlocks('parents')}
-
-      {/* ── ITINERARIO ── */}
-      {cfg.sections?.itinerary !== false && itinerary.length > 0 && (
-        <section className="section section--itinerary" ref={itineraryRef} id="itinerary">
-          <h2 className="section-heading reveal">Programa del Día</h2>
-          <div className="dlx-itinerary">
-            {itinerary.map((item, i) => {
-              const [h, m] = (item.time || '00:00').split(':');
-              const mapsUrl = item.address ? `https://maps.google.com/?q=${encodeURIComponent(item.address)}` : '';
-              const isLast = i === itinerary.length - 1;
-              return (
-                <React.Fragment key={i}>
-                  <div className={`dlx-irow slide-up delay-${i + 1}`}>
-                    {/* Hora centrada */}
-                    <div className="dlx-irow-time">
-                      <span className="time-h">{h}</span>
-                      <span className="time-m">:{m}</span>
-                    </div>
-                    {/* Nodo central */}
-                    <div className="dlx-irow-node">
-                      <div className="dlx-inode" />
-                    </div>
-                    {/* Tarjeta de contenido */}
-                    <div className="dlx-irow-content">
-                      {item.image && (
-                        <div className="dlx-iimg-wrap">
-                          <img src={item.image} alt={item.venue} className="dlx-iimg" />
-                        </div>
-                      )}
-                      <div className="dlx-icard-body">
-                        <p className="dlx-iname">{item.name}</p>
-                        {item.venue && <p className="dlx-ivenue">{item.venue}</p>}
-                        {item.address && (
-                          <div className="dlx-iaddress">
-                            <PinIcon /><span>{item.address}</span>
-                          </div>
-                        )}
-                        {mapsUrl && (
-                          <div className="dlx-maps-wrap">
-                            <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="dlx-maps-btn">
-                              <MapsIcon /> Ver en Google Maps
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  {/* Conector entre items */}
-                  {!isLast && <div className="dlx-iconnector" />}
-                </React.Fragment>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {renderBlocks('itinerary')}
-
-      {/* Solo mostramos ornamento si la siguiente sección (Destino) está activa */}
-      {cfg.sections?.destination !== false && showDestination && <Ornament />}
-
-      {/* ── DESTINO ── */}
-      {cfg.sections?.destination !== false && showDestination && (
-        <section className="section section--wide" id="destination">
-          <h2 className="section-heading reveal">Boda Destino</h2>
-          <p className="label muted reveal" style={{ marginBottom: '3rem' }}>
-            Te ayudamos a organizar tu estadía
-          </p>
-
-          {destination.hotels && destination.hotels.length > 0 && (
-            <>
-              <p className="label gold reveal" style={{ marginBottom: '1.5rem' }}>Hospedaje</p>
-              <div className="destination-grid reveal">
-                {destination.hotels.map((hotel, i) => (
-                  <div key={i} className={`dest-card delay-${i + 1}`}>
-                    <div className="dest-card-icon"><HotelIcon /></div>
-                    <p className="dest-card-name">{hotel.name}</p>
-                    <p className="label muted dest-card-category">{hotel.category}</p>
-                    <div className="dest-card-divider" />
-                    <div className="dest-card-address"><PinIcon /><span>{hotel.address}</span></div>
-                    {hotel.note && <p className="dest-card-note">{hotel.note}</p>}
-                    {hotel.phone && <a href={`tel:${hotel.phone}`} className="dest-card-phone">{hotel.phone}</a>}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {destination.transport?.info && (
-            <>
-              <p className="label gold reveal" style={{ margin: '3.5rem 0 1.5rem' }}>Transporte</p>
-              <div className="transport-card reveal">
-                <div className="transport-header">
-                  <CarIcon />
-                  <p className="dest-card-name" style={{ margin: 0 }}>Información de transporte</p>
-                </div>
-                <p className="transport-info">{destination.transport.info}</p>
-                {destination.transport.schedule && destination.transport.schedule.length > 0 && (
-                  <div className="transport-schedule">
-                    {destination.transport.schedule.map((s, i) => (
-                      <div key={i} className="transport-row">
-                        <span className="transport-time">{s.time}</span>
-                        <span className="transport-detail">{s.detail}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {destination.transport.contact && (
-                  <div className="transport-contact">
-                    <EnvelopeIcon />
-                    <a href={`mailto:${destination.transport.contact}`} className="dest-card-phone">
-                      {destination.transport.contact}
-                    </a>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </section>
-      )}
-
-      {renderBlocks('destination')}
-
-      {/* ── DRESS CODE ── */}
-      {cfg.sections?.dressCode !== false && dressCode.label && (
-        <section className="section section--contrast">
-          <h2 className="section-heading reveal">Dress Code</h2>
-          <p className="label gold reveal" style={{ marginBottom: '0.75rem' }}>{dressCode.label}</p>
-          {dressCode.description && (
-            <p className="label muted reveal" style={{ marginBottom: '2rem', maxWidth: '360px', lineHeight: '1.8', textTransform: 'none', letterSpacing: '0' }}>
-              {dressCode.description}
-            </p>
-          )}
-
-          {(dressCode.women || dressCode.men) && (
-            <div className="dresscode-gender reveal">
-              <div className="dc-gender-block">
-                <div className="dc-gender-icon"><WomenIcon /></div>
-                <p className="label muted dc-gender-label">Ellas</p>
-                <p className="dc-gender-text">{dressCode.women}</p>
-              </div>
-              <div className="dc-gender-divider" />
-              <div className="dc-gender-block">
-                <div className="dc-gender-icon"><MenIcon /></div>
-                <p className="label muted dc-gender-label">Ellos</p>
-                <p className="dc-gender-text">{dressCode.men}</p>
-              </div>
-            </div>
-          )}
-
-          {dressCode.swatches.length > 0 && (
-            <div className="swatches reveal" style={{ marginTop: '2rem' }}>
-              {dressCode.swatches.map((s, i) => (
-                <div key={i} className="swatch-item">
-                  <div className="swatch-circle" style={{ backgroundColor: s.color }} />
-                  <span className="label muted">{s.name}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          {dressCode.avoid.length > 0 && (
-            <div className="reveal" style={{ marginTop: '2rem', textAlign: 'center' }}>
-              <p className="label muted" style={{ marginBottom: '1rem' }}>Por favor evita</p>
-              <div className="swatches" style={{ justifyContent: 'center' }}>
-                {dressCode.avoid.map((s, i) => (
-                  <div key={i} className="swatch-item">
-                    <div className="swatch-circle swatch-avoid" style={{ backgroundColor: s.color }} />
-                    <span className="label muted">{s.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </section>
-      )}
-
-      {renderBlocks('dressCode')}
-
-      {/* Ornamento condicional antes de Notas */}
-      {cfg.sections?.notes !== false && notes.length > 0 && <Ornament />}
-
-      {/* ── INDICACIONES ── */}
-      {cfg.sections?.notes !== false && notes.length > 0 && (
-        <section className="section">
-          <h2 className="section-heading reveal">Toma nota</h2>
-          <div className="notes-list">
-            {notes.map((note, i) => (
-              <div key={i} className={`note-item reveal delay-${i + 1}`}>
-                <span className="note-dot" />
-                <p className="note-text">{note}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {renderBlocks('notes')}
-
-      {/* Ornamento condicional antes de Regalos */}
-      {cfg.sections?.gifts !== false && (() => {
-        const gt = gifts.giftTypes ?? [];
-        return gt.length > 0 || gifts.bank || gifts.giftListUrl;
-      })() && <Ornament />}
-
-      {/* ── REGALOS ── */}
-      {cfg.sections?.gifts !== false && (() => {
-        const gt = gifts.giftTypes ?? [];
-        const showTransfer = gt.includes('transfer') || (!gt.length && !!gifts.bank);
-        const showList     = gt.includes('list')     || (!gt.length && !!gifts.giftListUrl);
-        const showEnvelope = gt.includes('envelope');
-        if (!showTransfer && !showList && !showEnvelope) return null;
-        return (
-          <section className="section" id="gifts">
-            <h2 className="section-heading reveal">Mesa de Regalos</h2>
-            <p className="label muted reveal" style={{ maxWidth: '340px', lineHeight: '1.9', marginBottom: '2rem' }}>
-              Tu presencia es el mejor regalo. Si deseas obsequiarnos algo, aquí encontrarás las opciones disponibles.
-            </p>
-            <div className="gifts-grid">
-              {showTransfer && gifts.bank && (
-                <div className="gift-card reveal">
-                  <p className="label" style={{ letterSpacing: '0.18em', marginBottom: '1rem', color: '#9B8B78' }}>Transferencia</p>
-                  {[
-                    { label: 'Banco',   value: gifts.bank },
-                    { label: 'Nombre',  value: gifts.holder },
-                    { label: 'Cuenta',  value: gifts.account },
-                    { label: 'CLABE',   value: gifts.clabe },
-                  ].filter(r => r.value).map(({ label, value }) => (
-                    <div key={label} className="gift-row">
-                      <span className="gift-label">{label}</span>
-                      <span className="gift-value">{value}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {showList && gifts.giftListUrl && (
-                <div className="gift-card gift-card--list reveal delay-1">
-                  <GiftIcon />
-                  <p className="label" style={{ letterSpacing: '0.18em', margin: '1rem 0 0.4rem', color: '#9B8B78' }}>Mesa de Regalos</p>
-                  {gifts.giftListLabel && <p className="gift-value" style={{ textAlign: 'center', marginBottom: '1.25rem' }}>{gifts.giftListLabel}</p>}
-                  <a href={gifts.giftListUrl} target="_blank" rel="noopener noreferrer" className="btn-outline btn-outline--sm">
-                    Ver mesa →
-                  </a>
-                </div>
-              )}
-              {showEnvelope && (
-                <div className="gift-card gift-card--envelope reveal delay-2">
-                  <EnvelopeSmallIcon />
-                  <p className="label" style={{ letterSpacing: '0.18em', margin: '1rem 0 0.4rem', color: '#9B8B78' }}>Sobre de Regalo</p>
-                  <p className="gift-envelope-note">
-                    {gifts.envelopeMessage || 'Con gusto recibimos sobres el día del evento'}
-                  </p>
-                </div>
-              )}
-            </div>
-          </section>
-        );
-      })()}
-
-      {renderBlocks('gifts')}
-
-      {/* Ornamento condicional antes de No Niños */}
-      {noChildren && <Ornament />}
-
-      {/* ── NO NIÑOS ── */}
-      {noChildren && (
-        <section className="section">
-          <div className="no-children-block reveal">
-            <NoChildrenIcon />
-            <div>
-              <p className="no-children-title">Evento solo para adultos</p>
-              <p className="no-children-desc">{noChildrenMessage}</p>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {renderBlocks('noChildren')}
-
-      {/* Ornamento final antes del RSVP */}
-      <Ornament />
-
-      {/* ── RSVP ── */}
-      <section className="section" id="rsvp">
-        <h2 className="section-heading reveal">¿Nos acompañas?</h2>
-        {rsvpDeadline && (
-          <p className="label muted reveal" style={{ marginBottom: '1.5rem', textTransform: 'none', letterSpacing: '0.05em' }}>
-            Nos encantaría contar contigo. Por favor, confírmanos antes del <strong style={{ color: 'var(--gold)' }}>{rsvpDeadline}</strong>
-          </p>
-        )}
-        <div className="dlx-rsvp-actions reveal">
-          {hasToken ? (
-            <button className="btn-rsvp" onClick={() => setModalOpen(true)}>
-              {hasExistingRsvp ? 'Actualizar mi respuesta' : 'Confirmar mi asistencia'}
-            </button>
-          ) : (
-            <div style={{ textAlign: 'center' }}>
-              <p style={{
-                fontFamily: 'var(--font-jost)',
-                fontSize: '12px',
-                letterSpacing: '0.05em',
-                color: '#9B8B78',
-                padding: '1.25rem 2rem',
-                border: '1px solid color-mix(in srgb, var(--gold), transparent 80%)',
-                borderRadius: '0',
-                maxWidth: '400px',
-                lineHeight: '1.8'
-              }}>
-                Para confirmar, por favor utiliza el enlace personal que te enviamos.
-              </p>
-            </div>
-          )}
-          <a href={calendarUrl} target="_blank" rel="noopener noreferrer" className="btn-calendar">
-            <CalendarIcon />
-            Agendar en Google Calendar
-          </a>
-        </div>
-      </section>
-
-      {/* ── FOOTER ── */}
-      <footer className="footer">
-        <p className="footer-monogram">{initials.person1} &amp; {initials.person2}</p>
-        <p className="footer-names">{couple.person1} &amp; {couple.person2}</p>
-        <p className="label muted" style={{ marginTop: '0.5rem' }}>
-          {date.day} · {date.month} · {date.year}{location ? ` · ${location}` : ''}
-        </p>
-      </footer>
-
-      {/* ── MODAL RSVP (pre-cargado) ── */}
-      {modalOpen && hasToken && (
-        <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}>
-          <div className="modal">
-            <button className="modal-close" onClick={() => setModalOpen(false)} aria-label="Cerrar">×</button>
-            {rsvpDone ? (
-              <div className="modal-success">
-                <div className="modal-success-icon">✓</div>
-                <h3 className="modal-title">
-                  {guestConfirmed ? '¡Hasta pronto!' : 'Respuesta registrada'}
-                </h3>
-                <p className="label muted" style={{ textAlign: 'center', lineHeight: '1.8' }}>
-                  {guestConfirmed
-                    ? 'Tu confirmación fue registrada. Estamos emocionados de celebrar contigo.'
-                    : 'Lamentamos no poder verte. Gracias por avisarnos.'}
-                </p>
-              </div>
-            ) : (
-              <div className="modal-form">
-                <div className="modal-header">
-                  <p className="label gold" style={{ marginBottom: '0.5rem' }}>Confirmación de Asistencia</p>
-                  <h3 className="modal-title">{couple.person1} &amp; {couple.person2}</h3>
-                  {date.day && <p className="label muted">{date.day} · {date.month} · {date.year}</p>}
-                </div>
-
-                {/* Datos pre-cargados del invitado */}
-                <div className="modal-guest-card">
-                  <div className="mgc-avatar">{displayName.charAt(0)}</div>
-                  <div>
-                    <p className="mgc-name">{displayName}</p>
-                    <p className="label muted">{totalSeats} {totalSeats === 1 ? 'lugar' : 'lugares'} reservados</p>
-                  </div>
-                </div>
-
-                {hasExistingRsvp && guestConfirmed === null && (
-                  <p className="label muted" style={{ textAlign: 'center', lineHeight: '1.8', color: '#B8965A' }}>
-                    Ya tienes una confirmación registrada. Puedes actualizarla.
-                  </p>
-                )}
-
-                {submitError && (
-                  <p style={{ color: '#9C3A3A', fontSize: '12px', textAlign: 'center' }}>{submitError}</p>
-                )}
-
-                {guestConfirmed === null ? (
-                  <div className="rsvp-choice">
-                    <button
-                      className="rsvp-yes"
-                      onClick={() => {
-                        setGuestConfirmed(true);
-                        const pre = initialCompanionNames.length > 0
-                          ? initialCompanionNames
-                          : Array(maxCompanions).fill('');
-                        setAttendeeNames(pre);
-                      }}
-                    >
-                      Sí, asistiré
-                    </button>
-                    <button className="rsvp-no" onClick={() => setGuestConfirmed(false)}>
-                      No podré ir
-                    </button>
-                  </div>
-                ) : guestConfirmed ? (
-                  <div className="rsvp-confirmed">
-                    <p className="rsvp-confirmed-text">¡Perfecto! Te esperamos.</p>
-
-                    <div className="attendees-list">
-                      <p className="label muted" style={{ marginBottom: '0.75rem' }}>Asistentes confirmados</p>
-                      <div className="attendee-row attendee-row--main">
-                        <div className="attendee-num">✓</div>
-                        <span className="attendee-name">{displayName}</span>
-                        <span className="label muted">Titular</span>
-                      </div>
-                      {attendeeNames.map((name, i) => (
-                        <div key={i} className="attendee-row">
-                          <div className="attendee-num">{i + 1}</div>
-                          <input
-                            className="form-input attendee-input"
-                            type="text"
-                            placeholder={`Nombre del acompañante ${i + 1}`}
-                            value={name}
-                            onChange={(e) => {
-                              const updated = [...attendeeNames];
-                              updated[i] = e.target.value;
-                              setAttendeeNames(updated);
-                            }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Opciones Dietéticas */}
-                    {(cfg.rsvp?.dietaryOptions?.length ?? 0) > 0 && (
-                      <div className="dlx-dietary-wrap">
-                        <p className="label muted" style={{ marginBottom: '0.75rem', textAlign: 'center' }}>Restricción alimentaria</p>
-                        <div className="dietary-grid">
-                          {cfg.rsvp!.dietaryOptions!.map((opt) => (
-                            <button
-                              key={opt}
-                              type="button"
-                              className={`dietary-btn${dietary === opt ? ' dietary-btn--active' : ''}`}
-                              onClick={() => setDietary(opt)}
-                            >
-                              {opt}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <button
-                      className="btn-submit"
-                      onClick={handleSubmitRsvp}
-                      disabled={submitting}
-                    >
-                      {submitting ? 'Guardando…' : 'Confirmar asistencia'}
-                    </button>
-                    <button className="rsvp-change" onClick={() => { setGuestConfirmed(null); setAttendeeNames([]); setSubmitError(''); }}>
-                      Cambiar respuesta
-                    </button>
-                  </div>
-                ) : (
-                  <div className="rsvp-confirmed">
-                    <p className="rsvp-confirmed-text" style={{ color: '#9B8B78' }}>
-                      Lamentamos no poder verte, gracias por avisarnos.
-                    </p>
-                    <button
-                      className="btn-submit"
-                      onClick={handleSubmitRsvp}
-                      disabled={submitting}
-                    >
-                      {submitting ? 'Guardando…' : 'Enviar respuesta'}
-                    </button>
-                    <button className="rsvp-change" onClick={() => { setGuestConfirmed(null); setSubmitError(''); }}>
-                      Cambiar respuesta
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Sub-components
-// ---------------------------------------------------------------------------
-function Ornament() {
-  return (
-    <div className="ornament">
-      <span className="sep-line" />
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <rect x="6" y="0" width="6" height="6" transform="rotate(45 6 0)" fill="#B8965A" opacity="0.7" />
-      </svg>
-      <span className="sep-line" />
-    </div>
-  );
-}
-function WomenIcon() {
-  return (
-    <svg width="30" height="40" viewBox="0 0 30 40" fill="none">
-      <path d="M11 1 L9 7" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M19 1 L21 7" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M9 7 Q15 5 21 7" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M9 7 L8 17" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M21 7 L22 17" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M8 17 L22 17" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M8 17 L2 39" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M22 17 L28 39" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M2 39 L28 39" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round"/>
-    </svg>
-  );
-}
-function MenIcon() {
-  return (
-    <svg width="32" height="40" viewBox="0 0 32 40" fill="none">
-      <path d="M16 3 L8 9 L5 7 L4 39 L16 39" stroke="#B8965A" strokeWidth="1.4" strokeLinejoin="round" fill="none"/>
-      <path d="M16 3 L24 9 L27 7 L28 39 L16 39" stroke="#B8965A" strokeWidth="1.4" strokeLinejoin="round" fill="none"/>
-      <path d="M8 9 L13 19 L16 13" stroke="#B8965A" strokeWidth="1.4" strokeLinejoin="round" fill="none"/>
-      <path d="M24 9 L19 19 L16 13" stroke="#B8965A" strokeWidth="1.4" strokeLinejoin="round" fill="none"/>
-      <path d="M15 19 L14 27 L16 30 L18 27 L17 19 Z" stroke="#B8965A" strokeWidth="1.1" strokeLinejoin="round" fill="none"/>
-    </svg>
-  );
-}
-
-function NoChildrenIcon() {
-  return (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" style={{ flexShrink: 0 }}>
-      <circle cx="24" cy="24" r="22" stroke="#B8965A" strokeWidth="1.4" />
-      <circle cx="24" cy="16" r="5" stroke="#B8965A" strokeWidth="1.4" />
-      <path d="M13 36c0-6.075 4.925-11 11-11s11 4.925 11 11" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round" />
-      <line x1="8" y1="8" x2="40" y2="40" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function PinIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: '1px' }}>
-      <path d="M12 2C8.686 2 6 4.686 6 8c0 4.418 6 12 6 12s6-7.582 6-12c0-3.314-2.686-6-6-6z" stroke="#B8965A" strokeWidth="1.6" />
-      <circle cx="12" cy="8" r="2" stroke="#B8965A" strokeWidth="1.6" />
-    </svg>
-  );
-}
-function MapsIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-      <path d="M12 2C8.686 2 6 4.686 6 8c0 4.418 6 12 6 12s6-7.582 6-12c0-3.314-2.686-6-6-6z" fill="currentColor" opacity="0.9" />
-      <circle cx="12" cy="8" r="2.5" fill="white" />
-    </svg>
-  );
-}
-function PlayIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M8 5v14l11-7z" />
-    </svg>
-  );
-}
-function PauseIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-    </svg>
-  );
-}
-function CalendarIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-      <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="8" cy="16" r="1" fill="currentColor" />
-      <circle cx="12" cy="16" r="1" fill="currentColor" />
-      <circle cx="16" cy="16" r="1" fill="currentColor" />
-    </svg>
-  );
-}
-function HotelIcon() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-      <rect x="2" y="7" width="20" height="14" rx="1.5" stroke="#B8965A" strokeWidth="1.3" />
-      <path d="M7 21V7" stroke="#B8965A" strokeWidth="1.3" />
-      <rect x="10" y="11" width="3" height="3" rx="0.5" stroke="#B8965A" strokeWidth="1.1" />
-      <rect x="15" y="11" width="3" height="3" rx="0.5" stroke="#B8965A" strokeWidth="1.1" />
-      <rect x="10" y="16" width="3" height="5" rx="0.5" stroke="#B8965A" strokeWidth="1.1" />
-      <path d="M5 7V4a1 1 0 011-1h11a1 1 0 011 1v3" stroke="#B8965A" strokeWidth="1.3" />
-    </svg>
-  );
-}
-function CarIcon() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-      <path d="M5 11l1.5-4.5h11L19 11" stroke="#B8965A" strokeWidth="1.3" strokeLinecap="round" />
-      <rect x="2" y="11" width="20" height="7" rx="2" stroke="#B8965A" strokeWidth="1.3" />
-      <circle cx="7" cy="18" r="2" stroke="#B8965A" strokeWidth="1.3" />
-      <circle cx="17" cy="18" r="2" stroke="#B8965A" strokeWidth="1.3" />
-      <path d="M2 14h20" stroke="#B8965A" strokeWidth="1" opacity="0.4" />
-    </svg>
-  );
-}
-function EnvelopeIcon() {
-  return (
-    <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-      <rect x="3" y="9" width="38" height="26" rx="2.5" stroke="#B8965A" strokeWidth="1.4" />
-      <path d="M3 13l19 13 19-13" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round" />
-    </svg>
-  );
-}
-function EnvelopeSmallIcon() {
-  return (
-    <svg width="32" height="32" viewBox="0 0 44 44" fill="none">
-      <rect x="3" y="9" width="38" height="26" rx="2.5" stroke="#B8965A" strokeWidth="1.4" />
-      <path d="M3 13l19 13 19-13" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round" />
-    </svg>
-  );
-}
-function GiftIcon() {
-  return (
-    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-      <rect x="5" y="17" width="30" height="18" rx="2" stroke="#B8965A" strokeWidth="1.4" />
-      <rect x="10" y="11" width="20" height="7" rx="1.5" stroke="#B8965A" strokeWidth="1.4" />
-      <path d="M20 11v24" stroke="#B8965A" strokeWidth="1.4" />
-      <path d="M20 11c0 0-4-6 0-6s4 6 0 6" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round" />
-      <path d="M20 11c0 0 4-6 0-6" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Styles
 // ---------------------------------------------------------------------------
@@ -1228,23 +164,6 @@ const css = `
 
   .sep-line { display: block; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); flex: 1; }
   .sep-line.short { max-width: 48px; }
-
-  /* ── Animations ── */
-  .reveal, .slide-left, .slide-right, .slide-up {
-    opacity: 0;
-    transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1);
-  }
-  .reveal    { transform: translateY(24px); }
-  .slide-left  { transform: translateX(-40px); }
-  .slide-right { transform: translateX(40px); }
-  .slide-up  { transform: translateY(32px); }
-  .reveal.is-visible, .slide-left.is-visible, .slide-right.is-visible, .slide-up.is-visible {
-    opacity: 1; transform: translate(0);
-  }
-  .delay-1 { transition-delay: 0.1s; }
-  .delay-2 { transition-delay: 0.2s; }
-  .delay-3 { transition-delay: 0.3s; }
-  .delay-4 { transition-delay: 0.4s; }
 
   /* ── Loader ── */
   .loader {
@@ -1657,7 +576,6 @@ const css = `
     align-items: center;
     gap: 0.75rem;
     text-decoration: none;
-    group;
   }
   .nav-dot {
     width: 6px;
@@ -1672,7 +590,7 @@ const css = `
     font-size: 10px;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: var(-- gold);
+    color: var(--gold);
     opacity: 0;
     transform: translateX(-10px);
     transition: all 0.3s ease;
@@ -1685,7 +603,20 @@ const css = `
   @media (max-width: 1000px) { .dlx-min-nav { display: none; } }
 
   /* ── Ornament ── */
-  .ornament { display: flex; align-items: center; gap: 1rem; padding: 0 3rem; max-width: 480px; margin: 0 auto; opacity: 0.6; }
+  .ornament {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    max-width: 520px;
+    margin: 2.5rem auto;
+    padding: 0.5rem 2rem;
+  }
+  .ornament-motif {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-shrink: 0;
+  }
 
   /* ── Quote (dark) ── */
   .quote-mark {
@@ -1905,97 +836,145 @@ const css = `
   .display-name { font-family: var(--font-cormorant), Georgia, serif; font-size: 1.25rem; font-weight: 400; color: var(--charcoal); margin: 0; }
   .name-sep { display: flex; justify-content: center; margin: 0.75rem 0; }
 
-  /* ── Itinerary Deluxe ── */
-  /* ── Itinerario (centrado) ── */
-  .dlx-itinerary {
+  /* ── Itinerary Deluxe v2 (alternating editorial) ── */
+  .dlx-itinerary-wrap {
     width: 100%;
-    max-width: 420px;
-    margin: 2rem auto 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    max-width: 820px;
+    margin: 3rem auto 0;
+    position: relative;
   }
 
-  .dlx-irow {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  /* Central vertical gold line (desktop) */
+  .dlx-itinerary-wrap::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 2rem;
+    bottom: 2rem;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, rgba(184,150,90,0.4) 8%, rgba(184,150,90,0.4) 92%, transparent);
+    transform: translateX(-50%);
   }
 
-  /* Hora */
-  .dlx-irow-time {
+  .dlx-irow-v2 {
+    display: grid;
+    grid-template-columns: 1fr 40px 1fr;
+    align-items: start;
+    margin-bottom: 2.5rem;
+  }
+
+  /* Time column (right-aligned for odd, left-aligned for even) */
+  .dlx-itime-col {
     display: flex;
-    align-items: baseline;
+    flex-direction: column;
+    align-items: flex-end;
+    padding: 0.25rem 2rem 0 0;
+    text-align: right;
+  }
+  .dlx-irow-v2--even .dlx-itime-col {
+    order: 3;
+    align-items: flex-start;
+    padding: 0.25rem 0 0 2rem;
+    text-align: left;
+  }
+  .dlx-itime-big {
+    font-family: var(--font-cormorant), Georgia, serif;
+    font-size: clamp(2.75rem, 6vw, 4.25rem);
+    font-weight: 300;
+    color: var(--gold);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  /* Node column (center) — dot vertically centered with the time text */
+  .dlx-inode-col {
+    display: flex;
     justify-content: center;
-    gap: 0;
-    padding: 1.5rem 0 0.5rem;
+    /* center = top-padding-of-time-col + half-of-time-font-size - half-of-dot-height */
+    padding-top: calc(0.25rem + clamp(2.75rem, 6vw, 4.25rem) / 2 - 6px);
   }
-  .time-h { font-family: var(--font-cormorant), Georgia, serif; font-size: 2.25rem; font-weight: 300; color: var(--gold); line-height: 1; }
-  .time-m { font-family: var(--font-cormorant), Georgia, serif; font-size: 1.25rem; font-weight: 300; color: var(--gold); }
-
-  /* Nodo */
-  .dlx-irow-node { display: flex; flex-direction: column; align-items: center; padding-bottom: 0.5rem; }
-  .dlx-inode {
-    width: 10px;
-    height: 10px;
+  .dlx-irow-v2--even .dlx-inode-col { order: 2; }
+  .dlx-inode-v2 {
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     background: var(--ivory);
     border: 2px solid var(--gold);
-    box-shadow: 0 0 0 4px rgba(184,150,90,0.12);
+    box-shadow: 0 0 0 5px rgba(184,150,90,0.12), 0 0 20px rgba(184,150,90,0.15);
+    flex-shrink: 0;
   }
 
-  /* Tarjeta de contenido */
-  .dlx-irow-content {
-    width: 100%;
-    border: 1px solid var(--muted);
-    border-radius: 16px;
+  /* Card column */
+  .dlx-icontent-col {
+    padding: 0 0 0 2rem;
+  }
+  .dlx-irow-v2--even .dlx-icontent-col {
+    order: 1;
+    padding: 0 2rem 0 0;
+  }
+
+  /* Card */
+  .dlx-icard-v2 {
+    background: color-mix(in srgb, var(--ivory) 94%, var(--gold) 6%);
+    border: 1px solid rgba(184,150,90,0.22);
+    border-radius: 18px;
     overflow: hidden;
-    background: color-mix(in srgb, var(--ivory) 96%, var(--gold));
-    text-align: center;
+    transition: border-color 0.35s ease, box-shadow 0.35s ease;
   }
-  .dlx-icard-body {
-    padding: 1.25rem 1.5rem 1.5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.3rem;
+  .dlx-icard-v2:hover {
+    border-color: rgba(184,150,90,0.55);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.10);
   }
-
-  /* Conector entre items */
-  .dlx-iconnector {
-    width: 1px;
-    height: 1.75rem;
-    background: linear-gradient(to bottom, color-mix(in srgb, var(--gold), transparent 10%), color-mix(in srgb, var(--gold), transparent 80%));
-  }
-
   .dlx-iimg-wrap {
     width: 100%;
     aspect-ratio: 16 / 7;
     overflow: hidden;
-    border-radius: 0;
-    margin-bottom: 0;
   }
-  .dlx-iimg { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); display: block; }
-  .dlx-iimg-wrap:hover .dlx-iimg { transform: scale(1.05); }
-  .dlx-iname { font-family: var(--font-cormorant), Georgia, serif; font-size: 1.35rem; font-weight: 400; color: var(--charcoal); margin: 0; }
-  .dlx-ivenue { font-family: var(--font-jost), system-ui, sans-serif; font-size: 11px; font-weight: 500; color: var(--muted-fg); margin: 0; letter-spacing: 0.08em; text-transform: uppercase; }
-  .dlx-iaddress {
+  .dlx-iimg { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s cubic-bezier(0.16,1,0.3,1); display: block; }
+  .dlx-iimg-wrap:hover .dlx-iimg { transform: scale(1.04); }
+
+  .dlx-icard-v2-body {
+    padding: 1.25rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .dlx-iname-v2 {
+    font-family: var(--font-cormorant), Georgia, serif;
+    font-size: 1.45rem;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--charcoal);
+    margin: 0;
+  }
+  .dlx-ivenue-v2 {
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted-fg);
+    margin: 0;
+  }
+  .dlx-iaddress-v2 {
     display: flex;
     align-items: flex-start;
-    justify-content: center;
     gap: 0.3rem;
-    margin-top: 0.1rem;
+    margin-top: 0.2rem;
   }
-  .dlx-iaddress span { font-family: var(--font-jost), system-ui, sans-serif; font-size: 12px; color: var(--muted-fg); line-height: 1.5; }
-  .dlx-maps-wrap { display: flex; justify-content: center; margin-top: 0.5rem; }
+  .dlx-iaddress-v2 span {
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 11px;
+    color: var(--muted-fg);
+    line-height: 1.55;
+  }
   .dlx-maps-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
+    margin-top: 0.75rem;
     padding: 0.4rem 0.9rem;
     border-radius: 100px;
-    border: 1px solid rgba(184,150,90,0.5);
+    border: 1px solid rgba(184,150,90,0.4);
     color: var(--gold);
     font-family: var(--font-jost), system-ui, sans-serif;
     font-size: 10px;
@@ -2004,7 +983,48 @@ const css = `
     text-decoration: none;
     transition: background 0.2s, border-color 0.2s;
   }
-  .dlx-maps-btn:hover { background: rgba(184,150,90,0.12); border-color: var(--gold); }
+  .dlx-maps-btn:hover { background: rgba(184,150,90,0.1); border-color: var(--gold); }
+
+  /* Mobile itinerary: left-rail layout */
+  @media (max-width: 680px) {
+    .dlx-itinerary-wrap::before {
+      left: 15px;
+      top: 0;
+      bottom: 0;
+    }
+    .dlx-irow-v2 {
+      grid-template-columns: 30px 1fr;
+      gap: 0 1rem;
+    }
+    .dlx-itime-col,
+    .dlx-irow-v2--even .dlx-itime-col { display: none; }
+    .dlx-inode-col,
+    .dlx-irow-v2--even .dlx-inode-col { order: 1; padding-top: 0.3rem; }
+    .dlx-icontent-col,
+    .dlx-irow-v2--even .dlx-icontent-col { order: 2; padding: 0; }
+    .dlx-itime-mobile {
+      display: flex;
+      align-items: baseline;
+      gap: 0.1rem;
+      margin-bottom: 0.5rem;
+    }
+    .dlx-itime-mobile-h {
+      font-family: var(--font-cormorant), Georgia, serif;
+      font-size: 1.5rem;
+      font-weight: 300;
+      color: var(--gold);
+      line-height: 1;
+    }
+    .dlx-itime-mobile-m {
+      font-family: var(--font-cormorant), Georgia, serif;
+      font-size: 1rem;
+      font-weight: 300;
+      color: var(--gold);
+    }
+  }
+  @media (min-width: 681px) {
+    .dlx-itime-mobile { display: none; }
+  }
 
   /* ── Section tinted / Contrast ── */
   .section--tinted {
@@ -2030,25 +1050,76 @@ const css = `
     font-weight: 300;
   }
 
-  /* ── Dress code gender ── */
-  .dresscode-gender {
+  /* ── Dress code v2 ── */
+  .dc-description {
+    font-family: var(--font-cormorant), Georgia, serif;
+    font-size: 1.15rem;
+    font-style: italic;
+    font-weight: 300;
+    color: var(--muted-fg);
+    line-height: 1.75;
+    max-width: 480px;
+    text-align: center;
+    margin: 1.25rem 0 2.5rem;
+  }
+  .dc-gender-grid {
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 1.5rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
     width: 100%;
-    max-width: 520px;
-    align-items: start;
-    text-align: left;
+    max-width: 580px;
+    margin-bottom: 2.75rem;
   }
-  @media (max-width: 560px) {
-    .dresscode-gender { grid-template-columns: 1fr; }
-    .dc-gender-divider { display: none; }
+  @media (max-width: 560px) { .dc-gender-grid { grid-template-columns: 1fr; max-width: 360px; } }
+  .dc-gender-card {
+    background: color-mix(in srgb, var(--ivory) 94%, var(--gold) 6%);
+    border: 1px solid rgba(184,150,90,0.22);
+    border-radius: 18px;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: border-color 0.35s ease, box-shadow 0.35s ease;
   }
-  .dc-gender-block { display: flex; flex-direction: column; align-items: flex-start; }
-  .dc-gender-icon { margin-bottom: 0.5rem; }
-  .dc-gender-label { margin-bottom: 0.4rem !important; }
-  .dc-gender-divider { width: 1px; background: rgba(230,221,210,0.25); align-self: stretch; }
-  .dc-gender-text { font-family: var(--font-jost), system-ui, sans-serif; font-size: 13px; color: var(--muted-fg); line-height: 1.8; margin: 0; }
+  .dc-gender-card:hover {
+    border-color: rgba(184,150,90,0.55);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  }
+  .dc-gender-icon-ring {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(184,150,90,0.1);
+    border: 1px solid rgba(184,150,90,0.28);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.85rem;
+  }
+  .dc-gender-divider-line {
+    width: 32px;
+    height: 1px;
+    background: rgba(184,150,90,0.3);
+    margin: 0.6rem 0 0.85rem;
+  }
+  .dc-gender-desc {
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 12.5px;
+    color: var(--muted-fg);
+    line-height: 1.85;
+    margin: 0;
+  }
+
+  /* ── Dress code swatches label ── */
+  .dc-swatches-label {
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted-fg);
+    margin-bottom: 1.25rem;
+  }
 
   /* ── No children ── */
   .no-children-block { display: flex; align-items: flex-start; gap: 1.25rem; background: #F0E9DF; border: 1px solid var(--muted); border-left: 3px solid var(--gold); border-radius: 12px; padding: 1.5rem 1.75rem; max-width: 480px; text-align: left; }
@@ -2062,50 +1133,208 @@ const css = `
   .note-text { font-family: var(--font-jost), system-ui, sans-serif; font-size: 13px; color: var(--charcoal); line-height: 1.7; margin: 0; }
 
   /* ── Swatches ── */
-  .swatches { display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center; }
-  .swatch-item { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); }
-  .swatch-item:hover { transform: translateY(-8px); }
-  .swatch-circle { width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--muted); }
-  .swatch-avoid { border-color: #d4a5a5; opacity: 0.7; }
-
-  /* ── Gifts ── */
-  .gifts-grid {
+  .swatches { display: flex; gap: 1.75rem; flex-wrap: wrap; justify-content: center; }
+  .swatch-item {
     display: flex;
     flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-    width: 100%;
-    max-width: 420px;
+    align-items: center;
+    gap: 0.65rem;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), filter 0.3s ease;
   }
-  .gift-card {
+  .swatch-item:hover { transform: translateY(-6px); filter: brightness(1.08); }
+  .swatch-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 1.5px solid var(--muted);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25);
+  }
+  .swatch-name {
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted-fg);
+    text-align: center;
+  }
+  /* Swatch avoid: posición relativa para overlay ✕ */
+  .swatch-item--avoid .swatch-circle {
+    border-color: rgba(196,130,130,0.45);
+    opacity: 0.65;
+    position: relative;
+  }
+  .swatch-avoid-x {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  /* ── Gifts v2 ── */
+  .gifts-grid-v2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1.25rem;
     width: 100%;
-    background: color-mix(in srgb, var(--ivory) 95%, var(--gold));
+    max-width: 720px;
+  }
+  /* 3ª tarjeta sola en su fila → centrada */
+  .gifts-grid-v2 .gift-card-v2:last-child:nth-child(3) {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: 100%;
+    max-width: 320px;
+  }
+  @media (max-width: 560px) {
+    .gifts-grid-v2 { grid-template-columns: 1fr; max-width: 380px; }
+    .gifts-grid-v2 .gift-card-v2:last-child:nth-child(3) {
+      grid-column: auto;
+      justify-self: auto;
+      max-width: 100%;
+    }
+  }
+
+  /* Base card */
+  .gift-card-v2 {
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.35s ease;
+    cursor: default;
+  }
+  .gift-card-v2:hover { transform: translateY(-5px); box-shadow: 0 20px 48px rgba(28,22,17,0.13); }
+
+  /* Transfer — dark card */
+  .gift-card-v2--transfer {
+    background: color-mix(in srgb, var(--ivory) 94%, var(--gold) 6%);
+    border: 1px solid rgba(184,150,90,0.22);
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .gift-card-v2--transfer::after {
+    content: '';
+    position: absolute;
+    top: -50px; right: -50px;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(184,150,90,0.09) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .gct-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .gct-badge {
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    opacity: 0.7;
+  }
+  .gct-icon-wrap {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    background: rgba(184,150,90,0.1);
+    border: 1px solid rgba(184,150,90,0.25);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .gct-rows { display: flex; flex-direction: column; gap: 0.75rem; }
+  .gct-row { display: flex; flex-direction: column; gap: 0.1rem; }
+  .gct-row-label {
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(184,150,90,0.55);
+  }
+  .gct-row-value {
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--charcoal);
+    letter-spacing: 0.01em;
+  }
+  .gct-row-value--mono {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    opacity: 0.85;
+  }
+  .gct-divider {
+    height: 1px;
+    background: rgba(184,150,90,0.12);
+    margin: 0;
+  }
+
+  /* List card — ivory */
+  .gift-card-v2--list {
+    background: color-mix(in srgb, var(--ivory) 94%, var(--gold));
     border: 1px solid var(--muted);
-    border-radius: 14px;
-    padding: 1.25rem 1.5rem;
-    text-align: left;
-    box-sizing: border-box;
+    padding: 2rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: center;
   }
-  .gift-card--list {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; padding: 1.5rem 1rem;
+  .gcl-icon-ring {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--ivory) 82%, var(--gold));
+    border: 1px solid rgba(184,150,90,0.3);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 0.25rem;
   }
-  .gift-card--envelope {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; padding: 1.5rem 1rem; gap: 0;
+  .gcl-title {
+    font-family: var(--font-cormorant), Georgia, serif;
+    font-size: 1.3rem;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--charcoal);
+    margin: 0;
   }
-  .gift-envelope-note {
+  .gcl-subtitle {
     font-family: var(--font-jost), system-ui, sans-serif;
     font-size: 12px;
     color: var(--muted-fg);
-    line-height: 1.6;
-    max-width: 140px;
+    line-height: 1.7;
+    max-width: 180px;
+    margin: 0.1rem 0 0.75rem;
+  }
+
+  /* Envelope card — warm tint */
+  .gift-card-v2--envelope {
+    background: color-mix(in srgb, var(--ivory) 88%, var(--gold));
+    border: 1px solid color-mix(in srgb, var(--gold) 25%, var(--muted));
+    padding: 2rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
     text-align: center;
   }
-  .gift-row { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; padding: 0.5rem 0; border-bottom: 1px solid var(--muted); }
-  .gift-row:last-child { border-bottom: none; }
-  .gift-label { font-family: var(--font-jost), system-ui, sans-serif; font-size: 10px; color: var(--gold); text-transform: uppercase; letter-spacing: 0.1em; flex-shrink: 0; }
-  .gift-value { font-family: var(--font-jost), system-ui, sans-serif; font-size: 12px; font-weight: 500; color: var(--charcoal); text-align: right; }
+  .gce-icon-ring {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: rgba(184,150,90,0.1);
+    border: 1px solid rgba(184,150,90,0.3);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 0.25rem;
+  }
+  .gce-note {
+    font-family: var(--font-cormorant), Georgia, serif;
+    font-size: 1.05rem;
+    font-style: italic;
+    color: var(--muted-fg);
+    line-height: 1.65;
+    max-width: 200px;
+    margin: 0.1rem 0 0;
+  }
   .btn-outline {
     display: inline-flex; align-items: center; gap: 0.5rem;
     padding: 0.625rem 1.5rem; border-radius: 100px;
@@ -2165,13 +1394,15 @@ const css = `
   }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   .modal {
-    background: var(--ivory);
+    background: rgba(248, 243, 236, 0.92);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.45);
     border-radius: 20px;
     width: 100%; max-width: 420px;
     max-height: 90svh; overflow-y: auto;
     position: relative;
     animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
-    border: 1px solid var(--muted);
   }
   @keyframes slideUp { from { opacity: 0; transform: translateY(32px); } to { opacity: 1; transform: translateY(0); } }
   .modal-close {
@@ -2268,8 +1499,37 @@ const css = `
     font-family: var(--font-jost), system-ui, sans-serif;
     font-size: 13px; font-weight: 500;
     color: var(--charcoal); flex: 1;
+    transition: color 0.2s, opacity 0.2s;
   }
-  .attendee-input { margin: 0; flex: 1; padding: 0.5rem 0.75rem; font-size: 13px; }
+  .attendee-name--muted {
+    color: var(--muted-fg);
+    text-decoration: line-through;
+    opacity: 0.55;
+  }
+  /* Checkbox personalizado */
+  .attendee-check-label {
+    display: flex; align-items: center; cursor: pointer; flex-shrink: 0;
+  }
+  .attendee-check-label input[type="checkbox"] { display: none; }
+  .attendee-check-box {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--muted);
+    border: 1.5px solid var(--muted-fg);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+  }
+  .attendee-check-label input[type="checkbox"]:checked + .attendee-check-box {
+    background: rgba(184,150,90,0.15);
+    border-color: var(--gold);
+  }
+  .attendee-check-label input[type="checkbox"]:checked + .attendee-check-box::after {
+    content: '✓';
+    font-size: 11px;
+    color: var(--gold);
+    line-height: 1;
+  }
   .form-input {
     width: 100%; padding: 0.875rem 1rem;
     border: 1px solid var(--muted); border-radius: 10px;
@@ -2333,9 +1593,1163 @@ const css = `
     .dlx-hero-meta { flex-direction: column; gap: 0.4rem; }
     .dlx-meta-dot { display: none; }
     .section { padding: 5rem 1.5rem; }
-    .dresscode-gender { grid-template-columns: 1fr; }
-    .dc-gender-divider { width: 80%; height: 1px; margin: 0.5rem auto; }
-    .dlx-itinerary { max-width: 100%; padding: 0 1rem; }
+    .dc-gender-grid { grid-template-columns: 1fr; max-width: 360px; }
+    .dlx-itinerary-wrap { max-width: 100%; padding: 0 0.5rem; }
     .destination-grid { grid-template-columns: 1fr; }
   }
 `;
+
+// ---------------------------------------------------------------------------
+// DeluxeCarouselBlock — carrusel interactivo con navegación
+// ---------------------------------------------------------------------------
+function DeluxeCarouselBlock({ srcs, positions, scales, names }: { srcs: string[]; positions?: string[]; scales?: number[]; names?: string }) {
+  const [idx, setIdx] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const total = srcs.length;
+  const touchStartX = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (total <= 1 || isPaused) return;
+    const id = setInterval(() => setIdx(i => (i + 1) % total), 5000);
+    return () => clearInterval(id);
+  }, [total, isPaused]);
+
+  const prev = () => { setIsPaused(true); setIdx(i => (i - 1 + total) % total); };
+  const next = () => { setIsPaused(true); setIdx(i => (i + 1) % total); };
+
+  const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) { if (diff > 0) next(); else prev(); }
+    touchStartX.current = null;
+  };
+
+  if (total === 0) return null;
+
+  return (
+    <div
+      className="dlx-carousel reveal"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      <div className="dlx-carousel-track" style={{ transform: `translateX(-${idx * 100}%)` }}>
+        {srcs.map((src, i) => (
+          <div key={i} className="dlx-carousel-slide">
+            <img
+              src={src}
+              alt={names ? `Foto ${i + 1} de ${names}` : `Foto ${i + 1}`}
+              className="dlx-carousel-img"
+              style={{
+                objectPosition: positions?.[i] ?? 'center center',
+                transform: `scale(${scales?.[i] ?? 1})`,
+                transformOrigin: positions?.[i] ?? 'center center',
+              }}
+            />
+          </div>
+        ))}
+      </div>
+      {total > 1 && (
+        <>
+          <button className="dlx-carousel-btn dlx-carousel-btn--prev" onClick={prev} aria-label="Anterior">
+            <svg width="10" height="17" viewBox="0 0 10 17" fill="none">
+              <path d="M9 1L1 8.5L9 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button className="dlx-carousel-btn dlx-carousel-btn--next" onClick={next} aria-label="Siguiente">
+            <svg width="10" height="17" viewBox="0 0 10 17" fill="none">
+              <path d="M1 1L9 8.5L1 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <div className="dlx-carousel-dots">
+            {srcs.map((_, i) => (
+              <button
+                key={i}
+                className={`dlx-carousel-dot${i === idx ? ' dlx-carousel-dot--active' : ''}`}
+                onClick={() => setIdx(i)}
+                aria-label={`Foto ${i + 1}`}
+              />
+            ))}
+          </div>
+          <div className="dlx-carousel-counter">
+            <span className="label gold">{idx + 1} / {total}</span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Hooks
+// ---------------------------------------------------------------------------
+function useCountdown(targetDate: string) {
+  const calc = () => {
+    const diff = new Date(targetDate).getTime() - Date.now();
+    if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, isOver: true };
+    return {
+      days: Math.floor(diff / 86400000),
+      hours: Math.floor((diff % 86400000) / 3600000),
+      minutes: Math.floor((diff % 3600000) / 60000),
+      seconds: Math.floor((diff % 60000) / 1000),
+      isOver: false,
+    };
+  };
+  const [time, setTime] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, isOver: false });
+  useEffect(() => {
+    setTime(calc());
+    const id = setInterval(() => setTime(calc()), 1000);
+    return () => clearInterval(id);
+  }, [targetDate]);
+  return time;
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+export default function DeluxeTemplate({
+  config,
+  eventId,
+  guestToken,
+  maxCompanions = 0,
+  companionNames: initialCompanionNames = [],
+  guestName,
+  hasExistingRsvp = false,
+}: Props) {
+  // ── Build data from config with defaults ────────────────────────────────
+  const cfg = (config ?? {}) as DeluxeConfig;
+
+  // ── Theme ────────────────────────────────────────────────────────────────
+  const t = cfg.theme ?? {};
+  const accentColor     = t.accentColor     ?? '#B8965A';
+  const backgroundColor = t.backgroundColor ?? '#F8F3EC';
+  const textColor       = t.textColor       ?? '#1C1611';
+  const displayFontVar  = DISPLAY_FONT_VAR[t.displayFont ?? 'cormorant'] ?? 'var(--font-cormorant)';
+  const bodyFontVar     = BODY_FONT_VAR[t.bodyFont ?? 'jost'] ?? 'var(--font-jost)';
+  const rootStyle = { '--font-display': displayFontVar, '--font-body': bodyFontVar } as React.CSSProperties;
+  const dynamicCss = `.dlx-root { --ivory: ${backgroundColor}; --charcoal: ${textColor}; --gold: ${accentColor}; }`;
+  const allFontVars = `${cormorant.variable} ${jost.variable} ${playfair.variable} ${ebGaramond.variable} ${raleway.variable} ${montserrat.variable}`;
+
+  const couple = {
+    person1: cfg.couple?.person1 || 'Persona 1',
+    person2: cfg.couple?.person2 || 'Persona 2',
+  };
+  const initials = {
+    person1: couple.person1.charAt(0),
+    person2: couple.person2.charAt(0),
+  };
+  const fullNames = {
+    person1: cfg.fullNames?.person1 || couple.person1,
+    person2: cfg.fullNames?.person2 || couple.person2,
+  };
+  const date = {
+    day:   cfg.date?.day   || '',
+    month: cfg.date?.month || '',
+    year:  cfg.date?.year  || '',
+  };
+  const location = cfg.location || '';
+  const targetDate = cfg.targetDate || '';
+  const heroLabel = cfg.heroLabel || 'Matrimonio';
+  const noChildrenMessage = cfg.noChildrenMessage || 'Con todo nuestro cariño, les pedimos que esta celebración sea exclusiva para adultos. Agradecemos su comprensión.';
+  const quote = {
+    text:      cfg.quote?.text      || '',
+    reference: cfg.quote?.reference || '',
+  };
+  const parents = {
+    person1: cfg.parents?.person1 || '',
+    person2: cfg.parents?.person2 || '',
+  };
+  // Hero photo
+  const allPhotos = cfg.photos ?? [];
+  const heroEntry = allPhotos.find(p => p.role === 'hero');
+  const heroUrl   = heroEntry?.url || DEFAULT_PHOTOS.hero;
+
+  /** Renderiza los bloques de imagen para una posición de sección */
+  function renderBlocks(afterSection: string) {
+    const sp = allPhotos.filter(p => p.role === 'block' && p.afterSection === afterSection);
+    if (sp.length === 0) return null;
+    const map = new Map<number, typeof sp>();
+    for (const p of sp) {
+      const g = p.blockGroup ?? 0;
+      map.set(g, [...(map.get(g) ?? []), p]);
+    }
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([g, ps]) => {
+        const sorted    = ps.sort((a, b) => (a.orderInBlock ?? 0) - (b.orderInBlock ?? 0));
+        const srcs      = sorted.map(p => p.url).filter(Boolean);
+        const positions = sorted.map(p => p.objectPosition ?? 'center center');
+        const scales    = sorted.map(p => p.scale ?? 1);
+        if (!srcs.length) return null;
+
+        const photoAlt = `Foto de ${couple.person1} y ${couple.person2}`;
+        if (ps[0].layout === 'full') {
+          return (
+            <div key={g} className="photo-block reveal">
+              <img src={srcs[0]} alt={photoAlt} className="photo-block-img"
+                style={{ objectPosition: positions[0], transform: `scale(${scales[0]})`, transformOrigin: positions[0] }} />
+            </div>
+          );
+        }
+        if (ps[0].layout === 'duo') {
+          return (
+            <div key={g} className="duo-block reveal">
+              <div className="duo-block-item slide-left">
+                <img src={srcs[0]} alt={photoAlt} className="duo-block-img"
+                  style={{ objectPosition: positions[0], transform: `scale(${scales[0]})`, transformOrigin: positions[0] }} />
+              </div>
+              <div className="duo-block-item slide-right">
+                <img src={srcs[1] ?? srcs[0]} alt={photoAlt} className="duo-block-img"
+                  style={{ objectPosition: positions[1] ?? positions[0], transform: `scale(${scales[1] ?? scales[1]})`, transformOrigin: positions[1] ?? positions[0] }} />
+              </div>
+            </div>
+          );
+        }
+        if (ps[0].layout === 'trio') {
+          return (
+            <div key={g} className="trio-block reveal">
+              <div className="trio-block-item slide-up">
+                <img src={srcs[0]} alt={photoAlt} className="trio-block-img"
+                  style={{ objectPosition: positions[0], transform: `scale(${scales[0]})`, transformOrigin: positions[0] }} />
+              </div>
+              <div className="trio-block-item slide-up delay-1">
+                <img src={srcs[1] ?? srcs[0]} alt={photoAlt} className="trio-block-img"
+                  style={{ objectPosition: positions[1] ?? positions[0], transform: `scale(${scales[1] ?? scales[0]})`, transformOrigin: positions[1] ?? positions[0] }} />
+              </div>
+              <div className="trio-block-item slide-up delay-2">
+                <img src={srcs[2] ?? srcs[0]} alt={photoAlt} className="trio-block-img"
+                  style={{ objectPosition: positions[2] ?? positions[0], transform: `scale(${scales[2] ?? scales[0]})`, transformOrigin: positions[2] ?? positions[0] }} />
+              </div>
+            </div>
+          );
+        }
+        // carousel
+        return <DeluxeCarouselBlock key={g} srcs={srcs} positions={positions} scales={scales} names={`${couple.person1} y ${couple.person2}`} />;
+      });
+  }
+  const itinerary = cfg.itinerary ?? [];
+  const dressCode = {
+    label:       cfg.dressCode?.label       || '',
+    description: cfg.dressCode?.description || '',
+    women:       cfg.dressCode?.women       || '',
+    men:         cfg.dressCode?.men         || '',
+    swatches:    cfg.dressCode?.swatches    ?? [],
+    avoid:       cfg.dressCode?.avoid       ?? [],
+  };
+  const notes       = cfg.notes  ?? [];
+  const gifts       = cfg.gifts  ?? {};
+  const music       = { url: cfg.music?.url || '', title: cfg.music?.title || '', artist: cfg.music?.artist || '' };
+  const destination = cfg.destination ?? {};
+  const noChildren  = cfg.noChildren ?? false;
+  const rsvpDeadline = cfg.rsvpDeadline || '';
+  const showDestination = cfg.sections?.destination !== false && (
+    (destination.hotels && destination.hotels.length > 0) ||
+    destination.transport?.info
+  );
+
+  // Google Calendar URL
+  const firstItineraryTime = itinerary[0]?.time ?? '17:00';
+  const [startH, startM] = firstItineraryTime.split(':');
+  const dateStr = `${date.year}${String(date.month).padStart(2, '0')}${String(date.day).padStart(2, '0')}`;
+  const isoStart = targetDate
+    ? targetDate.replace(/[-:]/g, '').replace('T', 'T').slice(0, 15)
+    : `${dateStr}T${startH}${startM}00`;
+  const isoEnd = targetDate
+    ? (() => { const d = new Date(targetDate); d.setHours(d.getHours() + 6); return d.toISOString().replace(/[-:]/g, '').slice(0, 15); })()
+    : `${dateStr}T230000`;
+  const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Boda de ${couple.person1} & ${couple.person2}`)}&dates=${isoStart}/${isoEnd}&details=${encodeURIComponent(`Celebración de matrimonio. Dress code: ${dressCode.label}`)}&location=${encodeURIComponent(location)}`;
+
+  // ── State ────────────────────────────────────────────────────────────────
+  const countdown = useCountdown(targetDate);
+  const [loading, setLoading] = useState(true);
+  const [loaderOut, setLoaderOut] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [rsvpDone, setRsvpDone] = useState(false);
+  const [guestConfirmed, setGuestConfirmed] = useState<null | boolean>(null);
+  const [attendeeNames, setAttendeeNames] = useState<string[]>([]);
+  const [attendeeChecked, setAttendeeChecked] = useState<boolean[]>([]);
+  const [dietary, setDietary] = useState(cfg.rsvp?.dietaryOptions?.[0] ?? '');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [playing, setPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const axisRef = useRef<HTMLDivElement>(null);
+  const itineraryRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const [musicMinimized, setMusicMinimized] = useState(false);
+  const [activeSection, setActiveSection] = useState('hero');
+
+  const hasToken = !!guestToken;
+  const displayName = guestName || couple.person1;
+  const totalSeats = 1 + maxCompanions;
+
+  // Loader
+  useEffect(() => {
+    const t1 = setTimeout(() => setLoaderOut(true), 2200);
+    const t2 = setTimeout(() => setLoading(false), 2800);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  // Music Auto-minimize
+  useEffect(() => {
+    if (loading) return;
+    const timer = setTimeout(() => setMusicMinimized(true), 4000);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  // Active Section Tracker (for minimal nav)
+  useEffect(() => {
+    if (loading) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) setActiveSection(e.target.id || 'hero');
+        });
+      },
+      { threshold: 0.5 }
+    );
+    document.querySelectorAll('section[id]').forEach((s) => observer.observe(s));
+    return () => observer.disconnect();
+  }, [loading]);
+
+  // Scroll reveal
+  useEffect(() => {
+    if (loading) return;
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('is-visible'); }),
+      { threshold: 0.08 }
+    );
+    document.querySelectorAll('.reveal, .slide-left, .slide-right, .slide-up').forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [loading]);
+
+  // Itinerary axis growing line
+  useEffect(() => {
+    if (loading) return;
+    const el = axisRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) el.classList.add('axis-grow'); },
+      { threshold: 0.05 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loading]);
+
+  // Modal focus management
+  useEffect(() => {
+    if (modalOpen) {
+      const first = modalRef.current?.querySelector<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      first?.focus();
+    }
+  }, [modalOpen]);
+
+  // Music toggle
+  const toggleMusic = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio && music.url) {
+      if (playing) { audio.pause(); }
+      else { audio.play().catch(() => {}); }
+    }
+    setPlaying((p) => !p);
+  }, [playing, music.url]);
+
+  // RSVP submit
+  async function handleSubmitRsvp() {
+    if (!hasToken || !eventId) return;
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const res = await fetch('/api/rsvp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: guestToken,
+          eventId,
+          name: displayName,
+          seats: guestConfirmed ? 1 + attendeeNames.filter((_, i) => attendeeChecked[i]).length : 0,
+          companionNames: guestConfirmed ? attendeeNames.filter((_, i) => attendeeChecked[i]) : [],
+          dietary: guestConfirmed ? dietary : undefined,
+          status: guestConfirmed ? 'confirmed' : 'declined',
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setSubmitError(json.error || 'Error al guardar'); return; }
+      setRsvpDone(true);
+    } catch {
+      setSubmitError('Error de conexión. Intenta de nuevo.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className={`${allFontVars} dlx-root`} style={rootStyle}>
+        <style suppressHydrationWarning>{css}</style>
+        <style suppressHydrationWarning>{dynamicCss}</style>
+        <div className={`loader ${loaderOut ? 'loader--out' : ''}`}>
+          <div className="loader-monogram">
+            <span className="loader-initial">{initials.person1}</span>
+            <span className="loader-amp">&</span>
+            <span className="loader-initial">{initials.person2}</span>
+          </div>
+          <div className="loader-line" />
+          <p className="loader-date label">
+            {date.day} · {date.month} · {date.year}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${allFontVars} dlx-root`} style={rootStyle}>
+      <style suppressHydrationWarning>{css}</style>
+      <style suppressHydrationWarning>{dynamicCss}</style>
+
+      {/* Audio */}
+      {music.url && <audio ref={audioRef} src={music.url} loop preload="none" />}
+
+      {/* ── MUSIC PLAYER ── */}
+      {music.url && (
+        <button 
+          className={`music-pill ${playing ? 'music-pill--playing' : ''} ${musicMinimized ? 'music-pill--minimized' : ''}`} 
+          onClick={() => {
+            if (musicMinimized) setMusicMinimized(false);
+            else toggleMusic();
+          }}
+          aria-label="Música"
+        >
+          <div className="music-pill-icon">
+            {playing ? <PauseIcon /> : <PlayIcon />}
+          </div>
+          <span className="music-pill-text">
+            {playing ? `${music.title || 'Música'} · ${music.artist || ''}` : 'Música'}
+          </span>
+          {playing && <span className="music-pill-wave"><span/><span/><span/><span/></span>}
+        </button>
+      )}
+
+      {/* ── MINIMAL NAV ── */}
+      <nav className={`dlx-min-nav ${loading ? '' : 'is-active'}`}>
+        {cfg.sections?.itinerary !== false && itinerary.length > 0 && (
+          <a href="#itinerary" className={activeSection === 'itinerary' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">Programa</span></a>
+        )}
+        {showDestination && (
+          <a href="#destination" className={activeSection === 'destination' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">Mapa</span></a>
+        )}
+        {cfg.sections?.dressCode !== false && dressCode.label && (
+          <a href="#dresscode" className={activeSection === 'dresscode' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">Vestimenta</span></a>
+        )}
+        {cfg.sections?.notes !== false && notes.length > 0 && (
+          <a href="#notes" className={activeSection === 'notes' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">Notas</span></a>
+        )}
+        {cfg.sections?.gifts !== false && (gifts.bank || gifts.giftListUrl || (gifts.giftTypes?.length ?? 0) > 0) && (
+          <a href="#gifts" className={activeSection === 'gifts' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">Regalos</span></a>
+        )}
+        <a href="#rsvp" className={activeSection === 'rsvp' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">RSVP</span></a>
+      </nav>
+
+      {/* ── HERO ── */}
+      <section className="dlx-hero" id="hero">
+        <div className="dlx-hero-bg" style={{ backgroundImage: `url(${heroUrl})` }} />
+        <div className="dlx-hero-glow" />
+        <div className="dlx-hero-overlay" />
+        <div className="dlx-hero-content">
+          <p className="label gold hero-label reveal">{heroLabel}</p>
+          <h1 className="dlx-hero-names reveal">
+            <span>{couple.person1}</span>
+            <span className="dlx-hero-amp">&</span>
+            <span>{couple.person2}</span>
+          </h1>
+          <div className="dlx-hero-meta reveal">
+            <span className="label gold">{date.day} · {date.month} · {date.year}</span>
+            <span className="dlx-meta-dot" />
+            <span className="label muted">{location}</span>
+          </div>
+          {/* Countdown */}
+          {countdown.isOver ? (
+            <div className="dlx-countdown reveal">
+              <span className="label gold">¡Gracias por celebrar con nosotros!</span>
+            </div>
+          ) : (
+            <div className="dlx-countdown reveal">
+              {[
+                { value: countdown.days, label: 'Días' },
+                { value: countdown.hours, label: 'Horas' },
+                { value: countdown.minutes, label: 'Min' },
+                { value: countdown.seconds, label: 'Seg' },
+              ].map(({ value, label }, i) => (
+                <React.Fragment key={label}>
+                  <div className="dlx-cd-unit">
+                    <span className="dlx-cd-value">{String(value).padStart(2, '0')}</span>
+                    <span className="dlx-cd-label">{label}</span>
+                  </div>
+                  {i < 3 && <span className="dlx-cd-sep">:</span>}
+                </React.Fragment>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="hero-scroll-indicator">
+          <span className="label muted" style={{ fontSize: '10px' }}>Desliza</span>
+          <div className="scroll-bar"><div className="scroll-thumb" /></div>
+        </div>
+      </section>
+
+      {renderBlocks('hero')}
+
+      {/* ── CITA ── */}
+      {cfg.sections?.quote !== false && quote.text && (
+        <section className="section dlx-dark" id="quote">
+          <div className="quote-mark reveal">"</div>
+          <p className="quote-text reveal">{quote.text}</p>
+          {quote.reference && <p className="label muted reveal" style={{ marginTop: '1rem', color: 'rgba(255,255,255,0.6)' }}>{quote.reference}</p>}
+        </section>
+      )}
+
+      {renderBlocks('quote')}
+
+      {/* ── NOMBRES Y PADRES ── */}
+      {cfg.sections?.parents !== false && (
+        <section className="section" id="parents">
+          <p className="label muted reveal" style={{ marginBottom: '2.5rem' }}>Con la bendición de nuestras familias</p>
+          <div className="parents-grid">
+            <div className="slide-left delay-1 text-center">
+              <p className="display-name">{fullNames.person1}</p>
+              <div className="name-sep"><span className="sep-line short" /></div>
+              {parents.person1 && (
+                <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
+                  {parents.person1}
+                </p>
+              )}
+            </div>
+            <div className="parents-monogram reveal">
+              <span>{initials.person1}</span>
+              <span className="pm-amp">&</span>
+              <span>{initials.person2}</span>
+            </div>
+            <div className="slide-right delay-1 text-center">
+              <p className="display-name">{fullNames.person2}</p>
+              <div className="name-sep"><span className="sep-line short" /></div>
+              {parents.person2 && (
+                <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
+                  {parents.person2}
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {renderBlocks('parents')}
+
+      {/* ── ITINERARIO ── */}
+      {cfg.sections?.itinerary !== false && itinerary.length > 0 && <Ornament />}
+      {cfg.sections?.itinerary !== false && itinerary.length > 0 && (
+        <section className="section" ref={itineraryRef} id="itinerary" style={{ maxWidth: '100%', width: '100%' }}>
+          <h2 className="section-heading reveal">Programa del Día</h2>
+          <p className="label muted reveal" style={{ marginBottom: '0.5rem' }}>
+            {date.day} · {date.month} · {date.year}
+          </p>
+          <div className="dlx-itinerary-wrap">
+            {itinerary.map((item, i) => {
+              const [h, m] = (item.time || '00:00').split(':');
+              const mapsUrl = item.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}` : '';
+              const isEven = i % 2 === 1;
+              return (
+                <div key={i} className={`dlx-irow-v2 slide-up${i <= 3 ? ` delay-${i + 1}` : ''}${isEven ? ' dlx-irow-v2--even' : ''}`}>
+                  {/* Hora (oculta en mobile) */}
+                  <div className="dlx-itime-col">
+                    <span className="dlx-itime-big">{h}<span style={{ fontSize: '0.45em', opacity: 0.6 }}>:{m}</span></span>
+                  </div>
+                  {/* Nodo central */}
+                  <div className="dlx-inode-col">
+                    <div className="dlx-inode-v2" />
+                  </div>
+                  {/* Tarjeta */}
+                  <div className="dlx-icontent-col">
+                    {/* Hora en mobile */}
+                    <div className="dlx-itime-mobile">
+                      <span className="dlx-itime-mobile-h">{h}</span>
+                      <span className="dlx-itime-mobile-m">:{m}</span>
+                    </div>
+                    <div className="dlx-icard-v2">
+                      {item.image && (
+                        <div className="dlx-iimg-wrap">
+                          <img src={item.image} alt={item.venue ?? item.name ?? 'Lugar del evento'} className="dlx-iimg" />
+                        </div>
+                      )}
+                      <div className="dlx-icard-v2-body">
+                        <p className="dlx-iname-v2">{item.name}</p>
+                        {item.venue && <p className="dlx-ivenue-v2">{item.venue}</p>}
+                        {item.address && (
+                          <div className="dlx-iaddress-v2">
+                            <PinIcon /><span>{item.address}</span>
+                          </div>
+                        )}
+                        {mapsUrl && (
+                          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="dlx-maps-btn">
+                            <MapsIcon /> Ver en Maps
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {renderBlocks('itinerary')}
+
+      {/* Solo mostramos ornamento si la siguiente sección (Destino) está activa */}
+      {cfg.sections?.destination !== false && showDestination && <Ornament />}
+
+      {/* ── DESTINO ── */}
+      {cfg.sections?.destination !== false && showDestination && (
+        <section className="section section--wide" id="destination">
+          <h2 className="section-heading reveal">Boda Destino</h2>
+          <p className="label muted reveal" style={{ marginBottom: '3rem' }}>
+            Te ayudamos a organizar tu estadía
+          </p>
+
+          {destination.hotels && destination.hotels.length > 0 && (
+            <>
+              <p className="label gold reveal" style={{ marginBottom: '1.5rem' }}>Hospedaje</p>
+              <div className="destination-grid reveal">
+                {destination.hotels.map((hotel, i) => (
+                  <div key={i} className={`dest-card delay-${i + 1}`}>
+                    <div className="dest-card-icon"><HotelIcon /></div>
+                    <p className="dest-card-name">{hotel.name}</p>
+                    <p className="label muted dest-card-category">{hotel.category}</p>
+                    <div className="dest-card-divider" />
+                    <div className="dest-card-address"><PinIcon /><span>{hotel.address}</span></div>
+                    {hotel.note && <p className="dest-card-note">{hotel.note}</p>}
+                    {hotel.phone && <a href={`tel:${hotel.phone}`} className="dest-card-phone">{hotel.phone}</a>}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {destination.transport?.info && (
+            <>
+              <p className="label gold reveal" style={{ margin: '3.5rem 0 1.5rem' }}>Transporte</p>
+              <div className="transport-card reveal">
+                <div className="transport-header">
+                  <CarIcon />
+                  <p className="dest-card-name" style={{ margin: 0 }}>Información de transporte</p>
+                </div>
+                <p className="transport-info">{destination.transport.info}</p>
+                {destination.transport.schedule && destination.transport.schedule.length > 0 && (
+                  <div className="transport-schedule">
+                    {destination.transport.schedule.map((s, i) => (
+                      <div key={i} className="transport-row">
+                        <span className="transport-time">{s.time}</span>
+                        <span className="transport-detail">{s.detail}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {destination.transport.contact && (
+                  <div className="transport-contact">
+                    <EnvelopeIcon />
+                    <a href={`mailto:${destination.transport.contact}`} className="dest-card-phone">
+                      {destination.transport.contact}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </section>
+      )}
+
+      {renderBlocks('destination')}
+
+      {/* ── DRESS CODE ── */}
+      {cfg.sections?.dressCode !== false && dressCode.label && <Ornament />}
+      {cfg.sections?.dressCode !== false && dressCode.label && (
+        <section className="section" id="dresscode" style={{ maxWidth: '100%', width: '100%' }}>
+          {/* Eyebrow */}
+          <p className="label gold reveal" style={{ letterSpacing: '0.25em', marginBottom: '0.75rem' }}>Dress Code</p>
+          {/* Nombre del dress code como hero */}
+          <h2 className="section-heading reveal" style={{ marginBottom: '0.75rem' }}>
+            {dressCode.label}
+          </h2>
+          <span className="sep-line reveal" style={{ maxWidth: '72px', marginBottom: '0' }} />
+
+          {/* Descripción general */}
+          {dressCode.description && (
+            <p className="dc-description reveal">{dressCode.description}</p>
+          )}
+
+          {/* Gender cards */}
+          {(dressCode.women || dressCode.men) && (
+            <div className="dc-gender-grid reveal">
+              {dressCode.women && (
+                <div className="dc-gender-card">
+                  <div className="dc-gender-icon-ring"><WomenIcon /></div>
+                  <p className="label gold" style={{ letterSpacing: '0.2em', margin: '0 0 0.1rem' }}>Ellas</p>
+                  <div className="dc-gender-divider-line" />
+                  <p className="dc-gender-desc">{dressCode.women}</p>
+                </div>
+              )}
+              {dressCode.men && (
+                <div className="dc-gender-card">
+                  <div className="dc-gender-icon-ring"><MenIcon /></div>
+                  <p className="label gold" style={{ letterSpacing: '0.2em', margin: '0 0 0.1rem' }}>Ellos</p>
+                  <div className="dc-gender-divider-line" />
+                  <p className="dc-gender-desc">{dressCode.men}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Paleta sugerida */}
+          {dressCode.swatches.length > 0 && (
+            <div className="reveal" style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+              <p className="dc-swatches-label">Colores sugeridos</p>
+              <div className="swatches">
+                {dressCode.swatches.map((s, i) => (
+                  <div key={i} className="swatch-item">
+                    <div className="swatch-circle" style={{ backgroundColor: s.color }} />
+                    <span className="swatch-name">{s.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Paleta a evitar */}
+          {dressCode.avoid.length > 0 && (
+            <div className="reveal" style={{ textAlign: 'center', marginTop: '2rem' }}>
+              <p className="dc-swatches-label">Por favor evita</p>
+              <div className="swatches">
+                {dressCode.avoid.map((s, i) => (
+                  <div key={i} className="swatch-item swatch-item--avoid">
+                    <div style={{ position: 'relative', width: 64, height: 64 }}>
+                      <div className="swatch-circle" style={{ backgroundColor: s.color, width: '100%', height: '100%' }} />
+                      <div className="swatch-avoid-x">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                          <path d="M4 4l10 10M14 4L4 14" stroke="rgba(255,255,255,0.55)" strokeWidth="1.5" strokeLinecap="round"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <span className="swatch-name">{s.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {renderBlocks('dressCode')}
+
+      {/* Ornamento condicional antes de Notas */}
+      {cfg.sections?.notes !== false && notes.length > 0 && <Ornament />}
+
+      {/* ── INDICACIONES ── */}
+      {cfg.sections?.notes !== false && notes.length > 0 && (
+        <section className="section" id="notes">
+          <h2 className="section-heading reveal">Toma nota</h2>
+          <div className="notes-list">
+            {notes.map((note, i) => (
+              <div key={i} className={`note-item reveal delay-${i + 1}`}>
+                <span className="note-dot" />
+                <p className="note-text">{note}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {renderBlocks('notes')}
+
+      {/* Ornamento condicional antes de Regalos */}
+      {cfg.sections?.gifts !== false && (() => {
+        const gt = gifts.giftTypes ?? [];
+        return gt.length > 0 || gifts.bank || gifts.giftListUrl;
+      })() && <Ornament />}
+
+      {/* ── REGALOS ── */}
+      {cfg.sections?.gifts !== false && (() => {
+        const gt = gifts.giftTypes ?? [];
+        const showTransfer = gt.includes('transfer') || (!gt.length && !!gifts.bank);
+        const showList     = gt.includes('list')     || (!gt.length && !!gifts.giftListUrl);
+        const showEnvelope = gt.includes('envelope');
+        if (!showTransfer && !showList && !showEnvelope) return null;
+        return (
+          <section className="section" id="gifts">
+            <h2 className="section-heading reveal">Mesa de Regalos</h2>
+            <p className="label muted reveal" style={{ maxWidth: '360px', lineHeight: '1.9', marginBottom: '2.5rem' }}>
+              Tu presencia es nuestro mayor regalo. Si deseas obsequiarnos algo, aquí encontrarás las opciones.
+            </p>
+            <div className="gifts-grid-v2">
+              {/* Transfer card — dark premium */}
+              {showTransfer && gifts.bank && (
+                <div className="gift-card-v2 gift-card-v2--transfer reveal">
+                  <div className="gct-header">
+                    <span className="gct-badge">Transferencia</span>
+                    <div className="gct-icon-wrap">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--gold)' }}>
+                        <rect x="2" y="5" width="20" height="14" rx="2"/>
+                        <path d="M2 10h20"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="gct-rows">
+                    {[
+                      { label: 'Banco',  value: gifts.bank,    mono: false },
+                      { label: 'Nombre', value: gifts.holder,  mono: false },
+                      { label: 'Cuenta', value: gifts.account, mono: true  },
+                      { label: 'CLABE',  value: gifts.clabe,   mono: true  },
+                    ].filter(r => r.value).map(({ label, value, mono }, idx) => (
+                      <React.Fragment key={label}>
+                        {idx > 0 && <div className="gct-divider" />}
+                        <div className="gct-row">
+                          <span className="gct-row-label">{label}</span>
+                          <span className={`gct-row-value${mono ? ' gct-row-value--mono' : ''}`}>{value}</span>
+                        </div>
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* List card — ivory */}
+              {showList && gifts.giftListUrl && (
+                <div className="gift-card-v2 gift-card-v2--list reveal delay-1">
+                  <div className="gcl-icon-ring">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--gold)' }}>
+                      <path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+                    </svg>
+                  </div>
+                  <p className="gcl-title">Mesa de Regalos</p>
+                  {gifts.giftListLabel && <p className="gcl-subtitle">{gifts.giftListLabel}</p>}
+                  <a href={gifts.giftListUrl} target="_blank" rel="noopener noreferrer" className="btn-outline btn-outline--sm">
+                    Ver lista →
+                  </a>
+                </div>
+              )}
+
+              {/* Envelope card — warm tint */}
+              {showEnvelope && (
+                <div className="gift-card-v2 gift-card-v2--envelope reveal delay-2">
+                  <div className="gce-icon-ring">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--gold)' }}>
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                  </div>
+                  <p className="gcl-title">Sobre de Regalo</p>
+                  <p className="gce-note">
+                    {gifts.envelopeMessage || 'Con gusto recibimos sobres el día del evento'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      })()}
+
+      {renderBlocks('gifts')}
+
+      {/* Ornamento condicional antes de No Niños */}
+      {noChildren && <Ornament />}
+
+      {/* ── NO NIÑOS ── */}
+      {noChildren && (
+        <section className="section">
+          <div className="no-children-block reveal">
+            <NoChildrenIcon />
+            <div>
+              <p className="no-children-title">Evento solo para adultos</p>
+              <p className="no-children-desc">{noChildrenMessage}</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {renderBlocks('noChildren')}
+
+      {/* Ornamento final antes del RSVP */}
+      <Ornament />
+
+      {/* ── RSVP ── */}
+      <section className="section" id="rsvp">
+        <h2 className="section-heading reveal">¿Nos acompañas?</h2>
+        {rsvpDeadline && (
+          <p className="label muted reveal" style={{ marginBottom: '1.5rem', textTransform: 'none', letterSpacing: '0.05em' }}>
+            Nos encantaría contar contigo. Por favor, confírmanos antes del <strong style={{ color: 'var(--gold)' }}>{rsvpDeadline}</strong>
+          </p>
+        )}
+        <div className="dlx-rsvp-actions reveal">
+          {hasToken ? (
+            <button className="btn-rsvp" onClick={() => setModalOpen(true)}>
+              {hasExistingRsvp ? 'Actualizar mi respuesta' : 'Confirmar mi asistencia'}
+            </button>
+          ) : (
+            <div style={{ textAlign: 'center' }}>
+              <p style={{
+                fontFamily: 'var(--font-jost)',
+                fontSize: '12px',
+                letterSpacing: '0.05em',
+                color: '#9B8B78',
+                padding: '1.25rem 2rem',
+                border: '1px solid color-mix(in srgb, var(--gold), transparent 80%)',
+                borderRadius: '0',
+                maxWidth: '400px',
+                lineHeight: '1.8'
+              }}>
+                Para confirmar, por favor utiliza el enlace personal que te enviamos.
+              </p>
+            </div>
+          )}
+          <a href={calendarUrl} target="_blank" rel="noopener noreferrer" className="btn-calendar">
+            <CalendarIcon />
+            Agendar en Google Calendar
+          </a>
+        </div>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer className="footer">
+        <p className="footer-monogram">{initials.person1} &amp; {initials.person2}</p>
+        <p className="footer-names">{couple.person1} &amp; {couple.person2}</p>
+        <p className="label muted" style={{ marginTop: '0.5rem' }}>
+          {date.day} · {date.month} · {date.year}{location ? ` · ${location}` : ''}
+        </p>
+      </footer>
+
+      {/* ── MODAL RSVP (pre-cargado) ── */}
+      {modalOpen && hasToken && (
+        <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}>
+          <div className="modal" ref={modalRef}>
+            <button className="modal-close" onClick={() => setModalOpen(false)} aria-label="Cerrar">×</button>
+            {rsvpDone ? (
+              <div className="modal-success">
+                <div className="modal-success-icon">✓</div>
+                <h3 className="modal-title">
+                  {guestConfirmed ? '¡Hasta pronto!' : 'Respuesta registrada'}
+                </h3>
+                <p className="label muted" style={{ textAlign: 'center', lineHeight: '1.8' }}>
+                  {guestConfirmed
+                    ? 'Tu confirmación fue registrada. Estamos emocionados de celebrar contigo.'
+                    : 'Lamentamos no poder verte. Gracias por avisarnos.'}
+                </p>
+              </div>
+            ) : (
+              <div className="modal-form">
+                <div className="modal-header">
+                  <p className="label gold" style={{ marginBottom: '0.5rem' }}>Confirmación de Asistencia</p>
+                  <h3 className="modal-title">{couple.person1} &amp; {couple.person2}</h3>
+                  {date.day && <p className="label muted">{date.day} · {date.month} · {date.year}</p>}
+                </div>
+
+                {/* Datos pre-cargados del invitado */}
+                <div className="modal-guest-card">
+                  <div className="mgc-avatar">{displayName.charAt(0)}</div>
+                  <div>
+                    <p className="mgc-name">{displayName}</p>
+                    <p className="label muted">{totalSeats} {totalSeats === 1 ? 'lugar' : 'lugares'} reservados</p>
+                  </div>
+                </div>
+
+                {hasExistingRsvp && guestConfirmed === null && (
+                  <p className="label muted" style={{ textAlign: 'center', lineHeight: '1.8', color: '#B8965A' }}>
+                    Ya tienes una confirmación registrada. Puedes actualizarla.
+                  </p>
+                )}
+
+                {submitError && (
+                  <p style={{ color: '#9C3A3A', fontSize: '12px', textAlign: 'center' }}>{submitError}</p>
+                )}
+
+                {guestConfirmed === null ? (
+                  <div className="rsvp-choice">
+                    <button
+                      className="rsvp-yes"
+                      onClick={() => {
+                        setGuestConfirmed(true);
+                        const names = initialCompanionNames.length > 0
+                          ? initialCompanionNames
+                          : Array.from({ length: maxCompanions }, (_, i) => `Acompañante ${i + 1}`);
+                        setAttendeeNames(names);
+                        setAttendeeChecked(Array(names.length).fill(true));
+                      }}
+                    >
+                      Sí, asistiré
+                    </button>
+                    <button className="rsvp-no" onClick={() => setGuestConfirmed(false)}>
+                      No podré ir
+                    </button>
+                  </div>
+                ) : guestConfirmed ? (
+                  <div className="rsvp-confirmed">
+                    <p className="rsvp-confirmed-text">¡Perfecto! Te esperamos.</p>
+
+                    <div className="attendees-list">
+                      <p className="label muted" style={{ marginBottom: '0.75rem' }}>¿Quiénes asistirán?</p>
+                      {/* Titular — siempre confirmado */}
+                      <div className="attendee-row attendee-row--main">
+                        <div className="attendee-num">✓</div>
+                        <span className="attendee-name">{displayName}</span>
+                        <span className="label muted">Titular</span>
+                      </div>
+                      {/* Acompañantes con checkbox */}
+                      {attendeeNames.map((name, i) => (
+                        <div key={i} className="attendee-row">
+                          <label className="attendee-check-label">
+                            <input
+                              type="checkbox"
+                              checked={attendeeChecked[i] ?? true}
+                              onChange={() => {
+                                const updated = [...attendeeChecked];
+                                updated[i] = !updated[i];
+                                setAttendeeChecked(updated);
+                              }}
+                            />
+                            <span className="attendee-check-box" />
+                          </label>
+                          <span className={`attendee-name${!(attendeeChecked[i] ?? true) ? ' attendee-name--muted' : ''}`}>
+                            {name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Opciones Dietéticas */}
+                    {(cfg.rsvp?.dietaryOptions?.length ?? 0) > 0 && (
+                      <div className="dlx-dietary-wrap">
+                        <p className="label muted" style={{ marginBottom: '0.75rem', textAlign: 'center' }}>Restricción alimentaria</p>
+                        <div className="dietary-grid">
+                          {cfg.rsvp!.dietaryOptions!.map((opt) => (
+                            <button
+                              key={opt}
+                              type="button"
+                              className={`dietary-btn${dietary === opt ? ' dietary-btn--active' : ''}`}
+                              onClick={() => setDietary(opt)}
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      className="btn-submit"
+                      onClick={handleSubmitRsvp}
+                      disabled={submitting}
+                    >
+                      {submitting ? 'Guardando…' : 'Confirmar asistencia'}
+                    </button>
+                    <button className="rsvp-change" onClick={() => { setGuestConfirmed(null); setAttendeeNames([]); setAttendeeChecked([]); setSubmitError(''); }}>
+                      Cambiar respuesta
+                    </button>
+                  </div>
+                ) : (
+                  <div className="rsvp-confirmed">
+                    <p className="rsvp-confirmed-text" style={{ color: '#9B8B78' }}>
+                      Lamentamos no poder verte, gracias por avisarnos.
+                    </p>
+                    <button
+                      className="btn-submit"
+                      onClick={handleSubmitRsvp}
+                      disabled={submitting}
+                    >
+                      {submitting ? 'Guardando…' : 'Enviar respuesta'}
+                    </button>
+                    <button className="rsvp-change" onClick={() => { setGuestConfirmed(null); setSubmitError(''); }}>
+                      Cambiar respuesta
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+function Ornament() {
+  return (
+    <div className="ornament">
+      <span className="sep-line" />
+      <div className="ornament-motif">
+        {/* Rombo pequeño izquierdo */}
+        <svg width="8" height="8" viewBox="0 0 8 8">
+          <polygon points="4,0 8,4 4,8 0,4" fill="none" stroke="#B8965A" strokeWidth="1" opacity="0.45" />
+        </svg>
+        {/* Estrella de 4 puntas central */}
+        <svg width="18" height="18" viewBox="0 0 18 18">
+          <path
+            d="M9 0 C9 0 9.6 5.4 12.4 5.6 C15.2 5.8 18 9 18 9 C18 9 15.2 12.2 12.4 12.4 C9.6 12.6 9 18 9 18 C9 18 8.4 12.6 5.6 12.4 C2.8 12.2 0 9 0 9 C0 9 2.8 5.8 5.6 5.6 C8.4 5.4 9 0 9 0 Z"
+            fill="#B8965A"
+            opacity="0.75"
+          />
+        </svg>
+        {/* Rombo pequeño derecho */}
+        <svg width="8" height="8" viewBox="0 0 8 8">
+          <polygon points="4,0 8,4 4,8 0,4" fill="none" stroke="#B8965A" strokeWidth="1" opacity="0.45" />
+        </svg>
+      </div>
+      <span className="sep-line" />
+    </div>
+  );
+}
+function WomenIcon() {
+  return <Flower2 size={26} color="var(--gold)" strokeWidth={1.4} />;
+}
+function MenIcon() {
+  return <Shirt size={26} color="var(--gold)" strokeWidth={1.4} />;
+}
+function NoChildrenIcon() {
+  return <UserX size={40} color="var(--gold)" strokeWidth={1.4} style={{ flexShrink: 0 }} />;
+}
+
+function PinIcon() {
+  return <MapPin size={12} color="var(--gold)" strokeWidth={1.6} style={{ flexShrink: 0, marginTop: '1px' }} />;
+}
+function MapsIcon() {
+  return <MapPin size={13} strokeWidth={1.6} style={{ flexShrink: 0 }} />;
+}
+function PlayIcon() {
+  return <Play size={14} />;
+}
+function PauseIcon() {
+  return <Pause size={14} />;
+}
+function CalendarIcon() {
+  return <CalendarDays size={15} style={{ flexShrink: 0 }} />;
+}
+function HotelIcon() {
+  return <Hotel size={28} color="var(--gold)" strokeWidth={1.3} />;
+}
+function CarIcon() {
+  return <Car size={28} color="var(--gold)" strokeWidth={1.3} />;
+}
+function EnvelopeIcon() {
+  return <Mail size={44} color="var(--gold)" strokeWidth={1.4} />;
+}
+function EnvelopeSmallIcon() {
+  return <Mail size={32} color="var(--gold)" strokeWidth={1.4} />;
+}
+function GiftIcon() {
+  return <Gift size={40} color="var(--gold)" strokeWidth={1.4} />;
+}
+
