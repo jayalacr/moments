@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import type { RsvpRow, RsvpStats, GuestWithRsvp } from '../_actions';
+import type { RsvpRow, RsvpStats, GuestWithRsvp } from '@/app/admin/invitados/types';
 import { saveMaxCapacity, updateGuestCompanions } from '../_actions';
 
 const C = {

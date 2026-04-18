@@ -153,6 +153,14 @@ export default async function EventoDetailPage({ params }: Props) {
           <Link href={`/superadmin/eventos/${event.id}/config`} className="ghost-link">
             editar datos →
           </Link>
+          <Link href={`/superadmin/eventos/${event.id}/editar`} className="ghost-link">
+            editar invitación →
+          </Link>
+          {(event.plan === 'plus' || event.plan === 'deluxe') && (
+            <Link href={`/superadmin/eventos/${event.id}/invitados`} className="ghost-link">
+              invitados & rsvp →
+            </Link>
+          )}
           {event.template_type && (
             <Link href={`/superadmin/eventos/${event.id}/preview`} target="_blank" className="ghost-link">
               vista previa ↗

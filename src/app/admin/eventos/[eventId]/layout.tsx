@@ -2,6 +2,7 @@ import { Cormorant_Garamond, Jost } from 'next/font/google';
 import Link from 'next/link';
 import LogoutButton from '@/components/auth/LogoutButton';
 import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
@@ -25,14 +26,34 @@ const C = {
   muted: '#9C8E82',
 };
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+interface Props {
+  children: React.ReactNode;
+  params: Promise<{ eventId: string }>;
+}
+
+export default async function EventoLayout({ children, params }: Props) {
+  const { eventId } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) redirect('/login');
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('full_name, email')
-    .eq('id', user?.id ?? '')
+    .eq('id', user.id)
     .single();
+
+  const { data: event } = await supabase
+    .from('events')
+    .select('id, title, plan')
+    .eq('id', eventId)
+    .eq('owner_id', user.id)
+    .single();
+
+  if (!event) redirect('/admin');
+
+  const showGuests = event.plan === 'plus' || event.plan === 'deluxe';
 
   return (
     <div
@@ -65,6 +86,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           border: 1.5px solid currentColor; flex-shrink: 0;
         }
         .admin-nav-link.active .dot { background: ${C.accent}; border-color: ${C.accent}; }
+        .back-link {
+          display: flex; align-items: center; gap: 6px;
+          font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+          color: ${C.muted}; text-decoration: none;
+          transition: color 0.2s;
+        }
+        .back-link:hover { color: ${C.accent}; }
       `}</style>
 
       {/* ── Sidebar ── */}
@@ -78,31 +106,52 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           flexDirection: 'column',
         }}
       >
-        {/* Brand */}
+        {/* Brand + back */}
         <div style={{ padding: '28px 20px 24px', borderBottom: `1px solid ${C.border}` }}>
+          <Link href="/admin" className="back-link" style={{ marginBottom: '16px', display: 'flex' }}>
+            ← Mis eventos
+          </Link>
           <p
             style={{
               fontFamily: 'var(--font-cormorant)',
-              fontSize: '22px',
-              fontWeight: 300,
+              fontSize: '16px',
+              fontWeight: 400,
               fontStyle: 'italic',
               color: C.text,
-              letterSpacing: '0.05em',
-              lineHeight: 1,
+              letterSpacing: '0.03em',
+              lineHeight: 1.3,
+              marginTop: '12px',
+              marginBottom: '8px',
             }}
           >
-            Moments
+            {event.title}
           </p>
-          <p style={{ marginTop: '6px', fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: C.accent }}>
-            Mi panel
-          </p>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '100px', backgroundColor: event.plan === 'deluxe' ? '#1C1611' : '#F5F1EC', border: `1px solid ${event.plan === 'deluxe' ? '#1C1611' : C.border}` }}>
+            <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', color: event.plan === 'deluxe' ? '#C9A87C' : C.accent }}>
+              Plan {event.plan}
+            </span>
+          </div>
         </div>
 
-        {/* Nav */}
+        {/* Nav contextual */}
         <nav style={{ flex: 1, padding: '20px 12px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-          <Link href="/admin" className="admin-nav-link">
+          <Link href={`/admin/eventos/${eventId}`} className="admin-nav-link">
             <span className="dot" />
-            Mis eventos
+            Resumen
+          </Link>
+          <Link href={`/admin/eventos/${eventId}/editar`} className="admin-nav-link">
+            <span className="dot" />
+            Editar invitación
+          </Link>
+          {showGuests && (
+            <Link href={`/admin/eventos/${eventId}/invitados`} className="admin-nav-link">
+              <span className="dot" />
+              Invitados & RSVP
+            </Link>
+          )}
+          <Link href={`/admin/eventos/${eventId}/preview`} className="admin-nav-link">
+            <span className="dot" />
+            Vista previa
           </Link>
         </nav>
 

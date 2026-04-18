@@ -13,11 +13,11 @@ const C = {
 };
 
 const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-  published: { label: 'Publicado', color: '#5A7A5A', bg: 'rgba(90,122,90,0.1)' },
-  draft:     { label: 'Borrador',  color: C.muted,  bg: 'rgba(0,0,0,0.05)' },
-  setup:     { label: 'En edición', color: C.accent, bg: C.accentLight },
-  paused:    { label: 'Pausado',   color: '#8B6914', bg: 'rgba(139,105,20,0.1)' },
-  finished:  { label: 'Finalizado', color: C.mutedLight, bg: 'rgba(0,0,0,0.05)' },
+  published: { label: 'Publicado',   color: '#5A7A5A',  bg: 'rgba(90,122,90,0.1)' },
+  draft:     { label: 'Borrador',    color: C.muted,    bg: 'rgba(0,0,0,0.05)' },
+  setup:     { label: 'En edición',  color: C.accent,   bg: C.accentLight },
+  paused:    { label: 'Pausado',     color: '#8B6914',  bg: 'rgba(139,105,20,0.1)' },
+  finished:  { label: 'Finalizado',  color: C.mutedLight, bg: 'rgba(0,0,0,0.05)' },
 };
 
 const PLAN_LABELS: Record<string, string> = {
@@ -45,46 +45,30 @@ export default async function AdminPage() {
     .eq('owner_id', user.id)
     .order('created_at', { ascending: false });
 
-  const event = events?.[0] ?? null;
-
   return (
-    <div style={{ padding: '40px 48px', maxWidth: '760px' }}>
+    <div style={{ padding: '40px 48px', maxWidth: '860px' }}>
       <style>{`
-        .admin-cta {
-          display: inline-flex; align-items: center; gap: 8px;
-          padding: 12px 24px;
-          background: ${C.text};
-          color: ${C.bg};
-          border-radius: 8px;
-          font-size: 12px;
-          font-family: var(--font-jost);
-          letter-spacing: 3px;
-          text-transform: uppercase;
-          text-decoration: none;
-          transition: opacity 0.2s;
-        }
-        .admin-cta:hover { opacity: 0.85; }
-        .admin-cta-sec {
-          display: inline-flex; align-items: center; gap: 8px;
-          padding: 12px 24px;
-          background: transparent;
-          color: ${C.text};
+        .event-card {
+          display: block;
+          background: #fff;
           border: 1px solid ${C.border};
-          border-radius: 8px;
-          font-size: 12px;
-          font-family: var(--font-jost);
-          letter-spacing: 3px;
-          text-transform: uppercase;
+          border-radius: 12px;
+          overflow: hidden;
           text-decoration: none;
-          transition: border-color 0.2s, background 0.2s;
+          color: inherit;
+          transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
         }
-        .admin-cta-sec:hover { border-color: ${C.accent}; background: ${C.accentLight}; }
+        .event-card:hover {
+          border-color: ${C.accent};
+          box-shadow: 0 4px 20px rgba(201,168,124,0.15);
+          transform: translateY(-2px);
+        }
       `}</style>
 
       {/* Cabecera */}
       <div style={{ marginBottom: '40px' }}>
         <p style={{ fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', color: C.accent, marginBottom: '8px' }}>
-          Mi invitación
+          Mis eventos
         </p>
         <h1
           style={{
@@ -96,12 +80,11 @@ export default async function AdminPage() {
             lineHeight: 1.1,
           }}
         >
-          {event ? event.title : 'Bienvenido'}
+          Panel de organizador
         </h1>
       </div>
 
-      {!event ? (
-        /* Sin evento */
+      {!events || events.length === 0 ? (
         <div
           style={{
             padding: '48px 40px',
@@ -119,109 +102,74 @@ export default async function AdminPage() {
               marginBottom: '12px',
             }}
           >
-            Aún no tienes un evento asignado
+            Aún no tienes eventos asignados
           </p>
           <p style={{ fontSize: '13px', color: C.muted, lineHeight: 1.6 }}>
             El administrador creará tu invitación y te notificará cuando esté lista.
           </p>
         </div>
       ) : (
-        /* Evento */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Card principal */}
-          <div
-            style={{
-              backgroundColor: '#fff',
-              border: `1px solid ${C.border}`,
-              borderRadius: '12px',
-              overflow: 'hidden',
-            }}
-          >
-            {/* Franja superior decorativa */}
-            <div style={{ height: '3px', background: `linear-gradient(90deg, ${C.accent}, #E8D5C4)` }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {events.map(event => {
+            const s = STATUS_LABELS[event.status] ?? STATUS_LABELS.draft;
+            return (
+              <Link key={event.id} href={`/admin/eventos/${event.id}`} className="event-card">
+                {/* Franja decorativa */}
+                <div style={{ height: '3px', background: `linear-gradient(90deg, ${C.accent}, #E8D5C4)` }} />
 
-            <div style={{ padding: '28px 32px' }}>
-              {/* Meta info */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
-                {/* Estado */}
-                {(() => {
-                  const s = STATUS_LABELS[event.status] ?? STATUS_LABELS.draft;
-                  return (
-                    <span style={{ padding: '4px 12px', borderRadius: '20px', backgroundColor: s.bg, fontSize: '11px', color: s.color, letterSpacing: '0.5px' }}>
-                      {s.label}
-                    </span>
-                  );
-                })()}
+                <div style={{ padding: '24px 28px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+                  {/* Info principal */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                      <span style={{ padding: '3px 10px', borderRadius: '20px', backgroundColor: s.bg, fontSize: '10px', color: s.color, letterSpacing: '0.5px', fontWeight: 500 }}>
+                        {s.label}
+                      </span>
+                      <span style={{ fontSize: '11px', color: C.muted, letterSpacing: '1px' }}>
+                        {TYPE_LABELS[event.event_type] ?? event.event_type}
+                      </span>
+                      <span style={{ width: '3px', height: '3px', borderRadius: '50%', backgroundColor: C.border, display: 'inline-block' }} />
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          letterSpacing: '1px',
+                          textTransform: 'uppercase',
+                          padding: '3px 10px',
+                          borderRadius: '100px',
+                          backgroundColor: event.plan === 'deluxe' ? '#1C1611' : event.plan === 'plus' ? '#FDFBF7' : '#F5F1EC',
+                          border: `1px solid ${event.plan === 'deluxe' ? '#1C1611' : C.border}`,
+                          color: event.plan === 'deluxe' ? '#C9A87C' : C.accent,
+                        }}
+                      >
+                        {PLAN_LABELS[event.plan] ?? event.plan}
+                      </span>
+                    </div>
 
-                <span style={{ width: '3px', height: '3px', borderRadius: '50%', backgroundColor: C.border }} />
-
-                <span style={{ fontSize: '12px', color: C.muted, letterSpacing: '1px' }}>
-                  {TYPE_LABELS[event.event_type] ?? event.event_type}
-                </span>
-
-                <span style={{ width: '3px', height: '3px', borderRadius: '50%', backgroundColor: C.border }} />
-
-                <span style={{ fontSize: '12px', color: C.accent, letterSpacing: '1px' }}>
-                  Plan {PLAN_LABELS[event.plan] ?? event.plan}
-                </span>
-              </div>
-
-              {/* Separador ornamental */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-                <div style={{ flex: 1, height: '1px', backgroundColor: C.border }} />
-                <span style={{ color: C.accent, fontSize: '14px' }}>✦</span>
-                <div style={{ flex: 1, height: '1px', backgroundColor: C.border }} />
-              </div>
-
-              {/* Detalles del evento */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-                {[
-                  { label: 'Url pública', value: `/${event.event_type}/${event.slug}` },
-                  { label: 'Tipo de evento', value: TYPE_LABELS[event.event_type] ?? event.event_type },
-                  { label: 'Plan', value: `Moments ${PLAN_LABELS[event.plan]}` },
-                  { label: 'Creado', value: new Date(event.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) },
-                ].map(item => (
-                  <div key={item.label}>
-                    <p style={{ fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', color: C.mutedLight, marginBottom: '4px' }}>
-                      {item.label}
+                    <p
+                      style={{
+                        fontFamily: 'var(--font-cormorant)',
+                        fontSize: '22px',
+                        fontWeight: 300,
+                        fontStyle: 'italic',
+                        color: C.text,
+                        margin: 0,
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {event.title}
                     </p>
-                    <p style={{ fontSize: '13px', color: C.text }}>
-                      {item.value}
+
+                    <p style={{ fontSize: '12px', color: C.mutedLight, marginTop: '6px' }}>
+                      Creado el {new Date(event.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}
                     </p>
                   </div>
-                ))}
-              </div>
 
-              {/* Acciones */}
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <Link href={`/admin/editar`} className="admin-cta">
-                  Editar invitación
-                </Link>
-                <Link
-                  href={event.status === 'published' ? `/${event.event_type}/${event.slug}` : '/admin/preview'}
-                  target="_blank"
-                  className="admin-cta-sec"
-                >
-                  {event.status === 'published' ? 'Ver invitación ↗' : 'Vista previa ↗'}
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* Nota informativa */}
-          <div
-            style={{
-              padding: '16px 20px',
-              backgroundColor: C.accentLight,
-              borderRadius: '8px',
-              border: `1px solid rgba(201,168,124,0.25)`,
-            }}
-          >
-            <p style={{ fontSize: '13px', color: C.muted, lineHeight: 1.6 }}>
-              <span style={{ color: C.accent, fontWeight: 500 }}>Tip: </span>
-              Cualquier cambio que guardes se reflejará en tiempo real en tu invitación pública.
-            </p>
-          </div>
+                  {/* Flecha */}
+                  <div style={{ color: C.accent, fontSize: '20px', flexShrink: 0 }}>→</div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
