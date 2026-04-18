@@ -25,6 +25,7 @@ export interface PlusConfig {
     mapsUrl?: string;
     image?: string;
     imageObjectPosition?: string;
+    imageScale?: number;
   }>;
   dressCode?: {
     label?: string;
@@ -407,6 +408,7 @@ export default function PlusTemplate({
   const [rsvpName, setRsvpName] = useState(guestName ?? '');
   const [companionInputs, setCompanionInputs] = useState<string[]>([]);
   const [dietary, setDietary] = useState(E.rsvp.dietaryOptions?.[0] ?? 'Sin restricción');
+  const [dietaryMap, setDietaryMap] = useState<Record<string, string>>({});
   const [rsvpSent, setRsvpSent] = useState(false);
   const [rsvpStatus, setRsvpStatus] = useState<'confirmed' | 'declined' | null>(null);
   const [rsvpLoading, setRsvpLoading] = useState(false);
@@ -505,6 +507,7 @@ export default function PlusTemplate({
           seats: status === 'declined' ? 0 : 1 + companionInputs.length,
           companionNames: status === 'declined' ? [] : companionInputs,
           dietary,
+          dietaryPerPerson: status === 'declined' ? {} : dietaryMap,
           status,
         }),
       });
@@ -967,8 +970,8 @@ export default function PlusTemplate({
                     placeholder="Ej. Juan García"
                     value={rsvpName}
                     onChange={(e) => setRsvpName(e.target.value)}
-                    readOnly={!!guestToken}
-                    style={guestToken ? { opacity: 0.6, cursor: 'default' } : undefined}
+                    readOnly={!!guestName || !!guestToken}
+                    style={(guestName || guestToken) ? { opacity: 0.7, cursor: 'not-allowed' } : undefined}
                   />
                 </div>
 
@@ -1014,24 +1017,34 @@ export default function PlusTemplate({
                   </div>
                 )}
 
-                {/* Restricción alimentaria */}
-                {(E.rsvp.dietaryOptions?.length ?? 0) > 0 && (
-                  <div className="form-field">
-                    <label className="form-label">Restricción alimentaria</label>
-                    <div className="dietary-grid">
-                      {E.rsvp.dietaryOptions!.map((opt) => (
-                        <button
-                          key={opt}
-                          type="button"
-                          className={`dietary-btn${dietary === opt ? ' dietary-btn--active' : ''}`}
-                          onClick={() => setDietary(opt)}
-                        >
-                          {opt}
-                        </button>
+                {/* Restricción alimentaria por Persona */}
+                {(E.rsvp.dietaryOptions?.length ?? 0) > 0 && (() => {
+                  const attendees = [rsvpName || 'Tú', ...companionInputs.filter(n => n.trim() !== '')];
+                  return (
+                    <div className="form-field">
+                      <label className="form-label" style={{ marginBottom: '1rem' }}>Sugerencia de menú / Restricción</label>
+                      {attendees.map((person) => (
+                        <div key={person} style={{ marginBottom: '1.25rem' }}>
+                          <p style={{ fontSize: '0.7rem', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '0.5rem' }}>
+                            {person}
+                          </p>
+                          <div className="dietary-grid">
+                            {E.rsvp.dietaryOptions!.map((opt) => (
+                              <button
+                                key={opt}
+                                type="button"
+                                className={`dietary-btn${dietaryMap[person] === opt ? ' dietary-btn--active' : ''}`}
+                                onClick={() => setDietaryMap(prev => ({ ...prev, [person]: opt }))}
+                              >
+                                {opt}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {rsvpError && (
                   <p className="label muted" style={{ color: '#c0392b', textAlign: 'center', marginBottom: '0.5rem' }}>

@@ -301,7 +301,7 @@ export function PhotoPositioner({
 // PhotoPositionerModal — full-screen overlay with large realistic preview
 // ---------------------------------------------------------------------------
 export function PhotoPositionerModal({
-  url, objectPosition, scale, label, aspectRatio = '4/3', aspectRatioDesktop, onConfirm, onClose, C,
+  url, objectPosition, scale, label, aspectRatio = '4/3', aspectRatioDesktop, onConfirm, onClose, C, variant = 'default',
 }: {
   url: string;
   objectPosition?: string;
@@ -313,6 +313,7 @@ export function PhotoPositionerModal({
   onConfirm: (pos: string, scale: number) => void;
   onClose: () => void;
   C: PositionerColors;
+  variant?: 'default' | 'itinerary';
 }) {
   const [pendingPos,   setPendingPos]   = useState(objectPosition ?? 'center center');
   const [pendingScale, setPendingScale] = useState(scale ?? 1);
@@ -388,15 +389,62 @@ export function PhotoPositionerModal({
 
         {/* Preview */}
         <div style={{ padding: '16px' }}>
-          <PhotoPositioner
-            url={url}
-            objectPosition={pendingPos}
-            scale={pendingScale}
-            onChange={(pos, s) => { setPendingPos(pos); setPendingScale(s); }}
-            C={C}
-            aspectRatio={viewMode === 'mobile' ? aspectRatio : (aspectRatioDesktop || aspectRatio)}
-          />
-          <p style={{ fontSize: '11px', color: C.muted, fontFamily: C.font, marginTop: '8px', textAlign: 'center' }}>
+          {variant === 'itinerary' ? (
+            <div style={{ 
+              background: '#FDFBF7', 
+              borderRadius: '18px', 
+              padding: '0', 
+              border: `1px solid ${C.border}`,
+              boxShadow: '0 8px 30px rgba(0,0,0,0.06)',
+              margin: '0 auto',
+              maxWidth: viewMode === 'mobile' ? '320px' : '480px',
+              overflow: 'hidden'
+            }}>
+              <PhotoPositioner
+                url={url}
+                objectPosition={pendingPos}
+                scale={pendingScale}
+                onChange={(pos, s) => { setPendingPos(pos); setPendingScale(s); }}
+                C={C}
+                aspectRatio={aspectRatio}
+              />
+              <div style={{ padding: '1.25rem 1.5rem 1.5rem', textAlign: 'center' }}>
+                <p style={{ fontSize: '1.6rem', fontFamily: 'var(--font-cormorant), serif', color: C.text, margin: '0 0 4px', fontStyle: 'italic', fontWeight: 400 }}>
+                  Ceremonia Religiosa
+                </p>
+                <p style={{ fontSize: '10px', fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.15em', margin: '0 0 12px' }}>
+                  Parroquia el Espíritu Santo
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: C.accent, opacity: 0.8 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  <span style={{ fontSize: '11px', fontWeight: 500 }}>Palacio de Justicia 500, Anáhuac...</span>
+                </div>
+                <div style={{ 
+                  marginTop: '16px', 
+                  padding: '6px 14px', 
+                  borderRadius: '100px', 
+                  border: `1px solid ${C.accent}`, 
+                  color: C.accent, 
+                  fontSize: '9px', 
+                  display: 'inline-block',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em'
+                }}>
+                  Ver en Maps
+                </div>
+              </div>
+            </div>
+          ) : (
+            <PhotoPositioner
+              url={url}
+              objectPosition={pendingPos}
+              scale={pendingScale}
+              onChange={(pos, s) => { setPendingPos(pos); setPendingScale(s); }}
+              C={C}
+              aspectRatio={viewMode === 'mobile' ? aspectRatio : (aspectRatioDesktop || aspectRatio)}
+            />
+          )}
+          <p style={{ fontSize: '11px', color: C.muted, fontFamily: C.font, marginTop: '12px', textAlign: 'center' }}>
             Arrastra para reposicionar · scroll o pellizco para zoom
           </p>
         </div>

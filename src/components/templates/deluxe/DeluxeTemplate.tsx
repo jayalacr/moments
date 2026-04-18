@@ -8,7 +8,15 @@ import type { PhotoEntry } from '@/lib/imageLayout';
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-interface ItineraryItem { time?: string; name?: string; venue?: string; address?: string; image?: string; }
+interface ItineraryItem { 
+  time?: string; 
+  name?: string; 
+  venue?: string; 
+  address?: string; 
+  image?: string; 
+  imageObjectPosition?: string;
+  imageScale?: number;
+}
 interface Swatch { color: string; name: string; }
 interface Hotel { name: string; category: string; address: string; note: string; phone: string; }
 
@@ -1762,7 +1770,8 @@ export default function DeluxeTemplate({
     person2: cfg.parents?.person2 || '',
   };
   // Hero photo
-  const allPhotos = cfg.photos ?? [];
+  // Limit specific to Deluxe plan as per requirements
+  const allPhotos = (cfg.photos ?? []).slice(0, 15);
   const heroEntry = allPhotos.find(p => p.role === 'hero');
   const heroUrl   = heroEntry?.url || DEFAULT_PHOTOS.hero;
 
@@ -1871,6 +1880,7 @@ export default function DeluxeTemplate({
   const [attendeeNames, setAttendeeNames] = useState<string[]>([]);
   const [attendeeChecked, setAttendeeChecked] = useState<boolean[]>([]);
   const [dietary, setDietary] = useState(cfg.rsvp?.dietaryOptions?.[0] ?? '');
+  const [dietaryMap, setDietaryMap] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [playing, setPlaying] = useState(false);
@@ -1974,6 +1984,7 @@ export default function DeluxeTemplate({
           seats: guestConfirmed ? 1 + attendeeNames.filter((_, i) => attendeeChecked[i]).length : 0,
           companionNames: guestConfirmed ? attendeeNames.filter((_, i) => attendeeChecked[i]) : [],
           dietary: guestConfirmed ? dietary : undefined,
+          dietaryPerPerson: guestConfirmed ? dietaryMap : undefined,
           status: guestConfirmed ? 'confirmed' : 'declined',
         }),
       });
@@ -2182,7 +2193,16 @@ export default function DeluxeTemplate({
                     <div className="dlx-icard-v2">
                       {item.image && (
                         <div className="dlx-iimg-wrap">
-                          <img src={item.image} alt={item.venue ?? item.name ?? 'Lugar del evento'} className="dlx-iimg" />
+                          <img 
+                            src={item.image} 
+                            alt={item.venue ?? item.name ?? 'Lugar del evento'} 
+                            className="dlx-iimg" 
+                            style={{
+                              objectPosition: item.imageObjectPosition ?? 'center center',
+                              transform: `scale(${item.imageScale ?? 1})`,
+                              transformOrigin: item.imageObjectPosition ?? 'center center',
+                            }}
+                          />
                         </div>
                       )}
                       <div className="dlx-icard-v2-body">
@@ -2550,15 +2570,30 @@ export default function DeluxeTemplate({
             ) : (
               <div className="modal-form">
                 <div className="modal-header">
-                  <p className="label gold" style={{ marginBottom: '0.5rem' }}>Confirmación de Asistencia</p>
-                  <h3 className="modal-title">{couple.person1} &amp; {couple.person2}</h3>
-                  {date.day && <p className="label muted">{date.day} · {date.month} · {date.year}</p>}
+                  <p className="label gold" style={{ marginBottom: '1.5rem' }}>Confirmación de Asistencia</p>
+                  <h3 className="modal-title" style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
+                    ¡Hola {displayName}!
+                  </h3>
+                  <p className="label muted" style={{ textTransform: 'none', letterSpacing: '0.02em', fontSize: '14px', marginBottom: '1.5rem' }}>
+                    Nos encantaría que nos acompañaras en nuestro gran día.
+                  </p>
+                  <div className="sep-line" style={{ maxWidth: '40px', margin: '0 auto 1.5rem' }} />
                 </div>
 
                 {/* Datos pre-cargados del invitado */}
                 <div className="modal-guest-card">
                   <div className="mgc-avatar">{displayName.charAt(0)}</div>
-                  <div>
+                  <div style={{ textAlign: 'left' }}>
+                    <p style={{ 
+                      fontFamily: 'var(--font-jost)', 
+                      fontSize: '10px', 
+                      letterSpacing: '0.1em', 
+                      textTransform: 'uppercase', 
+                      color: 'var(--gold)',
+                      marginBottom: '0.2rem'
+                    }}>
+                      Invitado Confirmado
+                    </p>
                     <p className="mgc-name">{displayName}</p>
                     <p className="label muted">{totalSeats} {totalSeats === 1 ? 'lugar' : 'lugares'} reservados</p>
                   </div>
@@ -2627,24 +2662,38 @@ export default function DeluxeTemplate({
                       ))}
                     </div>
 
-                    {/* Opciones Dietéticas */}
-                    {(cfg.rsvp?.dietaryOptions?.length ?? 0) > 0 && (
-                      <div className="dlx-dietary-wrap">
-                        <p className="label muted" style={{ marginBottom: '0.75rem', textAlign: 'center' }}>Restricción alimentaria</p>
-                        <div className="dietary-grid">
-                          {cfg.rsvp!.dietaryOptions!.map((opt) => (
-                            <button
-                              key={opt}
-                              type="button"
-                              className={`dietary-btn${dietary === opt ? ' dietary-btn--active' : ''}`}
-                              onClick={() => setDietary(opt)}
-                            >
-                              {opt}
-                            </button>
+                    {/* Opciones Dietéticas por Persona */}
+                    {(cfg.rsvp?.dietaryOptions?.length ?? 0) > 0 && (() => {
+                      // Personas que asistirán: titular + acompañantes marcados
+                      const attendingNames = [
+                        displayName,
+                        ...attendeeNames.filter((_, i) => attendeeChecked[i] ?? true),
+                      ];
+                      return (
+                        <div className="dlx-dietary-wrap">
+                          <p className="label muted" style={{ marginBottom: '0.75rem', textAlign: 'center' }}>Restricción alimentaria</p>
+                          {attendingNames.map((personName) => (
+                            <div key={personName} style={{ marginBottom: '1rem' }}>
+                              <p style={{ fontSize: '0.72rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '0.4rem', textAlign: 'center' }}>
+                                {personName}
+                              </p>
+                              <div className="dietary-grid">
+                                {cfg.rsvp!.dietaryOptions!.map((opt) => (
+                                  <button
+                                    key={opt}
+                                    type="button"
+                                    className={`dietary-btn${dietaryMap[personName] === opt ? ' dietary-btn--active' : ''}`}
+                                    onClick={() => setDietaryMap(prev => ({ ...prev, [personName]: opt }))}
+                                  >
+                                    {opt}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
                           ))}
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
 
                     <button
                       className="btn-submit"

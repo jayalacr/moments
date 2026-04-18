@@ -8,13 +8,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Cuerpo de solicitud inválido.' }, { status: 400 });
   }
 
-  const { token, eventId, name, seats, companionNames, dietary, status } = body as {
+  const { token, eventId, name, seats, companionNames, dietary, dietaryPerPerson, status } = body as {
     token?: string;
     eventId?: string;
     name?: string;
     seats?: number;
     companionNames?: string[];
     dietary?: string;
+    dietaryPerPerson?: Record<string, string>;
     status?: string;
   };
 
@@ -61,6 +62,7 @@ export async function POST(req: NextRequest) {
       seats: status === 'declined' ? 0 : totalSeats,
       companion_names: status === 'declined' ? [] : (companionNames ?? []),
       dietary: dietary ?? null,
+      dietary_per_person: status === 'declined' ? {} : (dietaryPerPerson ?? {}),
       status,
     };
 
@@ -102,6 +104,7 @@ export async function POST(req: NextRequest) {
     name: name.trim(),
     seats: status === 'declined' ? 0 : totalSeats,
     dietary: dietary ?? null,
+    dietary_per_person: status === 'declined' ? {} : (dietaryPerPerson ?? {}),
     status,
   });
 

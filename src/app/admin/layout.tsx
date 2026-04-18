@@ -106,6 +106,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <p style={{ marginTop: '6px', fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: C.accent }}>
             Mi panel
           </p>
+          {event?.plan && (
+            <div style={{ marginTop: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '100px', backgroundColor: event.plan === 'deluxe' ? '#1C1611' : event.plan === 'plus' ? '#FDFBF7' : '#F5F1EC', border: `1px solid ${event.plan === 'deluxe' ? '#1C1611' : C.border}` }}>
+              <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', color: event.plan === 'deluxe' ? '#C9A87C' : C.accent }}>
+                Plan {event.plan}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Nav */}
@@ -117,13 +124,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           {showGuests && (
             <Link href="/admin/invitados" className="admin-nav-link">
               <span className="dot" />
-              Invitados
-            </Link>
-          )}
-          {showGuests && (
-            <Link href="/admin/confirmaciones" className="admin-nav-link">
-              <span className="dot" />
-              Confirmaciones
+              Invitados & RSVP
             </Link>
           )}
         </nav>

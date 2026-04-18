@@ -68,12 +68,12 @@ const sections: Section[] = [
     features: [
       {
         label: 'Imágenes en la invitación',
-        essential: 'Foto principal',
-        plus: 'Carrusel manual',
-        deluxe: 'Carrusel automático distribuido',
+        essential: 'Hasta 5 imágenes',
+        plus: 'De 5 a 10 imágenes',
+        deluxe: 'Imágenes ilimitadas',
         note: {
-          essential: 'Hasta 5 imágenes',
-          plus: 'De 5 a 10 imágenes',
+          essential: '5 imágenes + portada',
+          plus: 'De 5 a 10 imágenes + portada',
           deluxe: 'A lo largo de la invitación',
         },
       },
@@ -144,8 +144,8 @@ const sections: Section[] = [
       {
         label: 'Tipo de confirmación',
         essential: 'Botón a WhatsApp',
-        plus: 'Formulario en modal',
-        deluxe: 'Modal con link único',
+        plus: 'Formulario interno',
+        deluxe: 'Formulario interno personalizado',
         note: {
           essential: 'Mensaje pre-escrito',
           plus: 'El invitado escribe su nombre',

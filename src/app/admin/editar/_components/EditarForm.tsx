@@ -19,6 +19,7 @@ interface TransportRow { time: string; detail: string; }
 
 interface EventConfig {
   heroLabel: string;
+  monogram?: string;
   couple: { person1: string; person2: string };
   fullNames: { person1: string; person2: string };
   date: { day: string; month: string; year: string };
@@ -64,6 +65,7 @@ interface EventConfig {
 // ---------------------------------------------------------------------------
 const DEFAULT: EventConfig = {
   heroLabel: '',
+  monogram: '',
   couple: { person1: '', person2: '' },
   fullNames: { person1: '', person2: '' },
   date: { day: '', month: '', year: '' },
@@ -453,7 +455,7 @@ export default function EditarForm({
   const S = makeStyles(C);
 
   // Límite total de fotos por plan (hero incluida)
-  const photoLimit: number | null = isDeluxe ? null : (isPlus ? 11 : 6);
+  const photoLimit: number | null = isDeluxe ? 15 : (isPlus ? 11 : 6);
 
   const [cfg, setCfg] = useState<EventConfig>(() => ({
     ...DEFAULT,
@@ -535,8 +537,7 @@ export default function EditarForm({
           objectPosition={cfg.itinerary[repositioningItinIdx].imageObjectPosition}
           scale={cfg.itinerary[repositioningItinIdx].imageScale}
           label={`Ajustar: ${cfg.itinerary[repositioningItinIdx].name || 'foto del lugar'}`}
-          aspectRatio="4/3"
-          aspectRatioDesktop="16/9"
+          aspectRatio={isDeluxe ? "16/7" : "4/3"}
           onConfirm={(pos, s) => {
             const it = [...cfg.itinerary];
             it[repositioningItinIdx] = { ...it[repositioningItinIdx], imageObjectPosition: pos, imageScale: s };
@@ -544,6 +545,7 @@ export default function EditarForm({
           }}
           onClose={() => setRepositioningItinIdx(null)}
           C={C}
+          variant="itinerary"
         />
       )}
 
@@ -584,6 +586,20 @@ export default function EditarForm({
           <Field label="Frase de introducción (aparece encima de los nombres)" C={C}>
             <input style={S.input} value={cfg.heroLabel} onChange={e => set('heroLabel', e.target.value)} placeholder="Nuestro gran día" />
           </Field>
+          {isDeluxe && (
+            <Field label="Monograma del loader (2-3 letras)" C={C}>
+              <input 
+                style={{ ...S.input, width: '120px', textTransform: 'uppercase', letterSpacing: '2px' }} 
+                value={cfg.monogram || ''} 
+                onChange={e => set('monogram', e.target.value.toUpperCase().slice(0, 3))} 
+                placeholder="V&S" 
+                maxLength={3}
+              />
+              <p style={{ fontSize: '11px', color: C.muted, marginTop: '4px' }}>
+                Se muestra en la animación inicial de carga.
+              </p>
+            </Field>
+          )}
           <Row>
             <Field label="Nombre corto — persona 1" C={C}>
               <input style={S.input} value={cfg.couple.person1} onChange={e => set('couple', { ...cfg.couple, person1: e.target.value })} placeholder="Sofía" />
@@ -1181,20 +1197,28 @@ export default function EditarForm({
               <Field label="Fecha límite de confirmación" C={C}>
                 <input style={S.input} value={cfg.rsvp.deadline} onChange={e => set('rsvp', { ...cfg.rsvp, deadline: e.target.value })} placeholder="15 de mayo de 2026" />
               </Field>
-              <div>
-                <span style={S.lbl}>Opciones de restricción alimentaria</span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {cfg.rsvp.dietaryOptions.map((opt, i) => (
-                    <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <input style={{ ...S.input, flex: 1 }} value={opt} onChange={e => { const d = [...cfg.rsvp.dietaryOptions]; d[i] = e.target.value; set('rsvp', { ...cfg.rsvp, dietaryOptions: d }); }} placeholder="Vegetariano" />
-                      {cfg.rsvp.dietaryOptions.length > 1 && (
-                        <button style={S.removeBtn} onClick={() => set('rsvp', { ...cfg.rsvp, dietaryOptions: cfg.rsvp.dietaryOptions.filter((_, j) => j !== i) })}>×</button>
-                      )}
-                    </div>
-                  ))}
-                  <button style={S.addBtn} onClick={() => set('rsvp', { ...cfg.rsvp, dietaryOptions: [...cfg.rsvp.dietaryOptions, ''] })}>+ Opción</button>
+              {isDeluxe ? (
+                <div style={{ padding: '12px 16px', backgroundColor: C.accentLight, borderRadius: '8px', border: `1px solid ${C.border}` }}>
+                  <p style={{ fontSize: '13px', color: C.accent, margin: 0, lineHeight: '1.6', fontFamily: C.font }}>
+                    <strong>Plan Deluxe:</strong> La gestión de invitados y cupos se realiza de forma individual en la sección de <a href={`/admin/invitados`} style={{ color: C.accent, fontWeight: 700 }}>Invitados</a>.
+                  </p>
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <span style={S.lbl}>Opciones de restricción alimentaria</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {cfg.rsvp.dietaryOptions.map((opt, i) => (
+                      <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <input style={{ ...S.input, flex: 1 }} value={opt} onChange={e => { const d = [...cfg.rsvp.dietaryOptions]; d[i] = e.target.value; set('rsvp', { ...cfg.rsvp, dietaryOptions: d }); }} placeholder="Vegetariano" />
+                        {cfg.rsvp.dietaryOptions.length > 1 && (
+                          <button style={S.removeBtn} onClick={() => set('rsvp', { ...cfg.rsvp, dietaryOptions: cfg.rsvp.dietaryOptions.filter((_, j) => j !== i) })}>×</button>
+                        )}
+                      </div>
+                    ))}
+                    <button style={S.addBtn} onClick={() => set('rsvp', { ...cfg.rsvp, dietaryOptions: [...cfg.rsvp.dietaryOptions, ''] })}>+ Opción</button>
+                  </div>
+                </div>
+              )}
             </>
           )}
 
