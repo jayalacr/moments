@@ -1,28 +1,33 @@
 'use client';
 
-import { useState, useTransition, useMemo } from 'react';
-import { 
-  Search, 
-  Plus, 
-  MessageCircle, 
-  Copy, 
-  Pencil, 
-  Trash2, 
-  Upload, 
-  Check, 
+import { useState, useTransition, useMemo, useRef } from 'react';
+import Papa from 'papaparse';
+import {
+  Search,
+  Plus,
+  MessageCircle,
+  Copy,
+  Pencil,
+  Trash2,
+  Upload,
+  Check,
   X,
   Users,
   ChevronDown,
   ChevronUp,
-  Save
+  Save,
+  Download,
+  FileText,
+  AlertCircle
 } from 'lucide-react';
-import { 
-  createGuest, 
-  updateGuest, 
-  deleteGuest, 
-  saveWhatsappTemplate, 
+import {
+  createGuest,
+  updateGuest,
+  deleteGuest,
+  saveWhatsappTemplate,
   saveMaxCapacity,
-  updateGuestCompanions
+  updateGuestCompanions,
+  bulkCreateGuests
 } from '../_actions';
 import type { GuestRow, RsvpRow, GuestWithRsvp, RsvpStats } from '@/app/admin/invitados/types';
 
@@ -58,6 +63,14 @@ interface FormState {
   phone: string;
   max_companions: number;
   companion_names: string[];
+}
+
+interface CsvRow {
+  name: string;
+  phone: string;
+  max_companions: number;
+  companion_names: string[];
+  _errors: string[];
 }
 
 const EMPTY_FORM: FormState = { name: '', phone: '', max_companions: 0, companion_names: [] };
@@ -98,6 +111,93 @@ export default function InvitadosClient({
   const [isSavingTemplate, startSaveTransition] = useTransition();
 
   const isDeluxe = event.plan === 'deluxe';
+
+  // ── CSV Import State ──────────────────────────────────────────────────────
+  const [showCsvModal, setShowCsvModal] = useState(false);
+  const [csvRows, setCsvRows] = useState<CsvRow[]>([]);
+  const [csvFileName, setCsvFileName] = useState<string | null>(null);
+  const [csvImporting, startCsvTransition] = useTransition();
+  const [csvResult, setCsvResult] = useState<{ inserted?: number; error?: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function downloadTemplate() {
+    const headers = isDeluxe
+      ? ['Nombre', 'Telefono', 'Cupo', 'Acompañantes']
+      : ['Nombre', 'Telefono', 'Cupo'];
+    const example = isDeluxe
+      ? ['Juan Pérez', '+525512345678', '2', '"María G., Pedro P."']
+      : ['Juan Pérez', '+525512345678', '2'];
+    const csvLine = (row: string[]) =>
+      row.map(cell => (cell.startsWith('"') ? cell : /,/.test(cell) ? `"${cell}"` : cell)).join(',');
+    const csv = [headers, example].map(csvLine).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `plantilla_invitados_${event.plan}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCsvFileName(file.name);
+    setCsvResult(null);
+
+    Papa.parse<string[]>(file, {
+      header: false,
+      skipEmptyLines: true,
+      complete: (results) => {
+        // Skip header row (index 0); access columns by index to avoid encoding issues with special chars
+        const dataRows = results.data.slice(1);
+        const existingPhones = new Set(guests.map(g => g.phone?.replace(/\D/g, '')).filter(Boolean));
+        const seenPhones = new Set<string>();
+        const parsed: CsvRow[] = dataRows.map((row) => {
+          const errors: string[] = [];
+          const name = (row[0] ?? '').trim();
+          const phone = (row[1] ?? '').trim();
+          const cupoRaw = (row[2] ?? '').trim();
+          const companions = isDeluxe ? (row[3] ?? '').trim() : '';
+
+          if (!name) errors.push('Nombre requerido');
+          const normalizedPhone = phone.replace(/\D/g, '');
+          if (!phone) errors.push('Teléfono requerido');
+          if (normalizedPhone && existingPhones.has(normalizedPhone)) errors.push('Teléfono ya registrado');
+          if (normalizedPhone && seenPhones.has(normalizedPhone)) errors.push('Teléfono duplicado en el archivo');
+          if (normalizedPhone) seenPhones.add(normalizedPhone);
+
+          const max_companions = parseInt(cupoRaw) || 0;
+          const companion_names = companions
+            ? companions.split(',').map(s => s.trim()).filter(Boolean)
+            : [];
+
+          return { name, phone, max_companions, companion_names, _errors: errors };
+        });
+        setCsvRows(parsed);
+      },
+    });
+  }
+
+  function handleCsvImport() {
+    const validRows = csvRows.filter(r => r._errors.length === 0);
+    if (validRows.length === 0) return;
+    startCsvTransition(async () => {
+      const result = await bulkCreateGuests(event.id, validRows);
+      setCsvResult(result);
+      if (!result.error) {
+        window.location.reload();
+      }
+    });
+  }
+
+  function closeCsvModal() {
+    setShowCsvModal(false);
+    setCsvRows([]);
+    setCsvFileName(null);
+    setCsvResult(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
 
   // ── Stats ────────────────────────────────────────────────────────────────
   const stats = useMemo(() => {
@@ -380,7 +480,7 @@ export default function InvitadosClient({
             ))}
           </div>
           <div style={{ display: 'flex', gap: '10px', marginLeft: 'auto' }}>
-            <button onClick={() => alert('Carga masiva (CSV) próximamente')} style={btnSecondary}>
+            <button onClick={() => setShowCsvModal(true)} style={btnSecondary}>
               <Upload size={14} style={{ marginRight: '8px' }} />
               Importar CSV
             </button>
@@ -470,6 +570,133 @@ export default function InvitadosClient({
           </div>
         )}
       </div>
+
+      {/* ── Modal de Importación CSV ── */}
+      {showCsvModal && (
+        <div style={modalOverlay}>
+          <div style={{ ...modalContent, maxWidth: '860px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingBottom: '16px', borderBottom: `1px solid ${C.border}` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <FileText size={18} color={C.accent} />
+                <p style={{ fontSize: '14px', fontWeight: 600, color: C.text, letterSpacing: '0.05em', textTransform: 'uppercase', margin: 0 }}>
+                  Importar invitados desde CSV
+                </p>
+              </div>
+              <button onClick={closeCsvModal} style={btnIcon}><X size={20} /></button>
+            </div>
+
+            {/* Paso 1: Descargar plantilla */}
+            <div style={{ backgroundColor: C.bg, borderRadius: '12px', padding: '20px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+              <div>
+                <p style={{ ...labelStyle, margin: '0 0 4px 0' }}>Paso 1 — Descarga la plantilla</p>
+                <p style={{ fontSize: '13px', color: C.muted, margin: 0 }}>
+                  {isDeluxe
+                    ? 'Plantilla Deluxe: incluye columna de nombres de acompañantes.'
+                    : 'Plantilla Plus/Essential: Nombre, Teléfono y Cupo.'}
+                </p>
+              </div>
+              <button onClick={downloadTemplate} style={{ ...btnSecondary, whiteSpace: 'nowrap' }}>
+                <Download size={14} style={{ marginRight: '8px' }} />
+                Descargar plantilla
+              </button>
+            </div>
+
+            {/* Paso 2: Subir archivo */}
+            <div style={{ marginBottom: '24px' }}>
+              <p style={{ ...labelStyle, marginBottom: '12px' }}>Paso 2 — Carga tu archivo CSV</p>
+              <label
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  gap: '12px', padding: '32px', border: `2px dashed ${C.border}`, borderRadius: '12px',
+                  cursor: 'pointer', backgroundColor: 'rgba(255,255,255,0.5)', transition: 'border-color 0.2s',
+                }}
+              >
+                <Upload size={24} color={C.muted} strokeWidth={1.5} />
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: '14px', color: C.text, margin: '0 0 4px 0', fontWeight: 500 }}>
+                    {csvFileName ?? 'Haz clic para seleccionar tu archivo'}
+                  </p>
+                  <p style={{ fontSize: '12px', color: C.mutedLight, margin: 0 }}>Solo archivos .csv</p>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                />
+              </label>
+            </div>
+
+            {/* Vista previa */}
+            {csvRows.length > 0 && (
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <p style={labelStyle}>
+                    Vista previa — {csvRows.filter(r => r._errors.length === 0).length} de {csvRows.length} filas válidas
+                  </p>
+                  {csvRows.some(r => r._errors.length > 0) && (
+                    <span style={{ fontSize: '12px', color: C.danger, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <AlertCircle size={14} />
+                      {csvRows.filter(r => r._errors.length > 0).length} filas con errores (serán omitidas)
+                    </span>
+                  )}
+                </div>
+                <div style={{ maxHeight: '300px', overflowY: 'auto', border: `1px solid ${C.border}`, borderRadius: '12px' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: C.bg }}>
+                        <th style={thStyle}>Nombre</th>
+                        <th style={thStyle}>Teléfono</th>
+                        <th style={thStyle}>Cupo</th>
+                        {isDeluxe && <th style={thStyle}>Acompañantes</th>}
+                        <th style={thStyle}>Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {csvRows.map((row, i) => (
+                        <tr key={i} style={{ backgroundColor: row._errors.length > 0 ? C.dangerLight : 'transparent', borderBottom: `1px solid ${C.border}` }}>
+                          <td style={tdStyle}>{row.name || <em style={{ color: C.mutedLight }}>vacío</em>}</td>
+                          <td style={tdStyle}>{row.phone || <em style={{ color: C.mutedLight }}>vacío</em>}</td>
+                          <td style={{ ...tdStyle, textAlign: 'center' }}>{row.max_companions}</td>
+                          {isDeluxe && <td style={tdStyle}>{row.companion_names.join(', ') || '—'}</td>}
+                          <td style={tdStyle}>
+                            {row._errors.length === 0
+                              ? <span style={{ color: C.success, fontWeight: 600 }}>✓ OK</span>
+                              : <span style={{ color: C.danger, fontSize: '11px' }}>{row._errors.join(' · ')}</span>
+                            }
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {csvResult?.error && (
+              <p style={{ fontSize: '13px', color: C.danger, backgroundColor: C.dangerLight, padding: '12px 16px', borderRadius: '10px', marginBottom: '16px' }}>
+                {csvResult.error}
+              </p>
+            )}
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', paddingTop: '20px', borderTop: `1px solid ${C.border}` }}>
+              <button onClick={closeCsvModal} style={btnSecondary}>Cancelar</button>
+              <button
+                onClick={handleCsvImport}
+                disabled={csvImporting || csvRows.filter(r => r._errors.length === 0).length === 0}
+                style={{
+                  ...btnPrimary,
+                  opacity: csvRows.filter(r => r._errors.length === 0).length === 0 ? 0.5 : 1,
+                }}
+              >
+                <Upload size={14} style={{ marginRight: '8px' }} />
+                {csvImporting ? 'Importando…' : `Importar ${csvRows.filter(r => r._errors.length === 0).length} invitados`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Modal de Formulario ── */}
       {showForm && (
@@ -741,8 +968,8 @@ export default function InvitadosClient({
             const meta = statusMeta[r.status];
             
             // Parse per-person dietary
-            const dietaryMap = r.dietary_per_person as Record<string, string> | null;
-            const hasDetailedDietary = dietaryMap && Object.keys(dietaryMap).length > 0;
+            const dMap = r.dietary_per_person;
+            const hasDetailedDietary = dMap && Object.keys(dMap).length > 0;
 
             return (
               <div key={r.id} style={{ 
@@ -775,11 +1002,13 @@ export default function InvitadosClient({
                   {hasDetailedDietary ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <p style={{ margin: 0, fontSize: '11px', fontWeight: 600, color: C.accent, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Preferencias:</p>
-                      {Object.entries(dietaryMap).map(([person, preference]) => (
-                        <div key={person} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${C.accentLight}`, paddingBottom: '2px' }}>
-                          <span style={{ color: C.muted }}>{person}:</span>
-                          <span style={{ fontWeight: 500 }}>{preference}</span>
-                        </div>
+                      {Object.entries(dMap).map(([person, preference]) => (
+                        preference && preference.length > 0 && (
+                          <div key={person} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${C.accentLight}`, paddingBottom: '2px' }}>
+                            <span style={{ color: C.muted }}>{person}:</span>
+                            <span style={{ fontWeight: 500 }}>{preference.join(', ')}</span>
+                          </div>
+                        )
                       ))}
                     </div>
                   ) : (
@@ -948,4 +1177,22 @@ const inputStyle: React.CSSProperties = {
   outline: 'none',
   boxSizing: 'border-box',
   transition: 'border-color 0.2s',
+};
+
+const thStyle: React.CSSProperties = {
+  padding: '10px 16px',
+  textAlign: 'left',
+  fontSize: '10px',
+  letterSpacing: '1.5px',
+  textTransform: 'uppercase',
+  color: '#9C8E82',
+  fontWeight: 600,
+  borderBottom: '1px solid #EDE5D8',
+};
+
+const tdStyle: React.CSSProperties = {
+  padding: '10px 16px',
+  fontSize: '13px',
+  color: '#1C1611',
+  verticalAlign: 'middle',
 };

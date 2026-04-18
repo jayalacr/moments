@@ -200,6 +200,33 @@ export async function saveMaxCapacity(eventId: string, capacity: number | null):
   return {};
 }
 
+export async function bulkCreateGuests(
+  eventId: string,
+  guests: Array<{ name: string; phone: string; max_companions: number; companion_names: string[] }>,
+): Promise<{ inserted: number; error?: string }> {
+  const supabase = await createClient();
+  const event = await getAuthorizedEvent(supabase, eventId);
+  if (!event) return { inserted: 0, error: 'No se encontró el evento.' };
+
+  const rows = guests.map(g => ({
+    event_id: event.id,
+    name: g.name.trim(),
+    phone: g.phone.trim() || null,
+    max_companions: g.max_companions,
+    companion_names: g.companion_names,
+  }));
+
+  const { error, count } = await supabase.from('guests').insert(rows, { count: 'exact' });
+
+  if (error) {
+    if (error.code === '23505') return { inserted: 0, error: 'Algunos teléfonos ya están registrados en este evento.' };
+    return { inserted: 0, error: error.message };
+  }
+
+  revalidatePath(`/admin/eventos/${eventId}/invitados`);
+  return { inserted: count ?? guests.length };
+}
+
 export async function updateGuestCompanions(
   eventId: string,
   guestId: string,
