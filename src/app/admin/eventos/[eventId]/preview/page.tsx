@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect, notFound } from 'next/navigation';
 import { TEMPLATES } from '@/lib/templates';
+import PreviewClient from './_components/PreviewClient';
 
 interface Props {
   params: Promise<{ eventId: string }>;
@@ -27,5 +28,9 @@ export default async function PreviewPage({ params }: Props) {
 
   const Template = entry.component;
 
-  return <Template config={event.config ?? {}} />;
+  return (
+    <PreviewClient eventId={eventId}>
+      <Template config={event.config ?? {}} />
+    </PreviewClient>
+  );
 }
