@@ -1,6 +1,6 @@
 import { Cormorant_Garamond, Jost } from 'next/font/google';
 import { createClient } from '@/lib/supabase/server';
-import AdminSidebar from '@/components/admin/AdminSidebar';
+import AdminLayoutClient from '../../components/admin/AdminLayoutClient';
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
@@ -40,18 +40,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div
       className={`${cormorant.variable} ${jost.variable}`}
       style={{
-        display: 'flex',
-        minHeight: '100dvh',
         backgroundColor: C.bg,
         fontFamily: 'var(--font-jost)',
       }}
     >
-      <AdminSidebar profile={profile} events={events || []} />
-
-      {/* ── Main ── */}
-      <main style={{ flex: 1, overflow: 'auto', color: C.text }}>
+      <AdminLayoutClient profile={profile} events={events || []}>
         {children}
-      </main>
+      </AdminLayoutClient>
     </div>
   );
 }

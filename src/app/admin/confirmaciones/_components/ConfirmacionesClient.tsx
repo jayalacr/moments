@@ -679,12 +679,21 @@ export default function ConfirmacionesClient({
                       {r.companion_names.join(', ')}
                     </p>
                   )}
-                  {r.dietary && (
+                  {r.dietary_per_person && Object.keys(r.dietary_per_person).length > 0 ? (
+                    <div style={{ marginTop: hasCompanions ? '6px' : 0 }}>
+                      {Object.entries(r.dietary_per_person).map(([pName, restrictions]) => (
+                        restrictions && restrictions.length > 0 && (
+                          <p key={pName} style={{ fontSize: '11px', color: C.muted, margin: '2px 0' }}>
+                            <span style={{ fontWeight: 500, color: C.accent }}>{pName}:</span> {restrictions.join(', ')}
+                          </p>
+                        )
+                      ))}
+                    </div>
+                  ) : r.dietary ? (
                     <p style={{ fontSize: '11px', color: C.accent, marginTop: hasCompanions ? '4px' : 0 }}>
                       {r.dietary}
                     </p>
-                  )}
-                  {!hasCompanions && !r.dietary && (
+                  ) : !hasCompanions && (
                     <p style={{ fontSize: '13px', color: C.mutedLight }}>—</p>
                   )}
                 </div>

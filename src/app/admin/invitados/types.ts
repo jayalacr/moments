@@ -5,7 +5,7 @@ export interface RsvpRow {
   seats: number;
   companion_names: string[];
   dietary: string | null;
-  dietary_per_person?: Record<string, string>;
+  dietary_per_person?: Record<string, string[]>;
   status: 'confirmed' | 'declined' | 'pending';
   created_at: string;
   guests: { name: string | null; token: string } | null;
@@ -23,7 +23,7 @@ export interface GuestWithRsvp {
     seats: number;
     companion_names: string[];
     dietary: string | null;
-    dietary_per_person?: Record<string, string>;
+    dietary_per_person?: Record<string, string[]>;
     created_at: string;
   } | null;
 }

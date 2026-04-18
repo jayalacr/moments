@@ -749,11 +749,26 @@ const css = `
     animation: heroFadeUp 1.4s cubic-bezier(0.16,1,0.3,1) 0.7s both;
   }
   .hero-amp {
-    font-size: 0.35em;
+    display: inline-block;
+    font-family: var(--font-playfair), serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 0.45em;
     color: var(--gold);
-    line-height: 1.3;
+    margin: 0 0.5rem;
+    position: relative;
     opacity: 0;
     animation: heroFadeUp 1.4s cubic-bezier(0.16,1,0.3,1) 0.75s both;
+  }
+  .hero-amp::after {
+    content: '';
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    width: 1em; height: 1em;
+    border: 1px solid var(--gold);
+    opacity: 0.15;
+    z-index: -1;
   }
   .hero-name-2 {
     opacity: 0;
@@ -1461,16 +1476,25 @@ const css = `
   }
 
   /* ---------- Mobile adjustments ---------- */
+  @media (max-width: 768px) {
+    :root { --section-gap: 3rem; }
+    .section { padding: 3rem 1.5rem; max-width: 100%; }
+    .section--left { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .section--wide { max-width: 100%; padding-left: 1.5rem; padding-right: 1.5rem; }
+    .parents-grid { grid-template-columns: 1fr; }
+    .parents-symbol { display: none; }
+    .dresscode-gender { grid-template-columns: 1fr; }
+    .gifts-grid { grid-template-columns: 1fr; }
+    .itinerary { max-width: 100%; }
+    .notes-list { max-width: 100%; }
+  }
   @media (max-width: 480px) {
     :root { --section-gap: 2.5rem; }
     .hero-meta { flex-direction: column; gap: 0.4rem; }
     .hero-meta-dot { display: none; }
-    .section {
-      padding: 2.5rem 1.25rem;
-      max-width: 100%;
-    }
+    .section { padding: 2.5rem 1.25rem; }
     .section--left { padding-left: 1.25rem; padding-right: 1.25rem; }
-    .section--wide { max-width: 100%; padding-left: 1.25rem; padding-right: 1.25rem; }
+    .section--wide { padding-left: 1.25rem; padding-right: 1.25rem; }
     .section-heading--display { font-size: clamp(2.5rem, 10vw, 4rem); }
     .rsvp-heading { font-size: clamp(3rem, 13vw, 5rem); }
     .quote-mark { font-size: clamp(5rem, 18vw, 8rem); margin-top: -1rem; }
@@ -1480,11 +1504,8 @@ const css = `
     .ornament { padding: 1.5rem 2rem; }
     .parents-header { gap: 0.75rem; }
     .hero-scroll-indicator { bottom: 1.75rem; }
-    .gifts-grid { grid-template-columns: 1fr; }
     .swatches { gap: 1.25rem; }
     .swatch-circle { width: 52px; height: 52px; }
     .footer-names { font-size: clamp(1.25rem, 7vw, 1.75rem); }
-    .itinerary { max-width: 100%; }
-    .notes-list { max-width: 100%; }
   }
 `;

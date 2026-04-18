@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Cormorant_Garamond, Jost, Playfair_Display, EB_Garamond, Raleway, Montserrat } from 'next/font/google';
-import { MapPin, Play, Pause, CalendarDays, Hotel, Car, Mail, Gift, Flower2, Shirt, UserX } from 'lucide-react';
+import { MapPin, Play, Pause, CalendarDays, Hotel, Car, Mail, Gift, Flower2, Shirt, UserX, ChevronDown } from 'lucide-react';
 import type { PhotoEntry } from '@/lib/imageLayout';
 
 // ---------------------------------------------------------------------------
@@ -13,6 +13,7 @@ interface ItineraryItem {
   name?: string; 
   venue?: string; 
   address?: string; 
+  mapsUrl?: string;
   image?: string; 
   imageObjectPosition?: string;
   imageScale?: number;
@@ -368,9 +369,22 @@ const css = `
     animation: loaderReveal 1.2s cubic-bezier(0.16,1,0.3,1) 0.3s both;
   }
   .dlx-hero-amp {
-    font-size: 0.45em;
+    display: inline-flex;
+    align-items: center;
+    gap: 1.5rem;
+    font-family: var(--font-playfair), serif;
+    font-size: 0.35em;
     color: var(--gold);
-    line-height: 1.1;
+    font-weight: 300;
+    font-style: italic;
+    opacity: 0.8;
+  }
+  .dlx-hero-amp::before, .dlx-hero-amp::after {
+    content: '';
+    width: 30px;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.4;
   }
   .dlx-hero-meta {
     display: flex;
@@ -459,8 +473,8 @@ const css = `
     gap: 1rem;
     width: 100%;
   }
-  @media (max-width: 700px) { .destination-grid { grid-template-columns: 1fr; } }
-  @media (min-width: 701px) and (max-width: 900px) { .destination-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 768px) { .destination-grid { grid-template-columns: 1fr; } }
+  @media (min-width: 769px) and (max-width: 900px) { .destination-grid { grid-template-columns: 1fr 1fr; } }
   .dest-card {
     background: #F0E9DF;
     border: 1px solid var(--muted);
@@ -790,21 +804,28 @@ const css = `
 
   /* ── Dietary ── */
   .dlx-dietary-wrap { width: 100%; text-align: center; padding-top: 0.25rem; }
-  .dietary-grid { display: flex; flex-wrap: wrap; gap: 0.45rem; justify-content: center; }
-  .dietary-btn {
-    padding: 0.45rem 0.9rem;
-    border-radius: 100px;
-    border: 1px solid rgba(184, 150, 90, 0.3);
-    background: rgba(184, 150, 90, 0.04);
-    font-family: var(--font-jost), system-ui, sans-serif;
-    font-size: 11px;
-    color: var(--muted-fg);
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.06em;
+  .dietary-details { position: relative; width: 100%; text-align: left; margin-bottom: 0.5rem; }
+  .dietary-summary {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.6rem 1rem; border: 1px solid rgba(184, 150, 90, 0.3); border-radius: 8px;
+    background: rgba(255,255,255,0.5); color: var(--charcoal); font-family: var(--font-jost), system-ui, sans-serif; font-size: 12px;
+    cursor: pointer; list-style: none; transition: border-color 0.2s;
   }
-  .dietary-btn:hover { border-color: var(--gold); color: var(--charcoal); background: rgba(184, 150, 90, 0.08); }
-  .dietary-btn--active { border-color: var(--gold); background: var(--gold); color: #fff; }
+  .dietary-summary:hover { border-color: var(--gold); }
+  .dietary-summary::-webkit-details-marker { display: none; }
+  .dietary-options {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--ivory); border: 1px solid rgba(184, 150, 90, 0.2); border-radius: 8px;
+    padding: 0.5rem; z-index: 10; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;
+  }
+  .dietary-option-label {
+    display: flex; align-items: center; gap: 10px; padding: 8px;
+    cursor: pointer; font-family: var(--font-jost), system-ui, sans-serif; font-size: 13px; color: var(--charcoal);
+    border-radius: 6px; transition: background 0.2s;
+  }
+  .dietary-option-label:hover { background: rgba(184, 150, 90, 0.08); }
+  .dietary-checkbox { accent-color: var(--gold); width: 14px; height: 14px; }
   .photo-cinematic-overlay {
     position: absolute;
     inset: 0;
@@ -825,22 +846,37 @@ const css = `
   }
 
   /* ── Parents ── */
-  .parents-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 2rem; width: 100%; align-items: center; }
-  @media (max-width: 600px) { .parents-grid { grid-template-columns: 1fr; } .parents-monogram { display: none; } }
+  .parents-grid { 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    gap: 3rem; 
+    width: 100%; 
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .parents-grid > div:not(.parents-monogram) { flex: 1; }
+  
+  @media (max-width: 600px) { 
+    .parents-grid { flex-direction: column; gap: 2.5rem; } 
+    .parents-monogram { margin: 1rem 0; } 
+  }
   .parents-monogram {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 0;
+    justify-content: center;
+    gap: 1rem;
     font-family: var(--font-cormorant), Georgia, serif;
-    font-size: 2.5rem;
+    font-size: 2.4rem;
     font-style: italic;
     font-weight: 300;
     color: var(--gold);
-    opacity: 0.5;
-    line-height: 1;
+    opacity: 0.6;
+    flex: 0 0 auto;
+    padding-bottom: 1rem; /* Visual compensation for the names weight */
   }
-  .pm-amp { font-size: 1.25rem; opacity: 0.7; }
+  .pm-amp { font-size: 1.3rem; opacity: 0.8; font-family: var(--font-jost), sans-serif; font-style: normal; }
   .display-name { font-family: var(--font-cormorant), Georgia, serif; font-size: 1.25rem; font-weight: 400; color: var(--charcoal); margin: 0; }
   .name-sep { display: flex; justify-content: center; margin: 0.75rem 0; }
 
@@ -1597,13 +1633,19 @@ const css = `
   .delay-4 { transition-delay: 0.4s; }
 
   /* ── Mobile adjustments ── */
+  @media (max-width: 768px) {
+    .section { padding: 3rem 1.5rem; }
+    .section--wide { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .destination-grid { grid-template-columns: 1fr; }
+    .dlx-itinerary-wrap { max-width: 100%; padding: 0 0.5rem; }
+    .gifts-grid-v2 { grid-template-columns: 1fr; max-width: 380px; }
+    .gifts-grid-v2 .gift-card-v2:last-child:nth-child(3) { grid-column: auto; justify-self: auto; max-width: 100%; }
+  }
   @media (max-width: 480px) {
     .dlx-hero-meta { flex-direction: column; gap: 0.4rem; }
     .dlx-meta-dot { display: none; }
-    .section { padding: 5rem 1.5rem; }
+    .section { padding: 3rem 1.25rem; }
     .dc-gender-grid { grid-template-columns: 1fr; max-width: 360px; }
-    .dlx-itinerary-wrap { max-width: 100%; padding: 0 0.5rem; }
-    .destination-grid { grid-template-columns: 1fr; }
   }
 `;
 
@@ -1880,7 +1922,7 @@ export default function DeluxeTemplate({
   const [attendeeNames, setAttendeeNames] = useState<string[]>([]);
   const [attendeeChecked, setAttendeeChecked] = useState<boolean[]>([]);
   const [dietary, setDietary] = useState(cfg.rsvp?.dietaryOptions?.[0] ?? '');
-  const [dietaryMap, setDietaryMap] = useState<Record<string, string>>({});
+  const [dietaryMap, setDietaryMap] = useState<Record<string, string[]>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [playing, setPlaying] = useState(false);
@@ -1983,7 +2025,7 @@ export default function DeluxeTemplate({
           name: displayName,
           seats: guestConfirmed ? 1 + attendeeNames.filter((_, i) => attendeeChecked[i]).length : 0,
           companionNames: guestConfirmed ? attendeeNames.filter((_, i) => attendeeChecked[i]) : [],
-          dietary: guestConfirmed ? dietary : undefined,
+          dietary: guestConfirmed ? (dietaryMap[displayName]?.join(', ') || '') : undefined,
           dietaryPerPerson: guestConfirmed ? dietaryMap : undefined,
           status: guestConfirmed ? 'confirmed' : 'declined',
         }),
@@ -2171,7 +2213,8 @@ export default function DeluxeTemplate({
           <div className="dlx-itinerary-wrap">
             {itinerary.map((item, i) => {
               const [h, m] = (item.time || '00:00').split(':');
-              const mapsUrl = item.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}` : '';
+              const manualUrl = item.mapsUrl?.trim();
+              const mapsUrl = manualUrl || (item.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}` : '');
               const isEven = i % 2 === 1;
               return (
                 <div key={i} className={`dlx-irow-v2 slide-up${i <= 3 ? ` delay-${i + 1}` : ''}${isEven ? ' dlx-irow-v2--even' : ''}`}>
@@ -2677,17 +2720,44 @@ export default function DeluxeTemplate({
                               <p style={{ fontSize: '0.72rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '0.4rem', textAlign: 'center' }}>
                                 {personName}
                               </p>
-                              <div className="dietary-grid">
-                                {cfg.rsvp!.dietaryOptions!.map((opt) => (
-                                  <button
-                                    key={opt}
-                                    type="button"
-                                    className={`dietary-btn${dietaryMap[personName] === opt ? ' dietary-btn--active' : ''}`}
-                                    onClick={() => setDietaryMap(prev => ({ ...prev, [personName]: opt }))}
-                                  >
-                                    {opt}
-                                  </button>
-                                ))}
+                              <div className="dietary-details-container">
+                                <details className="dietary-details">
+                                  <summary className="dietary-summary">
+                                    <span style={{ 
+                                      whiteSpace: 'nowrap', 
+                                      overflow: 'hidden', 
+                                      textOverflow: 'ellipsis',
+                                      maxWidth: '200px'
+                                    }}>
+                                      {dietaryMap[personName]?.length ? dietaryMap[personName].join(', ') : 'Seleccionar restricciones'}
+                                    </span>
+                                    <ChevronDown size={14} />
+                                  </summary>
+                                  <div className="dietary-options">
+                                    {cfg.rsvp!.dietaryOptions!.map((opt) => {
+                                      const isSelected = dietaryMap[personName]?.includes(opt);
+                                      return (
+                                        <label key={opt} className="dietary-option-label">
+                                          <input 
+                                            type="checkbox" 
+                                            className="dietary-checkbox"
+                                            checked={isSelected || false}
+                                            onChange={(e) => {
+                                              setDietaryMap(prev => {
+                                                const current = prev[personName] || [];
+                                                const updated = e.target.checked 
+                                                  ? [...current, opt]
+                                                  : current.filter(x => x !== opt);
+                                                return { ...prev, [personName]: updated };
+                                              });
+                                            }}
+                                          />
+                                          <span>{opt}</span>
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                </details>
                               </div>
                             </div>
                           ))}

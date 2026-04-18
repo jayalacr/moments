@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     seats?: number;
     companionNames?: string[];
     dietary?: string;
-    dietaryPerPerson?: Record<string, string>;
+    dietaryPerPerson?: Record<string, string[]>;
     status?: string;
   };
 

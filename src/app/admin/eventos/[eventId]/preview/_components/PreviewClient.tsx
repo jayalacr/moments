@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Monitor, Smartphone, X, RotateCcw } from 'lucide-react';
+import { Monitor, Smartphone, X } from 'lucide-react';
 import Link from 'next/link';
 
 interface PreviewClientProps {
@@ -23,32 +23,31 @@ export default function PreviewClient({ children, eventId }: PreviewClientProps)
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 20px',
-        zIndex: 100
+        zIndex: 100,
+        flexShrink: 0,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <Link 
-            href={`/admin/eventos/${eventId}`}
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '8px', 
-              color: '#666', 
-              textDecoration: 'none',
-              fontSize: '13px',
-              fontWeight: 500
-            }}
-          >
-            <X size={18} />
-            Salir de vista previa
-          </Link>
-        </div>
+        <Link
+          href={`/admin/eventos/${eventId}`}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            color: '#666',
+            textDecoration: 'none',
+            fontSize: '13px',
+            fontWeight: 500,
+          }}
+        >
+          <X size={18} />
+          Salir de vista previa
+        </Link>
 
-        <div style={{ 
-          display: 'flex', 
-          backgroundColor: '#F5F5F5', 
-          padding: '4px', 
+        <div style={{
+          display: 'flex',
+          backgroundColor: '#F5F5F5',
+          padding: '4px',
           borderRadius: '8px',
-          gap: '4px'
+          gap: '4px',
         }}>
           <button
             onClick={() => setViewMode('desktop')}
@@ -65,7 +64,7 @@ export default function PreviewClient({ children, eventId }: PreviewClientProps)
               gap: '8px',
               fontSize: '12px',
               fontWeight: 500,
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
             }}
           >
             <Monitor size={16} />
@@ -86,7 +85,7 @@ export default function PreviewClient({ children, eventId }: PreviewClientProps)
               gap: '8px',
               fontSize: '12px',
               fontWeight: 500,
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
             }}
           >
             <Smartphone size={16} />
@@ -94,21 +93,21 @@ export default function PreviewClient({ children, eventId }: PreviewClientProps)
           </button>
         </div>
 
-        <div style={{ width: '100px', display: 'flex', justifyContent: 'flex-end' }}>
-          {/* Empty space or additional actions */}
-        </div>
+        <div style={{ width: '140px' }} />
       </div>
 
       {/* Preview Area */}
-      <div style={{ 
-        flex: 1, 
-        overflow: 'auto', 
-        display: 'flex', 
-        alignItems: viewMode === 'mobile' ? 'center' : 'stretch', 
+      <div style={{
+        flex: 1,
+        overflow: 'auto',
+        display: 'flex',
+        alignItems: viewMode === 'mobile' ? 'flex-start' : 'stretch',
         justifyContent: 'center',
-        padding: viewMode === 'mobile' ? '40px 0' : '0'
+        padding: viewMode === 'mobile' ? '40px 0 60px' : '0',
       }}>
         {viewMode === 'mobile' ? (
+          /* Phone frame — iframe gives the template its own 375px viewport
+             so @media queries fire correctly, identical to real mobile */
           <div style={{
             width: '375px',
             height: '812px',
@@ -118,10 +117,9 @@ export default function PreviewClient({ children, eventId }: PreviewClientProps)
             boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
             position: 'relative',
             overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column'
+            flexShrink: 0,
           }}>
-            {/* Phone Notch */}
+            {/* Notch */}
             <div style={{
               position: 'absolute',
               top: 0,
@@ -132,15 +130,22 @@ export default function PreviewClient({ children, eventId }: PreviewClientProps)
               backgroundColor: '#1C1611',
               borderBottomLeftRadius: '18px',
               borderBottomRightRadius: '18px',
-              zIndex: 20
+              zIndex: 20,
             }} />
-            
-            <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-              {children}
-            </div>
+
+            <iframe
+              src={`/embed/${eventId}`}
+              title="Vista previa móvil"
+              style={{
+                width: '100%',
+                height: '100%',
+                border: 'none',
+                display: 'block',
+              }}
+            />
           </div>
         ) : (
-          <div style={{ width: '100%', height: '100%', backgroundColor: '#FFFFFF' }}>
+          <div style={{ width: '100%', height: '100%', backgroundColor: '#FFFFFF', overflow: 'auto' }}>
             {children}
           </div>
         )}

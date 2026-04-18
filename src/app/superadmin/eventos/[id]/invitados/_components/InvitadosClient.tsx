@@ -741,8 +741,8 @@ export default function InvitadosClient({
             const meta = statusMeta[r.status];
             
             // Parse per-person dietary
-            const dietaryMap = r.dietary_per_person as Record<string, string> | null;
-            const hasDetailedDietary = dietaryMap && Object.keys(dietaryMap).length > 0;
+            const dMap = r.dietary_per_person;
+            const hasDetailedDietary = dMap && Object.keys(dMap).length > 0;
 
             return (
               <div key={r.id} style={{ 
@@ -775,11 +775,13 @@ export default function InvitadosClient({
                   {hasDetailedDietary ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <p style={{ margin: 0, fontSize: '11px', fontWeight: 600, color: C.accent, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Preferencias:</p>
-                      {Object.entries(dietaryMap).map(([person, preference]) => (
-                        <div key={person} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${C.accentLight}`, paddingBottom: '2px' }}>
-                          <span style={{ color: C.muted }}>{person}:</span>
-                          <span style={{ fontWeight: 500 }}>{preference}</span>
-                        </div>
+                      {Object.entries(dMap).map(([person, preference]) => (
+                        preference && preference.length > 0 && (
+                          <div key={person} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${C.accentLight}`, paddingBottom: '2px' }}>
+                            <span style={{ color: C.muted }}>{person}:</span>
+                            <span style={{ fontWeight: 500 }}>{preference.join(', ')}</span>
+                          </div>
+                        )
                       ))}
                     </div>
                   ) : (

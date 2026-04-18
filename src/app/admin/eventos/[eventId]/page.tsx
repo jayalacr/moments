@@ -64,8 +64,17 @@ export default async function EventoPage({ params }: Props) {
   const s = STATUS_LABELS[event.status] ?? STATUS_LABELS.draft;
 
   return (
-    <div style={{ padding: '40px 48px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div className="event-page" style={{ padding: '40px 48px', maxWidth: '1000px', margin: '0 auto' }}>
       <style>{`
+        @media (max-width: 768px) {
+          .event-page { padding: 20px 20px !important; }
+          .event-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
+          .event-header-actions { flex-wrap: wrap; }
+          .event-info-grid { grid-template-columns: 1fr !important; }
+          .event-main-grid { grid-template-columns: 1fr !important; }
+          .event-title { font-size: clamp(2rem, 9vw, 3rem) !important; }
+        }
+
         .admin-cta {
           display: inline-flex; align-items: center; gap: 8px;
           padding: 12px 28px;
@@ -115,7 +124,7 @@ export default async function EventoPage({ params }: Props) {
       `}</style>
 
       {/* Cabecera con Badge de Estado */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px' }}>
+      <div className="event-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
             <span style={{ padding: '4px 12px', borderRadius: '20px', backgroundColor: s.bg, fontSize: '11px', color: s.color, letterSpacing: '0.05em', fontWeight: 600, textTransform: 'uppercase' }}>
@@ -126,6 +135,7 @@ export default async function EventoPage({ params }: Props) {
             </span>
           </div>
           <h1
+            className="event-title"
             style={{
               fontFamily: 'var(--font-cormorant)',
               fontSize: '48px',
@@ -139,8 +149,8 @@ export default async function EventoPage({ params }: Props) {
             {event.title}
           </h1>
         </div>
-        
-        <div style={{ display: 'flex', gap: '12px' }}>
+
+        <div className="event-header-actions" style={{ display: 'flex', gap: '12px' }}>
           <Link
             href={event.status === 'published' ? `/${event.event_type}/${event.slug}` : `/admin/eventos/${event.id}/preview`}
             target="_blank"
@@ -181,7 +191,7 @@ export default async function EventoPage({ params }: Props) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px' }}>
+      <div className="event-main-grid" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px' }}>
         {/* Detalles del Evento */}
         <div
           style={{
@@ -195,7 +205,7 @@ export default async function EventoPage({ params }: Props) {
             Información general
           </h3>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          <div className="event-info-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             {[
               { label: 'URL pública', value: `/${event.event_type}/${event.slug}` },
               { label: 'Plan contratado', value: `Moments ${PLAN_LABELS[event.plan]}` },

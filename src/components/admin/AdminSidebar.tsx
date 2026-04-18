@@ -25,9 +25,11 @@ interface Event {
 interface AdminSidebarProps {
   profile: { full_name: string | null; email: string | null } | null;
   events: Event[];
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export default function AdminSidebar({ profile, events }: AdminSidebarProps) {
+export default function AdminSidebar({ profile, events, isOpen, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
   const [isEventsExpanded, setIsEventsExpanded] = useState(true);
   const [expandedEventIds, setExpandedEventIds] = useState<string[]>([]);
@@ -56,20 +58,28 @@ export default function AdminSidebar({ profile, events }: AdminSidebarProps) {
   if (pathname.includes('/preview')) return null;
 
   return (
-    <aside
-      style={{
-        width: '260px',
-        flexShrink: 0,
-        backgroundColor: C.sidebar,
-        borderRight: `1px solid ${C.border}`,
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-      }}
-    >
+    <>
+      {/* Mobile backdrop */}
+      <div
+        className={`sidebar-backdrop${isOpen ? ' visible' : ''}`}
+        onClick={onClose}
+      />
+
+      <aside
+        className={`admin-sidebar${isOpen ? ' open' : ''}`}
+        style={{
+          width: '260px',
+          flexShrink: 0,
+          backgroundColor: C.sidebar,
+          borderRight: `1px solid ${C.border}`,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100vh',
+          position: 'sticky',
+          top: 0,
+          zIndex: 50,
+        }}
+      >
       <style>{`
         .nav-item {
           display: flex;
@@ -131,6 +141,32 @@ export default function AdminSidebar({ profile, events }: AdminSidebarProps) {
         }
         .collapse-btn:hover {
           background: rgba(0,0,0,0.05);
+        }
+
+        /* Mobile off-canvas */
+        .sidebar-backdrop {
+          display: none;
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.4);
+          z-index: 54;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+        @media (max-width: 768px) {
+          .sidebar-backdrop { display: block; pointer-events: none; }
+          .sidebar-backdrop.visible { opacity: 1; pointer-events: auto; }
+          .admin-sidebar {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100dvh !important;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 55 !important;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.12);
+          }
+          .admin-sidebar.open { transform: translateX(0); }
         }
       `}</style>
 
@@ -300,5 +336,6 @@ export default function AdminSidebar({ profile, events }: AdminSidebarProps) {
         </LogoutButton>
       </div>
     </aside>
+    </>
   );
 }

@@ -408,7 +408,7 @@ export default function PlusTemplate({
   const [rsvpName, setRsvpName] = useState(guestName ?? '');
   const [companionInputs, setCompanionInputs] = useState<string[]>([]);
   const [dietary, setDietary] = useState(E.rsvp.dietaryOptions?.[0] ?? 'Sin restricción');
-  const [dietaryMap, setDietaryMap] = useState<Record<string, string>>({});
+  const [dietaryMap, setDietaryMap] = useState<Record<string, string[]>>({});
   const [rsvpSent, setRsvpSent] = useState(false);
   const [rsvpStatus, setRsvpStatus] = useState<'confirmed' | 'declined' | null>(null);
   const [rsvpLoading, setRsvpLoading] = useState(false);
@@ -506,7 +506,7 @@ export default function PlusTemplate({
           name: rsvpName.trim(),
           seats: status === 'declined' ? 0 : 1 + companionInputs.length,
           companionNames: status === 'declined' ? [] : companionInputs,
-          dietary,
+          dietary: status === 'declined' ? '' : (dietaryMap[rsvpName || 'Tú']?.join(', ') || ''),
           dietaryPerPerson: status === 'declined' ? {} : dietaryMap,
           status,
         }),
@@ -1019,26 +1019,53 @@ export default function PlusTemplate({
 
                 {/* Restricción alimentaria por Persona */}
                 {(E.rsvp.dietaryOptions?.length ?? 0) > 0 && (() => {
-                  const attendees = [rsvpName || 'Tú', ...companionInputs.filter(n => n.trim() !== '')];
+                  const allNames = [rsvpName || 'Tú', ...companionInputs.filter(n => n.trim() !== '')];
                   return (
-                    <div className="form-field">
-                      <label className="form-label" style={{ marginBottom: '1rem' }}>Sugerencia de menú / Restricción</label>
-                      {attendees.map((person) => (
-                        <div key={person} style={{ marginBottom: '1.25rem' }}>
-                          <p style={{ fontSize: '0.7rem', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '0.5rem' }}>
+                    <div className="dlx-dietary-wrap" style={{ marginTop: '1.5rem' }}>
+                      <p className="label gold" style={{ marginBottom: '1rem' }}>Restricción alimentaria</p>
+                      {allNames.map(person => (
+                        <div key={person} style={{ marginBottom: '1rem' }}>
+                          <p style={{ fontSize: '12px', fontWeight: 500, color: 'var(--charcoal)', marginBottom: '0.5rem', textAlign: 'left' }}>
                             {person}
                           </p>
-                          <div className="dietary-grid">
-                            {E.rsvp.dietaryOptions!.map((opt) => (
-                              <button
-                                key={opt}
-                                type="button"
-                                className={`dietary-btn${dietaryMap[person] === opt ? ' dietary-btn--active' : ''}`}
-                                onClick={() => setDietaryMap(prev => ({ ...prev, [person]: opt }))}
-                              >
-                                {opt}
-                              </button>
-                            ))}
+                          <div className="dietary-details-container">
+                            <details className="dietary-details">
+                              <summary className="dietary-summary">
+                                <span style={{ 
+                                  whiteSpace: 'nowrap', 
+                                  overflow: 'hidden', 
+                                  textOverflow: 'ellipsis',
+                                  maxWidth: '200px'
+                                }}>
+                                  {dietaryMap[person]?.length ? dietaryMap[person].join(', ') : 'Seleccionar restricciones'}
+                                </span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                              </summary>
+                              <div className="dietary-options">
+                                {E.rsvp.dietaryOptions!.map((opt) => {
+                                  const isSelected = dietaryMap[person]?.includes(opt);
+                                  return (
+                                    <label key={opt} className="dietary-option-label">
+                                      <input 
+                                        type="checkbox" 
+                                        className="dietary-checkbox"
+                                        checked={isSelected || false}
+                                        onChange={(e) => {
+                                          setDietaryMap(prev => {
+                                            const current = prev[person] || [];
+                                            const updated = e.target.checked 
+                                              ? [...current, opt]
+                                              : current.filter(x => x !== opt);
+                                            return { ...prev, [person]: updated };
+                                          });
+                                        }}
+                                      />
+                                      <span>{opt}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            </details>
                           </div>
                         </div>
                       ))}
@@ -1331,9 +1358,21 @@ const css = `
     animation: heroFadeIn 1.2s cubic-bezier(0.16,1,0.3,1) 0.15s both;
   }
   .hero-amp {
-    font-size: 0.45em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 0.8em;
+    height: 0.8em;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    font-size: 0.4em;
+    font-family: var(--font-playfair), serif;
+    font-style: italic;
+    font-weight: 300;
     color: var(--gold);
-    line-height: 1.1;
+    margin: 0 0.5rem;
+    opacity: 0.7;
+    line-height: 1;
   }
   .hero-meta {
     display: flex;
@@ -1830,8 +1869,8 @@ const css = `
     gap: 1rem;
     width: 100%;
   }
-  @media (max-width: 700px) { .destination-grid { grid-template-columns: 1fr; } }
-  @media (min-width: 701px) and (max-width: 900px) { .destination-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 768px) { .destination-grid { grid-template-columns: 1fr; } }
+  @media (min-width: 769px) and (max-width: 900px) { .destination-grid { grid-template-columns: 1fr 1fr; } }
   .dest-card {
     background: #F0E9DF;
     border: 1px solid var(--muted);
@@ -2222,21 +2261,29 @@ const css = `
   }
 
   /* Dietary */
-  .dietary-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-  .dietary-btn {
-    padding: 0.5rem 1rem;
-    border-radius: 100px;
-    border: 1px solid var(--muted);
-    background: #F0E9DF;
-    font-family: var(--font-jost), system-ui, sans-serif;
-    font-size: 11px;
-    color: var(--muted-fg);
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.05em;
+  .dietary-details-container { margin-top: 0.5rem; }
+  .dietary-details { position: relative; width: 100%; text-align: left; margin-bottom: 0.5rem; }
+  .dietary-summary {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.7rem 1rem; border: 1px solid var(--muted); border-radius: 8px;
+    background: rgba(255,255,255,0.5); color: var(--charcoal); font-family: var(--font-jost), system-ui, sans-serif; font-size: 13px;
+    cursor: pointer; list-style: none; transition: border-color 0.2s;
   }
-  .dietary-btn:hover { border-color: var(--gold); color: var(--charcoal); }
-  .dietary-btn--active { border-color: var(--gold); background: var(--gold); color: #fff; }
+  .dietary-summary:hover { border-color: var(--gold); }
+  .dietary-summary::-webkit-details-marker { display: none; }
+  .dietary-options {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--ivory); border: 1px solid var(--muted); border-radius: 8px;
+    padding: 0.5rem; z-index: 10; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;
+  }
+  .dietary-option-label {
+    display: flex; align-items: center; gap: 10px; padding: 8px;
+    cursor: pointer; font-family: var(--font-jost), system-ui, sans-serif; font-size: 13px; color: var(--charcoal);
+    border-radius: 6px; transition: background 0.2s;
+  }
+  .dietary-option-label:hover { background: rgba(0,0,0,0.03); }
+  .dietary-checkbox { accent-color: var(--gold); width: 14px; height: 14px; }
 
   /* Submit */
   .btn-submit {
@@ -2275,14 +2322,22 @@ const css = `
   .btn-decline:disabled { opacity: 0.4; cursor: not-allowed; }
 
   /* ── Mobile centering ── */
+  @media (max-width: 768px) {
+    .section { padding: 3rem 1.5rem; }
+    .section--wide { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .destination-grid { grid-template-columns: 1fr; }
+    .duo-block { flex-direction: column; aspect-ratio: auto; gap: 2px; }
+    .duo-block-item { aspect-ratio: 4 / 3; }
+    .trio-block { flex-direction: column; aspect-ratio: auto; gap: 3px; }
+    .trio-block-item { aspect-ratio: 4 / 3; }
+  }
   @media (max-width: 480px) {
     .hero-meta { flex-direction: column; gap: 0.4rem; }
     .hero-meta-dot { display: none; }
-    .section { padding: 4rem 1.5rem; }
+    .section { padding: 3rem 1.25rem; }
     .dresscode-gender { grid-template-columns: 1fr; }
     .dc-gender-divider { width: 80%; height: 1px; margin: 0.5rem auto; }
     .dlx-itinerary { padding-left: 1.25rem; }
     .dlx-irow { grid-template-columns: 50px 16px 1fr; }
-    .destination-grid { grid-template-columns: 1fr; }
   }
 `;
