@@ -18,10 +18,10 @@ interface ItineraryItem {
   imageObjectPosition?: string;
   imageScale?: number;
 }
-interface Swatch { color: string; name: string; }
-interface Hotel { name: string; category: string; address: string; note: string; phone: string; }
+export interface Swatch { color: string; name: string; }
+export interface Hotel { name: string; category: string; address: string; note: string; phone: string; }
 
-interface DeluxeConfig {
+export interface DeluxeConfig {
   theme?: {
     accentColor?:     string;
     backgroundColor?: string;

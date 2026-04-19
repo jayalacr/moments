@@ -19,13 +19,40 @@ export async function generateMetadata({ params }: Pick<Props, 'params'>) {
 
   const { data: event } = await supabase
     .from('events')
-    .select('title')
+    .select('title, config')
     .eq('event_type', type)
     .eq('slug', slug)
     .single();
 
   if (!event) return { title: 'Invitación — Moments' };
-  return { title: event.title, description: `Estás invitado — ${event.title}` };
+
+  const config = event.config || {};
+  // Extraer imagen para el preview (Open Graph)
+  // Intentar con el nuevo modelo de photos primero, luego con images[]
+  const photos = config.photos as any[];
+  const heroUrl = photos?.find(p => p.role === 'hero')?.url 
+               || config.images?.[0] 
+               || 'https://moments.events/og-default.jpg'; // Fallback a una imagen de marca
+
+  const title = event.title;
+  const description = `Estás invitado a celebrar con nosotros. Mira los detalles de: ${title}`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      images: [{ url: heroUrl, width: 1200, height: 630, alt: title }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [heroUrl],
+    },
+  };
 }
 
 export default async function InvitacionPage({ params, searchParams }: Props) {

@@ -444,6 +444,21 @@ export default function PlanesPage() {
     .btn-p { background: var(--gold); color: white; }
     .btn-d { background: var(--charcoal); color: rgba(184,150,90,0.9); }
 
+    .btn-example {
+      font-size: 10px;
+      color: var(--gold);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+      margin-top: 10px;
+      display: inline-block;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .btn-example:hover {
+      border-bottom-color: var(--gold);
+    }
+
     .plans-note {
       text-align: center;
       padding: 32px 24px 0;
@@ -513,6 +528,7 @@ export default function PlanesPage() {
             </div>
             <p className="ph-name">Essential</p>
             <p className="ph-desc">Sencillo y elegante</p>
+            <a href="/plantillas/essential" target="_blank" className="btn-example">Ver ejemplo</a>
           </div>
 
           <div className="ph-plan p">
@@ -522,6 +538,7 @@ export default function PlanesPage() {
             </div>
             <p className="ph-name">Plus</p>
             <p className="ph-desc">Experiencia completa</p>
+            <a href="/plantillas/plus" target="_blank" className="btn-example">Ver ejemplo</a>
           </div>
 
           <div className="ph-plan d">
@@ -530,6 +547,7 @@ export default function PlanesPage() {
             </div>
             <p className="ph-name">Deluxe</p>
             <p className="ph-desc">Premium e inmersivo</p>
+            <a href="/plantillas/deluxe" target="_blank" className="btn-example">Ver ejemplo</a>
           </div>
         </div>
 
