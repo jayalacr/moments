@@ -88,7 +88,6 @@ export default function SuperadminLayout({ children }: { children: React.ReactNo
         .sa-sidebar-wrapper {
           display: flex;
           flex: 1;
-          overflow: hidden;
           position: relative;
         }
 
@@ -99,7 +98,9 @@ export default function SuperadminLayout({ children }: { children: React.ReactNo
           border-right: 1px solid ${C.border};
           display: flex;
           flex-direction: column;
-          height: 100%;
+          height: 100vh;
+          position: sticky;
+          top: 0;
           z-index: 50;
         }
 
@@ -138,7 +139,7 @@ export default function SuperadminLayout({ children }: { children: React.ReactNo
           <Menu size={20} />
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: 600, color: C.accent, letterSpacing: '0.05em' }}>
+          <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '13px', fontWeight: 600, color: C.accent, letterSpacing: '0.05em' }}>
             moments
           </p>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: C.muted, letterSpacing: '2px', textTransform: 'uppercase' }}>
@@ -155,7 +156,7 @@ export default function SuperadminLayout({ children }: { children: React.ReactNo
           {/* Brand */}
           <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid ' + C.border, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: 600, color: C.accent, letterSpacing: '0.05em', marginBottom: '2px' }}>
+              <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '13px', fontWeight: 600, color: C.accent, letterSpacing: '0.10em', marginBottom: '2px' }}>
                 moments
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

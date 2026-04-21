@@ -46,15 +46,14 @@ export default async function AdminPage() {
     .order('created_at', { ascending: false });
 
   return (
-    <div className="admin-page-container">
+    <div className="admin-dashboard-container">
       <style>{`
-        .admin-page-container {
+        .admin-dashboard-container {
           padding: 40px 48px;
           max-width: 860px;
-          margin: 0 auto;
         }
         @media (max-width: 768px) {
-          .admin-page-container {
+          .admin-dashboard-container {
             padding: 24px 20px;
           }
         }

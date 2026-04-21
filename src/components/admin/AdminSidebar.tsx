@@ -10,7 +10,8 @@ const C = {
   bg: '#F8F3EC',
   sidebar: '#FFFFFF',
   border: '#EDE5D8',
-  accent: '#C9A87C',
+  accent: '#1C1611',
+  logo: '#B28735',
   text: '#1C1611',
   muted: '#9C8E82',
   accentLight: 'rgba(201,168,124,0.10)',
@@ -190,16 +191,15 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
           <div>
             <p
               style={{
-                fontFamily: 'var(--font-cormorant)',
+                fontFamily: 'var(--font-montserrat)',
                 fontSize: '24px',
                 fontWeight: 300,
-                fontStyle: 'italic',
-                color: C.text,
+                color: C.logo,
                 letterSpacing: '0.05em',
                 lineHeight: 1,
               }}
             >
-              Moments
+              moments
             </p>
             <p style={{ marginTop: '6px', fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: C.accent }}>
               Panel de Control

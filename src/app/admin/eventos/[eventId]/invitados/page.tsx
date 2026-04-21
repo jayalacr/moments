@@ -13,17 +13,16 @@ export default async function InvitadosPage({ params }: Props) {
   if (!event) redirect('/admin');
 
   return (
-    <div className="admin-page-container">
+    <div className="admin-invitados-container">
       <style>{`
-        .admin-page-container {
+        .admin-invitados-container {
           padding: 40px 48px;
           width: 100%;
           max-width: 1200px;
-          margin: 0 auto;
           box-sizing: border-box;
         }
         @media (max-width: 768px) {
-          .admin-page-container {
+          .admin-invitados-container {
             padding: 24px 20px;
           }
         }

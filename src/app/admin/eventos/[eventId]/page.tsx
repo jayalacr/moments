@@ -210,7 +210,7 @@ export default async function EventoPage({ params }: Props) {
           <div className="event-info-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             {[
               { label: 'URL pública', value: `/${event.event_type}/${event.slug}` },
-              { label: 'Plan contratado', value: `Moments ${PLAN_LABELS[event.plan]}` },
+              { label: 'Plan contratado', value: `${PLAN_LABELS[event.plan]}` },
               { label: 'Fecha de creación', value: new Date(event.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) },
               { label: 'ID del evento', value: event.id.slice(0, 8) + '...' },
             ].map(item => (
@@ -256,7 +256,7 @@ export default async function EventoPage({ params }: Props) {
 
            {event.plan === 'plus' && (
              <PlusLinkGenerator 
-               baseUrl={`${headers().get('x-forwarded-proto') || 'https'}://${headers().get('host')}/${event.event_type}/${event.slug}`} 
+               baseUrl={`${(await headers()).get('x-forwarded-proto') || 'https'}://${(await headers()).get('host')}/${event.event_type}/${event.slug}`} 
              />
            )}
         </div>

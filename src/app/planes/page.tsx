@@ -245,12 +245,11 @@ export default function PlanesPage() {
       background: linear-gradient(to bottom, transparent, var(--gold));
     }
     .planes-wordmark {
-      font-family: var(--font-cormorant), Georgia, serif;
-      font-size: 13px;
-      font-weight: 400;
+      font-family: var(--font-montserrat);
+      font-size: 30px;
+      font-weight: 300;
       letter-spacing: 0.45em;
-      text-transform: uppercase;
-      color: var(--gold);
+      color: #B28735;
       margin-bottom: 20px;
     }
     .planes-title {
@@ -500,7 +499,7 @@ export default function PlanesPage() {
 
       {/* ── Hero ── */}
       <div className="planes-hero">
-        <p className="planes-wordmark">Moments</p>
+        <p className="planes-wordmark">moments</p>
         <h1 className="planes-title">
           Elige el plan para<br /><em>su gran día</em>
         </h1>

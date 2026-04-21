@@ -23,14 +23,14 @@ export default async function EditarPage({ params }: Props) {
   if (!event) redirect('/admin');
 
   return (
-    <div className="admin-page-container">
+    <div className="admin-editar-container">
       <style>{`
-        .admin-page-container {
+        .admin-editar-container {
           padding: 40px 48px;
           max-width: 760px;
         }
         @media (max-width: 768px) {
-          .admin-page-container {
+          .admin-editar-container {
             padding: 24px 20px;
           }
         }

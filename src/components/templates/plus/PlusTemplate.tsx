@@ -1,6 +1,6 @@
 'use client';
 
-import { Cormorant_Garamond, Jost } from 'next/font/google';
+import { Cormorant_Garamond, Jost, Montserrat } from 'next/font/google';
 import React, { useEffect, useState, useRef } from 'react';
 import type { ImageBlock, PhotoEntry } from '@/lib/imageLayout';
 
@@ -95,6 +95,12 @@ const jost = Jost({
   subsets: ['latin'],
   weight: ['300', '400', '500'],
   variable: '--font-jost',
+});
+
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-montserrat',
 });
 
 // ---------------------------------------------------------------------------
@@ -535,7 +541,7 @@ export default function PlusTemplate({
 
   return (
     <div 
-      className={`${cormorant.variable} ${jost.variable} plus-root`}
+      className={`${cormorant.variable} ${jost.variable} ${montserrat.variable} plus-root`}
       style={{
         '--ivory': backgroundColor,
         '--charcoal': textColor,
@@ -929,6 +935,9 @@ export default function PlusTemplate({
         <p className="footer-names">{E.couple.person1} &amp; {E.couple.person2}</p>
         <p className="label muted" style={{ marginTop: '0.5rem' }}>
           {E.date.day} · {E.date.month} · {E.date.year} · {E.location}
+        </p>
+        <p className="footer-powered">
+          powered by <span className="footer-brand">moments</span>
         </p>
       </footer>
 
@@ -2109,6 +2118,8 @@ const css = `
   /* ── Footer ── */
   .footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--muted); background: #F0E9DF; }
   .footer-names { font-family: var(--font-cormorant), Georgia, serif; font-size: 1.5rem; font-style: italic; font-weight: 300; color: var(--charcoal); margin: 0; }
+  .footer-powered { font-family: var(--font-jost), sans-serif; font-size: 9px; letter-spacing: 0.2em; text-transform: none; color: var(--charcoal); opacity: 0.4; margin-top: 2rem; }
+  .footer-brand { font-family: var(--font-montserrat), 'Montserrat', sans-serif; font-weight: 500; letter-spacing: 0.05em; opacity: 1; }
 
   /* ── Modal ── */
   .modal-backdrop {

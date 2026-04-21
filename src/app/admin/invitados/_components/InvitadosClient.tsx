@@ -741,7 +741,7 @@ export default function InvitadosClient({
             const meta = statusMeta[r.status];
             
             // Parse per-person dietary
-            const dietaryMap = r.dietary_per_person as Record<string, string> | null;
+            const dietaryMap = r.dietary_per_person as unknown as Record<string, string[]> | null;
             const hasDetailedDietary = dietaryMap && Object.keys(dietaryMap).length > 0;
 
             return (

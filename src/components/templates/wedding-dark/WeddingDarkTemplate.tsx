@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Cormorant_Garamond, Jost } from 'next/font/google';
+import { Cormorant_Garamond, Jost, Montserrat } from 'next/font/google';
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
@@ -14,6 +14,12 @@ const jost = Jost({
   subsets: ['latin'],
   weight: ['300', '400', '500'],
   variable: '--font-jost',
+});
+
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-montserrat',
 });
 
 // ---------------------------------------------------------------------------
@@ -247,7 +253,7 @@ export default function WeddingDarkTemplate() {
 
   if (loading) {
     return (
-      <div className={`${cormorant.variable} ${jost.variable}`}>
+      <div className={`${cormorant.variable} ${jost.variable} ${montserrat.variable}`}>
         <style>{css}</style>
         <div className={`loader ${loaderOut ? 'loader--out' : ''}`}>
           <div className="loader-monogram">
@@ -265,7 +271,7 @@ export default function WeddingDarkTemplate() {
   }
 
   return (
-    <div className={`${cormorant.variable} ${jost.variable} dlx-root`}>
+    <div className={`${cormorant.variable} ${jost.variable} ${montserrat.variable} dlx-root`}>
       <style>{css}</style>
 
       {/* Audio */}
@@ -616,6 +622,9 @@ export default function WeddingDarkTemplate() {
         <p className="footer-names">{EVENT.couple.person1} &amp; {EVENT.couple.person2}</p>
         <p className="label muted" style={{ marginTop: '0.5rem' }}>
           {EVENT.date.day} · {EVENT.date.month} · {EVENT.date.year} · {EVENT.location}
+        </p>
+        <p className="footer-powered">
+          powered by <span className="footer-brand">moments</span>
         </p>
       </footer>
 
@@ -1550,6 +1559,8 @@ const css = `
     margin: 0 0 0.5rem;
   }
   .footer-names { font-family: var(--font-cormorant), Georgia, serif; font-size: 1.5rem; font-style: italic; font-weight: 300; color: var(--ivory); margin: 0; }
+  .footer-powered { font-family: var(--font-jost), sans-serif; font-size: 9px; letter-spacing: 0.2em; color: var(--ivory); opacity: 0.35; margin-top: 2rem; }
+  .footer-brand { font-family: var(--font-montserrat), 'Montserrat', sans-serif; font-weight: 500; color: var(--gold); letter-spacing: 0.05em; opacity: 1; }
 
   /* ── Modal ── */
   .modal-backdrop {

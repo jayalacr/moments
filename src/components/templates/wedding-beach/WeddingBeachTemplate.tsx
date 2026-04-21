@@ -269,6 +269,9 @@ export default function WeddingBeachTemplate({ config = {} }: { config?: any }) 
       <footer className="footer">
         <p>{c.couple.person1} & {c.couple.person2}</p>
         <p className="label muted">{c.location}</p>
+        <p className="footer-powered">
+          powered by <span className="footer-brand">moments</span>
+        </p>
       </footer>
     </div>
   );
@@ -339,7 +342,9 @@ const css = `
   .btn-outline:hover { background: var(--gold); color: white; }
   .btn-whatsapp { display: inline-block; padding: 1rem 2.5rem; background: var(--gold); color: white; text-decoration: none; border-radius: 40px; font-weight: 600; margin-top: 2rem; }
 
-  .footer { padding: 60px 20px; border-top: 1px solid rgba(0,0,0,0.05); font-family: var(--font-display); font-style: italic; }
+  .footer { padding: 60px 20px; border-top: 1px solid rgba(0,0,0,0.05); font-family: var(--font-display); font-style: italic; text-align: center; }
+  .footer-powered { font-family: var(--font-body), sans-serif; font-size: 9px; font-style: normal; letter-spacing: 0.2em; color: var(--charcoal); opacity: 0.4; margin-top: 1.5rem; }
+  .footer-brand { font-family: var(--font-montserrat), 'Montserrat', sans-serif; font-weight: 500; letter-spacing: 0.05em; opacity: 1; }
   .ornament { display: flex; align-items: center; gap: 1rem; padding: 20px 0; max-width: 400px; margin: 0 auto; }
 `;
 

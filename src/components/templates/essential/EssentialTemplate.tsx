@@ -490,7 +490,7 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
           {c.date?.day} · {c.date?.month} · {c.date?.year} · {c.location}
         </p>
         <p className="footer-powered">
-          Creado con <span className="footer-brand">Moments</span>
+          powered by <span className="footer-brand">moments</span>
         </p>
       </footer>
     </div>
@@ -1471,8 +1471,11 @@ const css = `
     margin-top: 2rem;
   }
   .footer-brand {
+    font-family: 'Montserrat', var(--font-montserrat), sans-serif;
+    font-weight: 500;
     color: var(--gold);
     opacity: 1;
+    letter-spacing: 0.05em;
   }
 
   /* ---------- Mobile adjustments ---------- */

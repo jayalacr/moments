@@ -68,6 +68,55 @@ El sistema se divide en tres niveles estéticos y funcionales:
 
 Para que sea mas clara la diferencia entre planes te puedes guíar por el archivo llamado: comparativo_planes_boda.html
 
+## Modelo de Precios y Negocio
+
+### Costos Operativos Mensuales
+- **Claude Code** (generación de plantillas con IA): $20 USD/mes
+- **Cloudinary**: Plan gratuito
+- **Vercel**: Plan gratuito (Pro a $20 USD/mes si se escala)
+- **Supabase**: Plan gratuito (Pro a $25 USD/mes si se escala)
+- **Resend**: Plan gratuito (100 emails/día)
+- **Dominio**: ~$12 USD/año (~$1 USD/mes)
+- **Total estimado**: $21 – $41 USD/mes
+
+### Precios Base por Plan (incluye 1 mes gratis de publicación)
+| Plan | Precio único (MXN) | ~USD |
+|------|-------------------|------|
+| **Essential** | $699 | ~$35 |
+| **Plus** | $1,799 | ~$90 |
+| **Deluxe** | $2,999 | ~$150 |
+
+Todos los planes incluyen **1 mes gratuito** de publicación. A partir del segundo mes se cobra extensión.
+
+### Extensiones de Tiempo (a partir del mes 2)
+Los precios varían por plan debido al consumo diferenciado de recursos (imágenes, consultas al dashboard, emails de reenvío, etc.):
+
+| Extensión | Essential | Plus | Deluxe |
+|-----------|-----------|------|--------|
+| +1 mes | $99 | $149 | $199 |
+| +3 meses | $249 (~$83/mes) | $379 (~$126/mes) | $499 (~$166/mes) |
+| +6 meses | $449 (~$75/mes) | $649 (~$108/mes) | $899 (~$150/mes) |
+| Permanente | $699 | $999 | $1,499 |
+
+### Dominio Personalizado (Add-on)
+- **Subdominio de Moments** (ej. `juan-y-maria.moments.mx`): Gratis en Plus y Deluxe, no disponible en Essential.
+- **Dominio propio del cliente**:
+  - Configuración técnica (DNS + SSL en Vercel): $499 MXN (pago único).
+  - Dominio incluido (Moments lo compra por el cliente vía Cloudflare Registrar): $299 MXN/año.
+  - Solo configuración (el cliente ya tiene su dominio): $499 MXN (pago único).
+
+### Lógica de Expiración de Invitaciones
+El sistema debe manejar campos `published_at` y `expires_at` en la tabla `events` para controlar la duración de publicación:
+1. **7 días antes de expirar**: Se envía correo de aviso al organizador.
+2. **Al expirar**: La invitación muestra una pantalla amable: *"Esta invitación ya no está disponible. ¿Quieres crear la tuya? Visita moments.com"* (funciona como publicidad orgánica).
+3. **30 días post-expiración**: Los datos se conservan en DB para posible reactivación, pero la URL deja de resolver la invitación.
+
+### Campos Pendientes de Implementar en DB
+- `events.published_at` (TIMESTAMPTZ): Fecha en que se publica la invitación.
+- `events.expires_at` (TIMESTAMPTZ): Fecha de expiración calculada según plan + extensiones.
+- `events.custom_domain` (TEXT, nullable): Dominio personalizado asociado al evento.
+- `events.is_expired` (BOOLEAN, computed o trigger): Estado derivado para consultas rápidas.
+
 ## Patrones y Guías
 - **Component-First**: Utilizar componentes de shadcn/ui siempre que sea posible.
 - **Seguridad**: Verificar siempre las políticas RLS al añadir nuevas tablas.

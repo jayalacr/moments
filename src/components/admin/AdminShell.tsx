@@ -9,6 +9,7 @@ interface Profile { full_name: string | null; email: string | null; }
 
 const C = {
   bg: '#F8F3EC',
+  logo: '#B28735',
   text: '#1C1611',
   border: '#EDE5D8',
 };
@@ -53,8 +54,8 @@ export default function AdminShell({
         >
           <Menu size={22} />
         </button>
-        <p style={{ fontFamily: 'var(--font-cormorant)', fontSize: '20px', fontWeight: 300, fontStyle: 'italic', color: C.text, margin: 0 }}>
-          Moments
+        <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '20px', fontWeight: 300, fontStyle: 'italic', color: C.logo, margin: 0 }}>
+          moments
         </p>
       </header>
 

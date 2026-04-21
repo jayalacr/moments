@@ -33,7 +33,7 @@ export default function PlusLinkGenerator({ baseUrl }: Props) {
         <div style={{ 
           width: '32px', height: '32px', borderRadius: '8px', 
           background: 'rgba(201,168,124,0.15)', color: '#C9A87C',
-          display: 'flex', alignItems: 'center', justify : 'center'
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
           <Sparkles size={18} />
         </div>

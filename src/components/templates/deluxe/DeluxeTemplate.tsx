@@ -1414,6 +1414,8 @@ const css = `
     margin: 0 0 0.5rem;
   }
   .footer-names { font-family: var(--font-cormorant), Georgia, serif; font-size: 1.5rem; font-style: italic; font-weight: 300; color: var(--ivory); margin: 0; }
+  .footer-powered { font-family: var(--font-jost), sans-serif; font-size: 9px; letter-spacing: 0.2em; color: var(--ivory); opacity: 0.35; margin-top: 2rem; }
+  .footer-brand { font-family: var(--font-montserrat), 'Montserrat', sans-serif; font-weight: 500; color: var(--gold); letter-spacing: 0.05em; opacity: 1; }
 
   /* ── Modal ── */
   .modal-backdrop {
@@ -2585,6 +2587,9 @@ export default function DeluxeTemplate({
         <p className="footer-names">{couple.person1} &amp; {couple.person2}</p>
         <p className="label muted" style={{ marginTop: '0.5rem' }}>
           {date.day} · {date.month} · {date.year}{location ? ` · ${location}` : ''}
+        </p>
+        <p className="footer-powered">
+          powered by <span className="footer-brand">moments</span>
         </p>
       </footer>
 

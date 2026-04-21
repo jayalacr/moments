@@ -37,7 +37,6 @@ export default async function SuperadminInvitadosPage({ params }: Props) {
           padding: 32px 40px;
           width: 100%;
           max-width: 1200px;
-          margin: 0 auto;
           box-sizing: border-box;
           background-color: ${C.bg};
           min-height: 100vh;

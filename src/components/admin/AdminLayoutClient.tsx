@@ -51,15 +51,15 @@ export default function AdminLayoutClient({ children, profile, events }: AdminLa
           </button>
           <p
             style={{
-              fontFamily: 'var(--font-cormorant)',
+              fontFamily: 'var(--font-montserrat)',
               fontSize: '20px',
               fontWeight: 300,
               fontStyle: 'italic',
-              color: '#1C1611',
+              color: '#B28735',
               margin: 0,
             }}
           >
-            Moments
+            moments
           </p>
         </div>
       )}
