@@ -42,7 +42,15 @@ export default function PreviewClient({ children, eventId }: PreviewClientProps)
           Salir de vista previa
         </Link>
 
-        <div style={{
+        <style>{`
+          @media (max-width: 768px) {
+            .preview-toggle-container {
+              display: none !important;
+            }
+          }
+        `}</style>
+
+        <div className="preview-toggle-container" style={{
           display: 'flex',
           backgroundColor: '#F5F5F5',
           padding: '4px',
@@ -93,7 +101,7 @@ export default function PreviewClient({ children, eventId }: PreviewClientProps)
           </button>
         </div>
 
-        <div style={{ width: '140px' }} />
+        <div style={{ width: '140px' }} className="preview-toggle-container" />
       </div>
 
       {/* Preview Area */}

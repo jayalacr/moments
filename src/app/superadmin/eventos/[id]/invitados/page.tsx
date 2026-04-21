@@ -31,7 +31,24 @@ export default async function SuperadminInvitadosPage({ params }: Props) {
   if (!event) redirect('/superadmin');
 
   return (
-    <div style={{ padding: '32px 40px', width: '100%', boxSizing: 'border-box', backgroundColor: C.bg, minHeight: '100vh', color: C.text }}>
+    <div className="sa-invitados-container">
+      <style>{`
+        .sa-invitados-container {
+          padding: 32px 40px;
+          width: 100%;
+          max-width: 1200px;
+          margin: 0 auto;
+          box-sizing: border-box;
+          background-color: ${C.bg};
+          min-height: 100vh;
+          color: ${C.text};
+        }
+        @media (max-width: 768px) {
+          .sa-invitados-container {
+            padding: 20px 16px;
+          }
+        }
+      `}</style>
       <div style={{ marginBottom: '28px' }}>
         <Link
           href={`/superadmin/eventos/${id}`}

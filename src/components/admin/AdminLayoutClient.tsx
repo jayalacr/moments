@@ -33,19 +33,7 @@ export default function AdminLayoutClient({ children, profile, events }: AdminLa
 
       {/* Mobile Header */}
       {!isPreview && (
-        <div className="admin-mobile-header">
-          <p
-            style={{
-              fontFamily: 'var(--font-cormorant)',
-              fontSize: '20px',
-              fontWeight: 300,
-              fontStyle: 'italic',
-              color: '#1C1611',
-              margin: 0,
-            }}
-          >
-            Moments
-          </p>
+        <div className="admin-mobile-header" suppressHydrationWarning>
           <button
             onClick={() => setIsMobileMenuOpen(true)}
             style={{
@@ -61,6 +49,18 @@ export default function AdminLayoutClient({ children, profile, events }: AdminLa
           >
             <Menu size={24} />
           </button>
+          <p
+            style={{
+              fontFamily: 'var(--font-cormorant)',
+              fontSize: '20px',
+              fontWeight: 300,
+              fontStyle: 'italic',
+              color: '#1C1611',
+              margin: 0,
+            }}
+          >
+            Moments
+          </p>
         </div>
       )}
 

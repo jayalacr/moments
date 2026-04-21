@@ -23,7 +23,18 @@ export default async function EditarPage({ params }: Props) {
   if (!event) redirect('/admin');
 
   return (
-    <div style={{ padding: '40px 48px', maxWidth: '760px' }}>
+    <div className="admin-page-container">
+      <style>{`
+        .admin-page-container {
+          padding: 40px 48px;
+          max-width: 760px;
+        }
+        @media (max-width: 768px) {
+          .admin-page-container {
+            padding: 24px 20px;
+          }
+        }
+      `}</style>
       <div style={{ marginBottom: '36px' }}>
         <p style={{ fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', color: '#C9A87C', marginBottom: '8px' }}>
           Editando invitación

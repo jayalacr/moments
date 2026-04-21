@@ -53,8 +53,36 @@ export default async function EventoDetailPage({ params }: Props) {
   const status = STATUS_MAP[event.status] ?? STATUS_MAP.draft;
 
   return (
-    <div style={{ padding: '32px 40px', maxWidth: '680px' }}>
+    <div className="sa-detail-container">
       <style>{`
+        .sa-detail-container {
+          padding: 32px 40px;
+          max-width: 680px;
+        }
+        .sa-header-flex {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          margin-bottom: 32px;
+          gap: 16px;
+        }
+        .sa-info-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+          margin-bottom: 32px;
+        }
+        @media (max-width: 768px) {
+          .sa-detail-container {
+            padding: 20px 16px;
+          }
+          .sa-header-flex {
+            flex-direction: column;
+          }
+          .sa-info-grid {
+            grid-template-columns: 1fr;
+          }
+        }
         @keyframes pulse-dot { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
         .live-dot { animation: pulse-dot 2s ease-in-out infinite; }
         .toggle-btn {
@@ -84,7 +112,7 @@ export default async function EventoDetailPage({ params }: Props) {
       </div>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '32px', gap: '16px' }}>
+      <div className="sa-header-flex">
         <div>
           <h1 style={{ fontSize: '20px', fontWeight: 400, color: C.text, marginBottom: '6px' }}>
             {event.title}
@@ -123,7 +151,7 @@ export default async function EventoDetailPage({ params }: Props) {
       </div>
 
       {/* Info del evento */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '32px' }}>
+      <div className="sa-info-grid">
         {[
           { label: 'slug', value: `/${event.event_type}/${event.slug}` },
           { label: 'organizador', value: (event.profiles as { full_name?: string; email?: string } | null)?.full_name || (event.profiles as { email?: string } | null)?.email || '—' },
@@ -134,7 +162,7 @@ export default async function EventoDetailPage({ params }: Props) {
             <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: C.muted, letterSpacing: '2px', marginBottom: '6px' }}>
               {item.label.toUpperCase()}
             </p>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: C.text }}>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: C.text, wordBreak: 'break-all' }}>
               {item.value}
             </p>
           </div>

@@ -46,8 +46,18 @@ export default async function AdminPage() {
     .order('created_at', { ascending: false });
 
   return (
-    <div style={{ padding: '40px 48px', maxWidth: '860px' }}>
+    <div className="admin-page-container">
       <style>{`
+        .admin-page-container {
+          padding: 40px 48px;
+          max-width: 860px;
+          margin: 0 auto;
+        }
+        @media (max-width: 768px) {
+          .admin-page-container {
+            padding: 24px 20px;
+          }
+        }
         .event-card {
           display: block;
           background: #fff;

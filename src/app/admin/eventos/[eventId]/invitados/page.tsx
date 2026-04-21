@@ -13,7 +13,21 @@ export default async function InvitadosPage({ params }: Props) {
   if (!event) redirect('/admin');
 
   return (
-    <div style={{ padding: '40px 48px', width: '100%', boxSizing: 'border-box' }}>
+    <div className="admin-page-container">
+      <style>{`
+        .admin-page-container {
+          padding: 40px 48px;
+          width: 100%;
+          max-width: 1200px;
+          margin: 0 auto;
+          box-sizing: border-box;
+        }
+        @media (max-width: 768px) {
+          .admin-page-container {
+            padding: 24px 20px;
+          }
+        }
+      `}</style>
       <div style={{ marginBottom: '36px' }}>
         <p style={{ fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', color: '#C9A87C', marginBottom: '8px' }}>
           Gestión de asistentes

@@ -58,8 +58,41 @@ export default async function SuperadminPage() {
   const draft = events?.filter(e => e.status === 'draft').length ?? 0;
 
   return (
-    <div style={{ padding: '32px 40px', minHeight: '100%' }}>
+    <div className="sa-page-container">
       <style>{`
+        .sa-page-container {
+          padding: 32px 40px;
+          min-height: 100%;
+        }
+        .sa-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          margin-bottom: 32px;
+          gap: 16px;
+        }
+        .sa-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 12px;
+          margin-bottom: 32px;
+        }
+        .sa-table-wrapper {
+          border: 1px solid ${C.border};
+          border-radius: 8px;
+          overflow-x: auto;
+        }
+        @media (max-width: 768px) {
+          .sa-page-container {
+            padding: 20px 16px;
+          }
+          .sa-header {
+            flex-direction: column;
+          }
+          .sa-stats-grid {
+            grid-template-columns: 1fr;
+          }
+        }
         @keyframes pulse-dot { 0%,100% { opacity:1; box-shadow: 0 0 6px ${C.green}; } 50% { opacity:0.5; box-shadow: 0 0 2px ${C.green}; } }
         .live-dot { animation: pulse-dot 2s ease-in-out infinite; }
         .toggle-btn {
@@ -88,6 +121,7 @@ export default async function SuperadminPage() {
           letter-spacing: 0.08em;
           text-decoration: none;
           transition: background 0.15s;
+          white-space: nowrap;
         }
         .new-btn:hover { background: rgba(45,212,191,0.2); }
         tr.event-row { transition: background 0.12s; }
@@ -95,7 +129,7 @@ export default async function SuperadminPage() {
       `}</style>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '32px' }}>
+      <div className="sa-header">
         <div>
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted, letterSpacing: '3px', marginBottom: '6px' }}>
             /superadmin/eventos
@@ -110,7 +144,7 @@ export default async function SuperadminPage() {
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '32px' }}>
+      <div className="sa-stats-grid">
         {[
           { label: 'total_events', value: String(total).padStart(2, '0'), color: C.text },
           { label: 'live_now', value: String(live).padStart(2, '0'), color: C.green },
@@ -136,7 +170,7 @@ export default async function SuperadminPage() {
       </div>
 
       {/* Table */}
-      <div style={{ border: `1px solid ${C.border}`, borderRadius: '8px', overflow: 'hidden' }}>
+      <div className="sa-table-wrapper">
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: `1px solid ${C.border}` }}>
@@ -181,7 +215,7 @@ export default async function SuperadminPage() {
                   style={{ borderTop: i > 0 ? `1px solid ${C.border}` : undefined }}
                 >
                   {/* Evento */}
-                  <td style={{ padding: '14px 16px' }}>
+                  <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
                     <p style={{ fontSize: '13px', color: C.text, fontWeight: 400, marginBottom: '2px' }}>
                       {event.title}
                     </p>
@@ -191,21 +225,21 @@ export default async function SuperadminPage() {
                   </td>
 
                   {/* Tipo */}
-                  <td style={{ padding: '14px 16px' }}>
+                  <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.mutedMid }}>
                       {TYPE_MAP[event.event_type] ?? event.event_type}
                     </span>
                   </td>
 
                   {/* Plan */}
-                  <td style={{ padding: '14px 16px' }}>
+                  <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: plan.color, letterSpacing: '1px' }}>
                       {plan.label}
                     </span>
                   </td>
 
                   {/* Organizador */}
-                  <td style={{ padding: '14px 16px' }}>
+                  <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
                     <p style={{ fontSize: '12px', color: C.text }}>
                       {org?.full_name || '—'}
                     </p>
@@ -215,7 +249,7 @@ export default async function SuperadminPage() {
                   </td>
 
                   {/* Estado */}
-                  <td style={{ padding: '14px 16px' }}>
+                  <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '4px', backgroundColor: status.bg }}>
                       <span
                         className={event.status === 'published' ? 'live-dot' : ''}
@@ -228,14 +262,14 @@ export default async function SuperadminPage() {
                   </td>
 
                   {/* Creado */}
-                  <td style={{ padding: '14px 16px' }}>
+                  <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.mutedMid }}>
                       {createdAt}
                     </span>
                   </td>
 
                   {/* Acciones */}
-                  <td style={{ padding: '14px 16px' }}>
+                  <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Link
                         href={`/superadmin/eventos/${event.id}`}
