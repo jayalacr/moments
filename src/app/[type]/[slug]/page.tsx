@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { notFound } from 'next/navigation';
 import { TEMPLATES } from '@/lib/templates';
 import { Jost } from 'next/font/google';
+import { decodePasses } from '@/lib/rsvp-utils';
 
 // Siempre renderizar desde el servidor con datos frescos de Supabase
 export const dynamic = 'force-dynamic';
@@ -10,7 +11,7 @@ const jost = Jost({ subsets: ['latin'], weight: ['300', '400'] });
 
 interface Props {
   params: Promise<{ type: string; slug: string }>;
-  searchParams: Promise<{ id?: string }>;
+  searchParams: Promise<{ id?: string; p?: string }>;
 }
 
 export async function generateMetadata({ params }: Pick<Props, 'params'>) {
@@ -57,7 +58,7 @@ export async function generateMetadata({ params }: Pick<Props, 'params'>) {
 
 export default async function InvitacionPage({ params, searchParams }: Props) {
   const { type, slug } = await params;
-  const { id: guestToken } = await searchParams;
+  const { id: guestToken, p: passesCode } = await searchParams;
   const supabase = createAdminClient();
 
   const { data: event } = await supabase
@@ -103,7 +104,7 @@ export default async function InvitacionPage({ params, searchParams }: Props) {
   if (!entry) notFound();
 
   // Si hay token, resolver datos del invitado server-side
-  let maxCompanions: number | undefined;
+  let maxCompanions: number = 0;
   let companionNames: string[] | undefined;
   let guestName: string | undefined;
   let hasExistingRsvp = false;
@@ -128,6 +129,11 @@ export default async function InvitacionPage({ params, searchParams }: Props) {
         .maybeSingle();
 
       hasExistingRsvp = !!existingRsvp;
+    }
+  } else if (passesCode) {
+    const decoded = decodePasses(passesCode);
+    if (decoded !== null) {
+      maxCompanions = decoded;
     }
   }
 

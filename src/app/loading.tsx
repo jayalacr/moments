@@ -9,45 +9,21 @@ export default function Loading() {
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: '#FAF7F2',
-      color: '#1C1611',
     }}>
       <style>{`
-        @keyframes fadeInOut {
-          0%, 100% { opacity: 0.3; transform: scale(0.98); }
-          50% { opacity: 1; transform: scale(1); }
+        .spinner {
+          width: 40px;
+          height: 40px;
+          border: 3px solid rgba(201,168,124,0.1);
+          border-top-color: #C9A87C;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
         }
-        .loader-logo {
-          font-family: var(--font-cormorant), serif;
-          font-size: 24px;
-          letter-spacing: 0.3em;
-          text-transform: uppercase;
-          color: #B8965A;
-          animation: fadeInOut 2s ease-in-out infinite;
-          margin-bottom: 24px;
-        }
-        .loader-bar {
-          width: 120px;
-          height: 1px;
-          background: #E6DDD2;
-          position: relative;
-          overflow: hidden;
-        }
-        .loader-bar::after {
-          content: '';
-          position: absolute;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: #B8965A;
-          animation: slide 1.5s infinite;
-        }
-        @keyframes slide {
-          0% { left: -100%; }
-          100% { left: 100%; }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
       `}</style>
-      <div className="loader-logo">Moments</div>
-      <div className="loader-bar" />
+      <div className="spinner" />
     </div>
   );
 }

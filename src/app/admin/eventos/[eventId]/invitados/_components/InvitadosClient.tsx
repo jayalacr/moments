@@ -20,6 +20,7 @@ import {
   FileText,
   AlertCircle
 } from 'lucide-react';
+import Spinner from '@/components/ui/Spinner';
 import {
   createGuest,
   updateGuest,
@@ -81,6 +82,82 @@ function buildInviteUrl(event: Props['event'], token: string): string {
 }
 
 const DEFAULT_TEMPLATE = '¡Hola {nombre}! 👋 Te compartimos nuestra invitación digital. Nos encantaría que nos acompañaras. Por favor confirma tu asistencia aquí: {link}';
+
+const responsiveStyles = `
+  .admin-page-container {
+    padding: 0;
+  }
+  @media (max-width: 768px) {
+    .admin-page-container {
+      gap: 20px !important;
+    }
+    .stats-grid {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 12px !important;
+    }
+    .stats-card {
+      padding: 16px !important;
+    }
+    .stats-value {
+      font-size: 24px !important;
+    }
+    .toolbar-container {
+      flex-direction: column !important;
+      align-items: stretch !important;
+    }
+    .search-input-wrap {
+      min-width: 100% !important;
+    }
+    .toolbar-actions {
+      margin-left: 0 !important;
+      justify-content: space-between;
+      width: 100%;
+    }
+    .toolbar-actions button {
+      flex: 1;
+      padding: 10px 8px !important;
+      font-size: 10px !important;
+    }
+    .guest-row {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 16px !important;
+      padding: 16px !important;
+    }
+    .guest-actions {
+      width: 100%;
+      justify-content: flex-end;
+      border-top: 1px solid #EDE5D8;
+      padding-top: 12px;
+    }
+    .tabs-selector {
+      gap: 12px !important;
+      overflow-x: auto;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+    }
+    .table-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .grid-row {
+      min-width: 800px;
+    }
+  }
+  @media (max-width: 480px) {
+    .stats-grid {
+      grid-template-columns: 1fr !important;
+    }
+    .toolbar-actions {
+      flex-direction: column;
+    }
+    .filter-tabs {
+      overflow-x: auto;
+      width: 100%;
+      padding-bottom: 8px;
+    }
+  }
+`;
 
 export default function InvitadosClient({ 
   initialGuests, 
@@ -209,7 +286,7 @@ export default function InvitadosClient({
     guests.forEach(g => {
       if (g.rsvp?.status === 'confirmed') {
         confirmed++;
-        totalConfirmedSeats += (1 + (g.rsvp.seats || 0));
+        totalConfirmedSeats += (g.rsvp.seats || 0);
       } else if (g.rsvp?.status === 'declined') {
         declined++;
       } else {
@@ -359,11 +436,39 @@ export default function InvitadosClient({
     });
   }
 
+  function exportRsvps() {
+    if (rsvps.length === 0) {
+      alert('No hay registros para exportar.');
+      return;
+    }
+
+    const data = rsvps.map(r => ({
+      'Nombre': r.name,
+      'Estatus': r.status === 'confirmed' ? 'Confirmado' : 'No asistirá',
+      'Asientos': r.seats,
+      'Acompañantes': r.companion_names?.join(', ') || '',
+      'Notas Dieta': r.dietary || '',
+      'Fecha': new Date(r.created_at).toLocaleString()
+    }));
+
+    const csv = Papa.unparse(data);
+    const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `confirmaciones_${event.slug}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', width: '100%' }}>
+    <div className="admin-page-container" style={{ display: 'flex', flexDirection: 'column', gap: '32px', width: '100%' }}>
+      <style>{responsiveStyles}</style>
       
       {/* ── Selector de Pestañas ── */}
-      <div style={{ display: 'flex', gap: '24px', borderBottom: `1px solid ${C.border}`, paddingBottom: '2px' }}>
+      <div className="tabs-selector" style={{ display: 'flex', gap: '24px', borderBottom: `1px solid ${C.border}`, paddingBottom: '2px' }}>
         <button
           onClick={() => setActiveTab('invitados')}
           style={{
@@ -409,7 +514,7 @@ export default function InvitadosClient({
       {activeTab === 'invitados' ? (
         <>
           {/* ── Dashboard de Estadísticas ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
         <div style={cardStats}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
@@ -451,8 +556,8 @@ export default function InvitadosClient({
 
       {/* ── Barra de Herramientas ── */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, position: 'relative', minWidth: '300px' }}>
+        <div className="toolbar-container" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <div className="search-input-wrap" style={{ flex: 1, position: 'relative', minWidth: '300px' }}>
             <input
               style={{ ...inputStyle, paddingLeft: '40px' }}
               placeholder="Buscar por nombre..."
@@ -461,7 +566,7 @@ export default function InvitadosClient({
             />
             <Search size={16} color={C.muted} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} strokeWidth={1.5} />
           </div>
-          <div style={{ display: 'flex', gap: '4px', background: C.border, padding: '2px', borderRadius: '10px' }}>
+          <div className="filter-tabs" style={{ display: 'flex', gap: '4px', background: C.border, padding: '2px', borderRadius: '10px' }}>
             {(['all', 'confirmed', 'pending', 'declined'] as const).map(tab => (
               <button
                 key={tab}
@@ -479,7 +584,11 @@ export default function InvitadosClient({
               </button>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: '10px', marginLeft: 'auto' }}>
+          <div className="toolbar-actions" style={{ display: 'flex', gap: '10px', marginLeft: 'auto' }}>
+            <button onClick={exportRsvps} style={btnSecondary}>
+              <Download size={14} style={{ marginRight: '8px' }} />
+              Exportar
+            </button>
             <button onClick={() => setShowCsvModal(true)} style={btnSecondary}>
               <Upload size={14} style={{ marginRight: '8px' }} />
               Importar CSV
@@ -552,7 +661,7 @@ export default function InvitadosClient({
                 disabled={isSavingTemplate}
                 style={btnPrimary}
               >
-                <Save size={14} style={{ marginRight: '8px' }} />
+                {isSavingTemplate ? <Spinner size={14} light /> : <Save size={14} style={{ marginRight: '8px' }} />}
                 {isSavingTemplate ? 'Guardando…' : 'Guardar mensaje'}
               </button>
               {templateSaved && (
@@ -690,7 +799,7 @@ export default function InvitadosClient({
                   opacity: csvRows.filter(r => r._errors.length === 0).length === 0 ? 0.5 : 1,
                 }}
               >
-                <Upload size={14} style={{ marginRight: '8px' }} />
+                {csvImporting ? <Spinner size={14} light /> : <Upload size={14} style={{ marginRight: '8px' }} />}
                 {csvImporting ? 'Importando…' : `Importar ${csvRows.filter(r => r._errors.length === 0).length} invitados`}
               </button>
             </div>
@@ -775,7 +884,8 @@ export default function InvitadosClient({
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '16px', paddingTop: '20px', borderTop: `1px solid ${C.border}` }}>
               <button onClick={closeForm} style={btnSecondary}>Cancelar</button>
               <button onClick={handleSubmit} disabled={isPending} style={btnPrimary}>
-                {isPending ? 'Guardando…' : editingId ? 'Guardar cambios' : 'Crear invitado'}
+                {isPending ? <Spinner size={14} light /> : null}
+                {isPending ? ' Guardando…' : editingId ? 'Guardar cambios' : 'Crear invitado'}
               </button>
             </div>
           </div>
@@ -806,7 +916,7 @@ export default function InvitadosClient({
             return (
               <div
                 key={guest.id}
-                className="guest-row-hover"
+                className="guest-row"
                 style={{
                   backgroundColor: C.white,
                   border: `1px solid ${C.border}`,
@@ -847,7 +957,7 @@ export default function InvitadosClient({
                       <>
                         <span style={{ color: C.border }}>•</span>
                         <span style={{ fontSize: '12px', color: C.success, fontWeight: 500 }}>
-                          Confirmó {1 + guest.rsvp.seats} {1 + guest.rsvp.seats === 1 ? 'persona' : 'personas'}
+                          Confirmó {guest.rsvp.seats} {guest.rsvp.seats === 1 ? 'persona' : 'personas'}
                         </span>
                       </>
                     )}
@@ -855,7 +965,7 @@ export default function InvitadosClient({
                 </div>
 
                 {/* Acciones */}
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <div className="guest-actions" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                   <button
                     onClick={() => openWhatsApp(guest)}
                     title={guest.phone ? `WhatsApp: ${guest.phone}` : 'Enviar por WhatsApp (sin número registrado)'}
@@ -944,8 +1054,8 @@ export default function InvitadosClient({
       </div>
 
       {/* ── Tabla de Confirmaciones Detalladas ── */}
-      <div style={{ backgroundColor: C.white, border: `1px solid ${C.border}`, borderRadius: '20px', overflow: 'hidden' }}>
-        <div style={{ 
+      <div className="table-container" style={{ backgroundColor: C.white, border: `1px solid ${C.border}`, borderRadius: '20px', overflow: 'hidden' }}>
+        <div className="grid-row" style={{ 
           display: 'grid', gridTemplateColumns: 'minmax(200px, 1.5fr) 120px 100px 2fr 120px', 
           padding: '16px 24px', backgroundColor: C.bg, borderBottom: `1px solid ${C.border}`
         }}>
@@ -972,7 +1082,7 @@ export default function InvitadosClient({
             const hasDetailedDietary = dMap && Object.keys(dMap).length > 0;
 
             return (
-              <div key={r.id} style={{ 
+              <div key={r.id} className="grid-row" style={{ 
                 display: 'grid', gridTemplateColumns: 'minmax(200px, 1.5fr) 120px 100px 2fr 120px', 
                 padding: '20px 24px', borderBottom: i === rsvps.length - 1 ? 'none' : `1px solid ${C.border}`,
                 alignItems: 'start'

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronDown, ChevronRight, Calendar, Users, LayoutDashboard, Eye, Edit3, LogOut, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronRight, Calendar, Users, LayoutDashboard, Eye, Edit3, LogOut, Sparkles, PanelLeftClose } from 'lucide-react';
 import LogoutButton from '@/components/auth/LogoutButton';
 
 const C = {
@@ -26,10 +26,12 @@ interface AdminSidebarProps {
   profile: { full_name: string | null; email: string | null } | null;
   events: Event[];
   isOpen?: boolean;
+  isHidden?: boolean;
+  onToggleCollapse?: () => void;
   onClose?: () => void;
 }
 
-export default function AdminSidebar({ profile, events, isOpen, onClose }: AdminSidebarProps) {
+export default function AdminSidebar({ profile, events, isOpen, isHidden, onToggleCollapse, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
   const [isEventsExpanded, setIsEventsExpanded] = useState(true);
   const [expandedEventIds, setExpandedEventIds] = useState<string[]>([]);
@@ -66,7 +68,7 @@ export default function AdminSidebar({ profile, events, isOpen, onClose }: Admin
       />
 
       <aside
-        className={`admin-sidebar${isOpen ? ' open' : ''}`}
+        className={`admin-sidebar${isOpen ? ' open' : ''}${isHidden ? ' is-hidden' : ''}`}
         style={{
           width: '260px',
           flexShrink: 0,
@@ -78,6 +80,7 @@ export default function AdminSidebar({ profile, events, isOpen, onClose }: Admin
           position: 'sticky',
           top: 0,
           zIndex: 50,
+          transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), width 0.3s ease, margin-left 0.3s ease',
         }}
       >
       <style>{`
@@ -168,27 +171,71 @@ export default function AdminSidebar({ profile, events, isOpen, onClose }: Admin
           }
           .admin-sidebar.open { transform: translateX(0); }
         }
+        @media (min-width: 769px) {
+          .admin-sidebar.is-hidden {
+            margin-left: -260px !important;
+            opacity: 0;
+            pointer-events: none;
+            visibility: hidden;
+          }
+        }
+        .admin-sidebar {
+          overflow: hidden;
+        }
       `}</style>
 
       {/* Brand */}
-      <div style={{ padding: '28px 24px 24px', borderBottom: `1px solid ${C.border}` }}>
-        <p
-          style={{
-            fontFamily: 'var(--font-cormorant)',
-            fontSize: '24px',
-            fontWeight: 300,
-            fontStyle: 'italic',
-            color: C.text,
-            letterSpacing: '0.05em',
-            lineHeight: 1,
-          }}
-        >
-          Moments
-        </p>
-        <p style={{ marginTop: '6px', fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: C.accent }}>
-          Panel de Control
-        </p>
+      <div style={{ padding: '28px 24px 24px', borderBottom: `1px solid ${C.border}`, position: 'relative' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <p
+              style={{
+                fontFamily: 'var(--font-cormorant)',
+                fontSize: '24px',
+                fontWeight: 300,
+                fontStyle: 'italic',
+                color: C.text,
+                letterSpacing: '0.05em',
+                lineHeight: 1,
+              }}
+            >
+              Moments
+            </p>
+            <p style={{ marginTop: '6px', fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: C.accent }}>
+              Panel de Control
+            </p>
+          </div>
+          <button
+            onClick={onToggleCollapse}
+            className="collapse-sidebar-btn"
+            title="Ocultar menú"
+          >
+            <PanelLeftClose size={18} />
+          </button>
+        </div>
       </div>
+
+      <style>{`
+        .collapse-sidebar-btn {
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          color: ${C.muted};
+          padding: 4px;
+          border-radius: 6px;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .collapse-sidebar-btn:hover {
+          color: ${C.text};
+          background: rgba(0,0,0,0.05);
+        }
+        @media (max-width: 768px) {
+          .collapse-sidebar-btn { display: none; }
+        }
+      `}</style>
 
       {/* Nav Content */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 12px' }}>

@@ -462,6 +462,7 @@ const css = `
     display: flex;
     flex-direction: column;
     align-items: center;
+    scroll-margin-top: 4rem;
   }
   .section--itinerary { max-width: 760px; }
   .section--wide { max-width: 900px; }
@@ -883,61 +884,53 @@ const css = `
   /* ── Itinerary Deluxe v2 (alternating editorial) ── */
   .dlx-itinerary-wrap {
     width: 100%;
-    max-width: 820px;
+    max-width: 580px;
     margin: 3rem auto 0;
     position: relative;
   }
 
-  /* Central vertical gold line (desktop) */
+  /* Vertical gold line (desktop) */
   .dlx-itinerary-wrap::before {
     content: '';
     position: absolute;
-    left: 50%;
+    left: 165px;
     top: 2rem;
     bottom: 2rem;
     width: 1px;
     background: linear-gradient(to bottom, transparent, rgba(184,150,90,0.4) 8%, rgba(184,150,90,0.4) 92%, transparent);
-    transform: translateX(-50%);
   }
 
   .dlx-irow-v2 {
     display: grid;
-    grid-template-columns: 1fr 40px 1fr;
+    grid-template-columns: 140px 50px 1fr;
     align-items: start;
     margin-bottom: 2.5rem;
   }
 
-  /* Time column (right-aligned for odd, left-aligned for even) */
+  /* Time column (always on left) */
   .dlx-itime-col {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    padding: 0.25rem 2rem 0 0;
+    padding: 0.25rem 0 0 0;
     text-align: right;
-  }
-  .dlx-irow-v2--even .dlx-itime-col {
-    order: 3;
-    align-items: flex-start;
-    padding: 0.25rem 0 0 2rem;
-    text-align: left;
   }
   .dlx-itime-big {
     font-family: var(--font-cormorant), Georgia, serif;
-    font-size: clamp(2.75rem, 6vw, 4.25rem);
+    font-size: clamp(2.5rem, 5vw, 3.75rem);
     font-weight: 300;
     color: var(--gold);
     line-height: 1;
     letter-spacing: -0.02em;
+    white-space: nowrap;
   }
 
-  /* Node column (center) — dot vertically centered with the time text */
+  /* Node column (always center of the rail) */
   .dlx-inode-col {
     display: flex;
     justify-content: center;
-    /* center = top-padding-of-time-col + half-of-time-font-size - half-of-dot-height */
     padding-top: calc(0.25rem + clamp(2.75rem, 6vw, 4.25rem) / 2 - 6px);
   }
-  .dlx-irow-v2--even .dlx-inode-col { order: 2; }
   .dlx-inode-v2 {
     width: 12px;
     height: 12px;
@@ -948,13 +941,9 @@ const css = `
     flex-shrink: 0;
   }
 
-  /* Card column */
+  /* Card column (always on right) */
   .dlx-icontent-col {
-    padding: 0 0 0 2rem;
-  }
-  .dlx-irow-v2--even .dlx-icontent-col {
-    order: 1;
-    padding: 0 2rem 0 0;
+    padding: 0;
   }
 
   /* Card */
@@ -978,14 +967,14 @@ const css = `
   .dlx-iimg-wrap:hover .dlx-iimg { transform: scale(1.04); }
 
   .dlx-icard-v2-body {
-    padding: 1.25rem 1.5rem 1.5rem;
+    padding: 1rem 1.25rem 1.25rem;
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.25rem;
   }
   .dlx-iname-v2 {
     font-family: var(--font-cormorant), Georgia, serif;
-    font-size: 1.45rem;
+    font-size: 1.35rem;
     font-weight: 400;
     font-style: italic;
     color: var(--charcoal);
@@ -1353,8 +1342,8 @@ const css = `
 
   /* Envelope card — warm tint */
   .gift-card-v2--envelope {
-    background: color-mix(in srgb, var(--ivory) 88%, var(--gold));
-    border: 1px solid color-mix(in srgb, var(--gold) 25%, var(--muted));
+    background: color-mix(in srgb, var(--ivory) 94%, var(--gold));
+    border: 1px solid var(--muted);
     padding: 2rem 1.75rem;
     display: flex;
     flex-direction: column;
@@ -1956,11 +1945,16 @@ export default function DeluxeTemplate({
     if (loading) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) setActiveSection(e.target.id || 'hero');
-        });
+        // Find the section that is most in view
+        const mostInView = entries
+          .filter(e => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        
+        if (mostInView) {
+          setActiveSection(mostInView.target.id || 'hero');
+        }
       },
-      { threshold: 0.5 }
+      { threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] }
     );
     document.querySelectorAll('section[id]').forEach((s) => observer.observe(s));
     return () => observer.disconnect();
@@ -2039,6 +2033,7 @@ export default function DeluxeTemplate({
       setSubmitting(false);
     }
   }
+
 
   if (loading) {
     return (
@@ -2215,9 +2210,8 @@ export default function DeluxeTemplate({
               const [h, m] = (item.time || '00:00').split(':');
               const manualUrl = item.mapsUrl?.trim();
               const mapsUrl = manualUrl || (item.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}` : '');
-              const isEven = i % 2 === 1;
               return (
-                <div key={i} className={`dlx-irow-v2 slide-up${i <= 3 ? ` delay-${i + 1}` : ''}${isEven ? ' dlx-irow-v2--even' : ''}`}>
+                <div key={i} className={`dlx-irow-v2 slide-up${i <= 3 ? ` delay-${i + 1}` : ''}`}>
                   {/* Hora (oculta en mobile) */}
                   <div className="dlx-itime-col">
                     <span className="dlx-itime-big">{h}<span style={{ fontSize: '0.45em', opacity: 0.6 }}>:{m}</span></span>
@@ -2509,8 +2503,9 @@ export default function DeluxeTemplate({
               {showEnvelope && (
                 <div className="gift-card-v2 gift-card-v2--envelope reveal delay-2">
                   <div className="gce-icon-ring">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--gold)' }}>
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                      <polyline points="22,6 12,13 2,6"/>
                     </svg>
                   </div>
                   <p className="gcl-title">Sobre de Regalo</p>
@@ -2832,10 +2827,22 @@ function Ornament() {
   );
 }
 function WomenIcon() {
-  return <Flower2 size={26} color="var(--gold)" strokeWidth={1.4} />;
+  return (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2L9 7v3l-6 11h18l-6-11V7l-3-5z" />
+      <path d="M9 10h6" />
+    </svg>
+  );
 }
 function MenIcon() {
-  return <Shirt size={26} color="var(--gold)" strokeWidth={1.4} />;
+  return (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 2h16v20H4V2z" />
+      <path d="M4 2l8 10 8-10" />
+      <path d="M12 12v10" />
+      <path d="M11 5l1 1 1-1-1-1-1 1z" />
+    </svg>
+  );
 }
 function NoChildrenIcon() {
   return <UserX size={40} color="var(--gold)" strokeWidth={1.4} style={{ flexShrink: 0 }} />;

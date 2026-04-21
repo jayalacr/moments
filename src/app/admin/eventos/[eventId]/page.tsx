@@ -1,7 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import Link from 'next/link';
 import { Users, CheckCircle2, Trophy, ExternalLink, Settings, Sparkles } from 'lucide-react';
+import PlusLinkGenerator from './_components/PlusLinkGenerator';
 
 const C = {
   bg: '#F8F3EC',
@@ -251,6 +253,12 @@ export default async function EventoPage({ params }: Props) {
                 Nuestro equipo de soporte está disponible para ayudarte a personalizar tu invitación deluxe.
               </p>
            </div>
+
+           {event.plan === 'plus' && (
+             <PlusLinkGenerator 
+               baseUrl={`${headers().get('x-forwarded-proto') || 'https'}://${headers().get('host')}/${event.event_type}/${event.slug}`} 
+             />
+           )}
         </div>
       </div>
     </div>

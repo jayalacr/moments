@@ -398,10 +398,8 @@ export default function PlusTemplate({
   const backgroundColor  = E.theme.backgroundColor  ?? '#F8F3EC';
   const textColor        = E.theme.textColor        ?? '#1C1611';
 
-  // Si hay token, usar maxCompanions del prop; si no, usar el config global del evento
-  const effectiveMaxCompanions = guestToken
-    ? (maxCompanionsProp ?? 0)
-    : (E.rsvp.maxPlusOnes ?? 0);
+  // Priorizar siempre el valor que viene configurado (deluxe con token o plus con link inteligente)
+  const effectiveMaxCompanions = maxCompanionsProp ?? 0;
 
   const countdown = useCountdown(E.targetDate);
   const [modalOpen, setModalOpen] = useState(false);
@@ -504,8 +502,8 @@ export default function PlusTemplate({
         body: JSON.stringify({
           ...(guestToken ? { token: guestToken } : { eventId }),
           name: rsvpName.trim(),
-          seats: status === 'declined' ? 0 : 1 + companionInputs.length,
-          companionNames: status === 'declined' ? [] : companionInputs,
+          seats: status === 'declined' ? 0 : 1 + companionInputs.filter(n => n.trim() !== '').length,
+          companionNames: status === 'declined' ? [] : companionInputs.filter(n => n.trim() !== ''),
           dietary: status === 'declined' ? '' : (dietaryMap[rsvpName || 'Tú']?.join(', ') || ''),
           dietaryPerPerson: status === 'declined' ? {} : dietaryMap,
           status,
@@ -651,7 +649,7 @@ export default function PlusTemplate({
 
       {/* ── ITINERARIO ── */}
       {E.sections.itinerary === true && (
-        <section className="section section--itinerary section--tinted-wide">
+        <section className="section section--itinerary section--tinted-wide" style={{ maxWidth: '100%', width: '100%' }}>
           <h2 className="section-heading reveal">Programa del Día</h2>
           <div className="dlx-itinerary">
             <div className="dlx-axis" ref={axisRef} />
@@ -1126,27 +1124,19 @@ function MapsIcon() {
 
 function WomenIcon() {
   return (
-    <svg width="30" height="40" viewBox="0 0 30 40" fill="none">
-      <path d="M11 1 L9 7" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M19 1 L21 7" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M9 7 Q15 5 21 7" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M9 7 L8 17" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M21 7 L22 17" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M8 17 L22 17" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M8 17 L2 39" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M22 17 L28 39" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M2 39 L28 39" stroke="#B8965A" strokeWidth="1.4" strokeLinecap="round"/>
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2L9 7v3l-6 11h18l-6-11V7l-3-5z" />
+      <path d="M9 10h6" />
     </svg>
   );
 }
 function MenIcon() {
   return (
-    <svg width="32" height="40" viewBox="0 0 32 40" fill="none">
-      <path d="M16 3 L8 9 L5 7 L4 39 L16 39" stroke="#B8965A" strokeWidth="1.4" strokeLinejoin="round" fill="none"/>
-      <path d="M16 3 L24 9 L27 7 L28 39 L16 39" stroke="#B8965A" strokeWidth="1.4" strokeLinejoin="round" fill="none"/>
-      <path d="M8 9 L13 19 L16 13" stroke="#B8965A" strokeWidth="1.4" strokeLinejoin="round" fill="none"/>
-      <path d="M24 9 L19 19 L16 13" stroke="#B8965A" strokeWidth="1.4" strokeLinejoin="round" fill="none"/>
-      <path d="M15 19 L14 27 L16 30 L18 27 L17 19 Z" stroke="#B8965A" strokeWidth="1.1" strokeLinejoin="round" fill="none"/>
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 2h16v20H4V2z" />
+      <path d="M4 2l8 10 8-10" />
+      <path d="M12 12v10" />
+      <path d="M11 5l1 1 1-1-1-1-1 1z" />
     </svg>
   );
 }
@@ -1708,28 +1698,39 @@ const css = `
   .dlx-itinerary {
     position: relative;
     width: 100%;
-    max-width: 640px;
-    padding-left: 2.5rem;
-    margin-top: 3rem;
+    max-width: 580px;
+    margin: 3rem auto 0;
+    position: relative;
   }
   .dlx-axis {
     position: absolute;
-    left: 0;
-    top: -2rem;
+    left: 165px;
+    top: 0;
+    bottom: 0;
     width: 1px;
-    height: 0;
-    background: linear-gradient(to bottom, var(--gold), rgba(184,150,90,0.1));
-    transition: height 2.5s cubic-bezier(0.16,1,0.3,1);
+    background: color-mix(in srgb, var(--gold) 20%, transparent);
+    z-index: 1;
   }
-  .dlx-axis.axis-grow { height: calc(100% + 2rem); }
+  .dlx-axis::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 0;
+    background: var(--gold);
+    transition: height 2s cubic-bezier(0.16,1,0.3,1);
+  }
+  .dlx-axis.axis-grow::before { height: 100%; }
   
   .dlx-irow {
     display: grid;
-    grid-template-columns: 75px 40px 1fr;
+    grid-template-columns: 140px 50px 1fr;
     gap: 0;
     align-items: start;
     margin-bottom: 3.5rem;
     position: relative;
+    z-index: 2;
   }
   .dlx-irow-time { 
     text-align: right; 
