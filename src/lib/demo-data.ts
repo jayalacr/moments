@@ -214,5 +214,11 @@ export const DELUXE_DEMO: DeluxeConfig = {
     giftListLabel: 'Luna de Miel en Japón',
     envelopeMessage: 'Su presencia es nuestro mayor regalo. Si desean hacernos un obsequio, pueden contribuir a nuestra luna de miel.',
   },
+  rsvpDeadline: '30 de Junio de 2026',
+  rsvp: {
+    maxPlusOnes: 2,
+    deadline: '30 de Junio de 2026',
+    dietaryOptions: ['Sin restricción', 'Vegetariano', 'Vegano', 'Sin gluten'],
+  },
   sections: { quote: true, parents: true, itinerary: true, dressCode: true, destination: true, gifts: true }
 };

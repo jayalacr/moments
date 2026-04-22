@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Cormorant_Garamond, Jost, Playfair_Display, EB_Garamond, Raleway, Montserrat } from 'next/font/google';
 import { MapPin, Play, Pause, CalendarDays, Hotel, Car, Mail, Gift, Flower2, Shirt, UserX, ChevronDown } from 'lucide-react';
 import type { PhotoEntry } from '@/lib/imageLayout';
+import ContentProtection from '@/components/templates/shared/ContentProtection';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1925,8 +1926,10 @@ export default function DeluxeTemplate({
   const [activeSection, setActiveSection] = useState('hero');
 
   const hasToken = !!guestToken;
-  const displayName = guestName || couple.person1;
-  const totalSeats = 1 + maxCompanions;
+  const isDemo = !eventId && !guestToken;
+  const displayName = guestName || (isDemo ? 'Ana García' : couple.person1);
+  const effectiveMaxCompanions = isDemo ? 2 : maxCompanions;
+  const totalSeats = 1 + effectiveMaxCompanions;
 
   // Loader
   useEffect(() => {
@@ -2039,6 +2042,7 @@ export default function DeluxeTemplate({
 
   if (loading) {
     return (
+      <ContentProtection>
       <div className={`${allFontVars} dlx-root`} style={rootStyle}>
         <style suppressHydrationWarning>{css}</style>
         <style suppressHydrationWarning>{dynamicCss}</style>
@@ -2054,10 +2058,12 @@ export default function DeluxeTemplate({
           </p>
         </div>
       </div>
+      </ContentProtection>
     );
   }
 
   return (
+    <ContentProtection>
     <div className={`${allFontVars} dlx-root`} style={rootStyle}>
       <style suppressHydrationWarning>{css}</style>
       <style suppressHydrationWarning>{dynamicCss}</style>
@@ -2553,7 +2559,7 @@ export default function DeluxeTemplate({
           </p>
         )}
         <div className="dlx-rsvp-actions reveal">
-          {hasToken ? (
+          {(hasToken || isDemo) ? (
             <button className="btn-rsvp" onClick={() => setModalOpen(true)}>
               {hasExistingRsvp ? 'Actualizar mi respuesta' : 'Confirmar mi asistencia'}
             </button>
@@ -2594,7 +2600,7 @@ export default function DeluxeTemplate({
       </footer>
 
       {/* ── MODAL RSVP (pre-cargado) ── */}
-      {modalOpen && hasToken && (
+      {modalOpen && (hasToken || isDemo) && (
         <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}>
           <div className="modal" ref={modalRef}>
             <button className="modal-close" onClick={() => setModalOpen(false)} aria-label="Cerrar">×</button>
@@ -2658,9 +2664,11 @@ export default function DeluxeTemplate({
                       className="rsvp-yes"
                       onClick={() => {
                         setGuestConfirmed(true);
-                        const names = initialCompanionNames.length > 0
+                        const names = isDemo
+                          ? ['Acompañante 1', 'Acompañante 2']
+                          : (initialCompanionNames.length > 0
                           ? initialCompanionNames
-                          : Array.from({ length: maxCompanions }, (_, i) => `Acompañante ${i + 1}`);
+                          : Array.from({ length: maxCompanions }, (_, i) => `Acompañante ${i + 1}`));
                         setAttendeeNames(names);
                         setAttendeeChecked(Array(names.length).fill(true));
                       }}
@@ -2765,13 +2773,19 @@ export default function DeluxeTemplate({
                       );
                     })()}
 
-                    <button
-                      className="btn-submit"
-                      onClick={handleSubmitRsvp}
-                      disabled={submitting}
-                    >
-                      {submitting ? 'Guardando…' : 'Confirmar asistencia'}
-                    </button>
+                    {isDemo ? (
+                      <p style={{ fontFamily: 'var(--font-jost)', fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold)', textAlign: 'center', padding: '0.75rem 1rem', border: '1px solid color-mix(in srgb, var(--gold), transparent 70%)', borderRadius: '4px' }}>
+                        Vista previa · Los datos no se guardan
+                      </p>
+                    ) : (
+                      <button
+                        className="btn-submit"
+                        onClick={handleSubmitRsvp}
+                        disabled={submitting}
+                      >
+                        {submitting ? 'Guardando…' : 'Confirmar asistencia'}
+                      </button>
+                    )}
                     <button className="rsvp-change" onClick={() => { setGuestConfirmed(null); setAttendeeNames([]); setAttendeeChecked([]); setSubmitError(''); }}>
                       Cambiar respuesta
                     </button>
@@ -2781,13 +2795,19 @@ export default function DeluxeTemplate({
                     <p className="rsvp-confirmed-text" style={{ color: '#9B8B78' }}>
                       Lamentamos no poder verte, gracias por avisarnos.
                     </p>
-                    <button
-                      className="btn-submit"
-                      onClick={handleSubmitRsvp}
-                      disabled={submitting}
-                    >
-                      {submitting ? 'Guardando…' : 'Enviar respuesta'}
-                    </button>
+                    {isDemo ? (
+                      <p style={{ fontFamily: 'var(--font-jost)', fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold)', textAlign: 'center', padding: '0.75rem 1rem', border: '1px solid color-mix(in srgb, var(--gold), transparent 70%)', borderRadius: '4px' }}>
+                        Vista previa · Los datos no se guardan
+                      </p>
+                    ) : (
+                      <button
+                        className="btn-submit"
+                        onClick={handleSubmitRsvp}
+                        disabled={submitting}
+                      >
+                        {submitting ? 'Guardando…' : 'Enviar respuesta'}
+                      </button>
+                    )}
                     <button className="rsvp-change" onClick={() => { setGuestConfirmed(null); setSubmitError(''); }}>
                       Cambiar respuesta
                     </button>
@@ -2799,6 +2819,7 @@ export default function DeluxeTemplate({
         </div>
       )}
     </div>
+    </ContentProtection>
   );
 }
 
