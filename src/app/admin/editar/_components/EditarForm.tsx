@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect, useRef } from 'react';
 import { updateEventConfig } from '@/app/admin/_actions';
 import ImageUpload from '@/components/ui/ImageUpload';
 import { uploadImage } from '@/components/ui/ImageUpload';
+import AudioUpload from '@/components/ui/AudioUpload';
 import ImageLayoutEditor from './ImageLayoutEditor';
 import type { PhotoEntry } from '@/lib/imageLayout';
 import { PhotoPositionerModal } from './PhotoPositionerModal';
@@ -1051,20 +1052,14 @@ export default function EditarForm({
           <Section title="Música de fondo" C={C}
             summary={cfg.music.title ? `${cfg.music.title}${cfg.music.artist ? ` · ${cfg.music.artist}` : ''}` : '—'}
           >
-            <p style={{ fontSize: '13px', color: C.muted, marginTop: '-8px' }}>
-              Pega la URL directa de un archivo MP3 (Google Drive, Dropbox, etc.). La canción se reproduce en loop con controles visibles para el invitado.
-            </p>
-            <Field label="URL del archivo MP3" C={C}>
-              <input style={S.input} type="url" value={cfg.music.url} onChange={e => set('music', { ...cfg.music, url: e.target.value })} placeholder="https://drive.google.com/uc?export=download&id=..." />
-            </Field>
-            <Row>
-              <Field label="Nombre de la canción" C={C}>
-                <input style={S.input} value={cfg.music.title} onChange={e => set('music', { ...cfg.music, title: e.target.value })} placeholder="Perfect" />
-              </Field>
-              <Field label="Artista" C={C}>
-                <input style={S.input} value={cfg.music.artist} onChange={e => set('music', { ...cfg.music, artist: e.target.value })} placeholder="Ed Sheeran" />
-              </Field>
-            </Row>
+            <AudioUpload
+              value={cfg.music.url}
+              onChange={url => set('music', { ...cfg.music, url })}
+              title={cfg.music.title}
+              artist={cfg.music.artist}
+              onTitleChange={title => set('music', { ...cfg.music, title })}
+              onArtistChange={artist => set('music', { ...cfg.music, artist })}
+            />
           </Section>
         )}
 
