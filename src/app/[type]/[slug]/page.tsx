@@ -4,8 +4,7 @@ import { TEMPLATES } from '@/lib/templates';
 import { Jost } from 'next/font/google';
 import { decodePasses } from '@/lib/rsvp-utils';
 
-// Siempre renderizar desde el servidor con datos frescos de Supabase
-export const dynamic = 'force-dynamic';
+export const revalidate = 86400;
 
 const jost = Jost({ subsets: ['latin'], weight: ['300', '400'] });
 

@@ -137,6 +137,7 @@ export async function createGuest(formData: {
   }
 
   revalidatePath('/admin/invitados');
+  if (event.plan === 'deluxe') revalidatePath(`/${event.event_type}/${event.slug}`, 'page');
   return {};
 }
 
@@ -170,6 +171,7 @@ export async function updateGuest(
   }
 
   revalidatePath('/admin/invitados');
+  if (event.plan === 'deluxe') revalidatePath(`/${event.event_type}/${event.slug}`, 'page');
   return {};
 }
 
@@ -195,6 +197,7 @@ export async function deleteGuest(guestId: string): Promise<{ error?: string }> 
   if (error) return { error: error.message };
 
   revalidatePath('/admin/invitados');
+  if (event.plan === 'deluxe') revalidatePath(`/${event.event_type}/${event.slug}`, 'page');
   return {};
 }
 

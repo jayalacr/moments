@@ -263,15 +263,8 @@ const css = `
   }
   .music-pill--minimized .music-pill-text,
   .music-pill--minimized .music-pill-wave { display: none; }
-  .music-pill--minimized:hover {
-    max-width: 260px;
-    width: auto;
-    border-radius: 100px;
-    padding: 0.75rem 1.25rem;
-  }
-  .music-pill--minimized:hover .music-pill-text { display: block; }
-  .music-pill--minimized:hover .music-pill-wave { display: flex; }
   .music-pill-icon { display: flex; align-items: center; justify-content: center; }
+  .music-pill--minimized:hover { background: rgba(200,165,100,0.95); }
   .music-pill:hover { border-color: var(--gold); }
   .music-pill--playing { border-color: var(--gold); }
   .music-pill-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1893,10 +1886,7 @@ export default function DeluxeTemplate({
   const isoStart = targetDate
     ? targetDate.replace(/[-:]/g, '').replace('T', 'T').slice(0, 15)
     : `${dateStr}T${startH}${startM}00`;
-  const isoEnd = targetDate
-    ? (() => { const d = new Date(targetDate); d.setHours(d.getHours() + 6); return d.toISOString().replace(/[-:]/g, '').slice(0, 15); })()
-    : `${dateStr}T230000`;
-  const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Boda de ${couple.person1} & ${couple.person2}`)}&dates=${isoStart}/${isoEnd}&details=${encodeURIComponent(`Celebración de matrimonio. Dress code: ${dressCode.label}`)}&location=${encodeURIComponent(location)}`;
+  const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Boda de ${couple.person1} & ${couple.person2}`)}&dates=${isoStart}&location=${encodeURIComponent(location)}`;
 
   // ── State ────────────────────────────────────────────────────────────────
   const countdown = useCountdown(targetDate);
@@ -1907,7 +1897,6 @@ export default function DeluxeTemplate({
   const [guestConfirmed, setGuestConfirmed] = useState<null | boolean>(null);
   const [attendeeNames, setAttendeeNames] = useState<string[]>([]);
   const [attendeeChecked, setAttendeeChecked] = useState<boolean[]>([]);
-  const [dietary, setDietary] = useState(cfg.rsvp?.dietaryOptions?.[0] ?? '');
   const [dietaryMap, setDietaryMap] = useState<Record<string, string[]>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -1917,6 +1906,8 @@ export default function DeluxeTemplate({
   const itineraryRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const [musicMinimized, setMusicMinimized] = useState(false);
+  const [showSongName, setShowSongName] = useState(false);
+  const showSongNameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hasToken = !!guestToken;
   const isDemo = !eventId && !guestToken;
@@ -1995,10 +1986,19 @@ export default function DeluxeTemplate({
   const toggleMusic = useCallback(() => {
     const audio = audioRef.current;
     if (audio && music.url) {
-      if (playing) { audio.pause(); }
-      else { audio.play().catch(() => {}); }
+      if (playing) {
+        audio.pause();
+        setMusicMinimized(true);
+      } else {
+        audio.play().catch(() => {});
+        setMusicMinimized(false);
+      }
     }
     setPlaying((p) => !p);
+    // Mostrar nombre de canción brevemente al hacer click
+    if (showSongNameTimerRef.current) clearTimeout(showSongNameTimerRef.current);
+    setShowSongName(true);
+    showSongNameTimerRef.current = setTimeout(() => setShowSongName(false), 3000);
   }, [playing, music.url]);
 
   // RSVP submit
@@ -2073,20 +2073,19 @@ export default function DeluxeTemplate({
       {music.url && (
         <button 
           className={`music-pill ${playing ? 'music-pill--playing' : ''} ${musicMinimized ? 'music-pill--minimized' : ''}`} 
-          onClick={() => {
-            if (musicMinimized) setMusicMinimized(false);
-            else toggleMusic();
-          }}
+          onClick={toggleMusic}
           aria-label="Play"
         >
           <div className="music-pill-icon">
             {playing ? <PauseIcon /> : <PlayIcon />}
           </div>
-          <span className="music-pill-text">
-            {playing
-              ? [music.title, music.artist].filter(Boolean).join(' · ') || 'Reproduciendo'
-              : 'Reproducir'}
-          </span>
+          {showSongName && (
+            <span className="music-pill-text">
+              {playing
+                ? [music.title, music.artist].filter(Boolean).join(' · ') || 'Reproduciendo'
+                : 'Reproducir'}
+            </span>
+          )}
           {playing && <span className="music-pill-wave"><span/><span/><span/><span/></span>}
         </button>
       )}

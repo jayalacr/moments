@@ -13,23 +13,35 @@ export async function updateTemplateType(eventId: string, templateType: string) 
     .update({ template_type: templateType || null })
     .eq('id', eventId);
   if (error) throw new Error(error.message);
+
+  const { data: event } = await supabase.from('events').select('slug, event_type').eq('id', eventId).single();
+
   revalidatePath('/superadmin');
   revalidatePath(`/superadmin/eventos/${eventId}`);
+  if (event) revalidatePath(`/${event.event_type}/${event.slug}`, 'page');
 }
 
 export async function toggleEventStatus(eventId: string, currentStatus: string) {
   const supabase = await createClient();
   const newStatus = currentStatus === 'published' ? 'paused' : 'published';
   await supabase.from('events').update({ status: newStatus }).eq('id', eventId);
+
+  const { data: event } = await supabase.from('events').select('slug, event_type').eq('id', eventId).single();
+
   revalidatePath('/superadmin');
   revalidatePath(`/superadmin/eventos/${eventId}`);
+  if (event) revalidatePath(`/${event.event_type}/${event.slug}`, 'page');
 }
 
 export async function setEventDraft(eventId: string) {
   const supabase = await createClient();
   await supabase.from('events').update({ status: 'draft' }).eq('id', eventId);
+
+  const { data: event } = await supabase.from('events').select('slug, event_type').eq('id', eventId).single();
+
   revalidatePath('/superadmin');
   revalidatePath(`/superadmin/eventos/${eventId}`);
+  if (event) revalidatePath(`/${event.event_type}/${event.slug}`, 'page');
 }
 
 type EventPlan = 'essential' | 'plus' | 'deluxe';
@@ -52,7 +64,7 @@ export async function updateEventPlan(
   // Leer evento actual para evaluar compatibilidad de template
   const { data: event } = await supabase
     .from('events')
-    .select('template_type')
+    .select('template_type, slug, event_type')
     .eq('id', eventId)
     .single();
 
@@ -73,6 +85,7 @@ export async function updateEventPlan(
 
   revalidatePath('/superadmin');
   revalidatePath(`/superadmin/eventos/${eventId}`);
+  if (event) revalidatePath(`/${event.event_type}/${event.slug}`, 'page');
 
   return { success: true, templateCleared };
 }
@@ -139,8 +152,11 @@ export async function updatePaymentStatus(
 
   if (error) throw new Error(error.message);
 
+  const { data: event } = await supabase.from('events').select('slug, event_type').eq('id', eventId).single();
+
   revalidatePath('/superadmin');
   revalidatePath(`/superadmin/eventos/${eventId}`);
+  if (event) revalidatePath(`/${event.event_type}/${event.slug}`, 'page');
   return { success: true };
 }
 

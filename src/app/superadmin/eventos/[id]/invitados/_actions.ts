@@ -99,6 +99,8 @@ export async function createGuest(
 ): Promise<{ error?: string }> {
   const supabase = await assertSuperadmin();
 
+  const { data: event } = await supabase.from('events').select('slug, event_type, plan').eq('id', eventId).single();
+
   const { error } = await supabase.from('guests').insert({
     event_id: eventId,
     name: formData.name?.trim() || null,
@@ -113,6 +115,7 @@ export async function createGuest(
   }
 
   revalidatePath(`/superadmin/eventos/${eventId}/invitados`);
+  if (event?.plan === 'deluxe') revalidatePath(`/${event.event_type}/${event.slug}`, 'page');
   return {};
 }
 
@@ -122,6 +125,8 @@ export async function updateGuest(
   formData: { name?: string; phone?: string; max_companions: number; companion_names?: string[] },
 ): Promise<{ error?: string }> {
   const supabase = await assertSuperadmin();
+
+  const { data: event } = await supabase.from('events').select('slug, event_type, plan').eq('id', eventId).single();
 
   const { error } = await supabase
     .from('guests')
@@ -140,11 +145,14 @@ export async function updateGuest(
   }
 
   revalidatePath(`/superadmin/eventos/${eventId}/invitados`);
+  if (event?.plan === 'deluxe') revalidatePath(`/${event.event_type}/${event.slug}`, 'page');
   return {};
 }
 
 export async function deleteGuest(eventId: string, guestId: string): Promise<{ error?: string }> {
   const supabase = await assertSuperadmin();
+
+  const { data: event } = await supabase.from('events').select('slug, event_type, plan').eq('id', eventId).single();
 
   const { error: rsvpError } = await supabase.from('rsvps').delete().eq('guest_id', guestId);
   if (rsvpError) return { error: rsvpError.message };
@@ -153,6 +161,7 @@ export async function deleteGuest(eventId: string, guestId: string): Promise<{ e
   if (error) return { error: error.message };
 
   revalidatePath(`/superadmin/eventos/${eventId}/invitados`);
+  if (event?.plan === 'deluxe') revalidatePath(`/${event.event_type}/${event.slug}`, 'page');
   return {};
 }
 
