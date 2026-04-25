@@ -1,7 +1,24 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const DEV_TUNNEL_DOMAINS = ['devtunnels.ms', 'ngrok.io', 'ngrok-free.app', 'loca.lt']
+
+function isTunnelHost(host: string): boolean {
+  return DEV_TUNNEL_DOMAINS.some(d => host.endsWith(d))
+}
+
 export default async function proxy(request: NextRequest) {
+  // Fix CSRF para Server Actions desde dev tunnels.
+  // El tunnel reescribe origin → localhost:3000 pero mantiene x-forwarded-host → tunnel.domain.
+  // Next.js compara ambos y falla. Solución: eliminar x-forwarded-host para que
+  // Next.js use el header `host` (localhost:3000), que sí coincide con el origin reescrito.
+  const xfh = request.headers.get('x-forwarded-host')
+  if (xfh && isTunnelHost(xfh) && request.headers.has('next-action')) {
+    const headers = new Headers(request.headers)
+    headers.delete('x-forwarded-host')
+    return NextResponse.next({ request: { headers } })
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -56,5 +73,11 @@ export default async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/superadmin/:path*', '/login'],
+  matcher: [
+    '/admin/:path*',
+    '/superadmin/:path*',
+    '/login',
+    // Necesario para interceptar Server Actions desde dev tunnels
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
 }

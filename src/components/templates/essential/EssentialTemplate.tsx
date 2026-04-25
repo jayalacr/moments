@@ -3,6 +3,8 @@
 import { Cormorant_Garamond, Playfair_Display, EB_Garamond, Jost, Raleway, Montserrat } from 'next/font/google';
 import { useEffect } from 'react';
 import { cld, T } from '@/lib/cloudinary';
+import ContentProtection from '@/components/templates/shared/ContentProtection';
+import './essential.css';
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
@@ -77,6 +79,8 @@ export interface EssentialConfig {
     clabe?: string;
     giftListUrl?: string;
     giftListLabel?: string;
+    giftTypes?: string[];
+    envelopeMessage?: string;
   };
   whatsapp?: { number?: string; message?: string };
   noChildren?: boolean;
@@ -125,23 +129,16 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
     jost.variable, raleway.variable, montserrat.variable,
   ].join(' ');
 
-  // Las font vars DEBEN estar en el mismo elemento que el className de next/font
+  // Tokens de color + fuentes como CSS custom properties inline → presentes en SSR, sin hydration mismatch
   const rootStyle = {
-    '--font-display': displayFontVar,
-    '--font-body':    bodyFontVar,
+    '--font-display':  displayFontVar,
+    '--font-body':     bodyFontVar,
+    '--ivory':         backgroundColor,
+    '--charcoal':      textColor,
+    '--gold':          accentColor,
+    backgroundColor,
+    color:             textColor,
   } as React.CSSProperties;
-
-  // CSS dinámico que sobreescribe los tokens del CSS estático por orden de documento
-  // (mismo selector = misma especificidad, pero va después → gana en cascada)
-  const dynamicCss = `
-    .essential-root {
-      --ivory:   ${backgroundColor};
-      --charcoal: ${textColor};
-      --gold:    ${accentColor};
-      background-color: ${backgroundColor};
-      color: ${textColor};
-    }
-  `;
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -157,16 +154,19 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
   }, []);
 
   const waUrl = `https://wa.me/${c.whatsapp?.number ?? ''}?text=${encodeURIComponent(c.whatsapp?.message ?? '')}`;
-  // Nuevo modelo: photos[]. Fallback al modelo antiguo (images[0]).
-  const heroEntry = (c as { photos?: { url: string; role: string | null; objectPosition?: string }[] }).photos?.find(p => p.role === 'hero');
+  // Nuevo modelo: photos[]. Fallback al modelo antiguo (images[]).
+  const photosArr = (c as { photos?: { url: string; role: string | null; objectPosition?: string }[] }).photos;
+  const heroEntry = photosArr?.find(p => p.role === 'hero');
   const heroImage: string | null = heroEntry?.url ?? c.images?.[0] ?? null;
   const heroObjectPosition = heroEntry?.objectPosition ?? 'center center';
+  // Fotos de galería: tomar del nuevo modelo (todas las no-hero en orden), con fallback a images[]
+  const galleryUrls: (string | undefined)[] = photosArr?.length
+    ? [undefined, ...photosArr.filter(p => p.role !== 'hero').map(p => p.url)]
+    : (c.images ?? []);
 
   return (
+    <ContentProtection>
     <div className={`${allFontVars} essential-root`} style={rootStyle}>
-      <style suppressHydrationWarning>{css}</style>
-      <style suppressHydrationWarning>{dynamicCss}</style>
-
       {/* ── HERO ── */}
       <section className="hero">
         <div className="hero-bg">
@@ -243,24 +243,18 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
       )}
 
       {/* ── FOTO 2 (ancho completo) ── */}
-      {c.images?.[1] && (
+      {galleryUrls[1] && (
         <div className="photo-full reveal--image">
           <picture style={{ width: '100%', height: '100%', display: 'block' }}>
-            <source media="(max-width: 768px)" srcSet={cld(c.images[1], T.fullMobile)} />
-            <source media="(min-width: 769px)" srcSet={cld(c.images[1], T.fullDesktop)} />
+            <source media="(max-width: 768px)" srcSet={cld(galleryUrls[1], T.fullMobile)} />
+            <source media="(min-width: 769px)" srcSet={cld(galleryUrls[1], T.fullDesktop)} />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={cld(c.images[1], T.fullDesktop)} alt="Foto de los novios" className="photo-img photo-img--hover" />
+            <img src={cld(galleryUrls[1], T.fullDesktop)} alt="Foto de los novios" className="photo-img photo-img--hover" />
           </picture>
-          {c.location && (
-            <div className="photo-full-caption">
-              <span className="sep-line" style={{ maxWidth: '48px', flex: 'none' }} />
-              <span className="photo-caption-text">{c.location}</span>
-            </div>
-          )}
         </div>
       )}
 
-      {(hasParents || !!c.images?.[1]) && <Ornament />}
+      {(hasParents || !!galleryUrls[1]) && <Ornament />}
 
       {/* ── ITINERARIO ── */}
       {hasItinerary && (
@@ -302,12 +296,12 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
       )}
 
       {/* ── FOTO 3 (ancho pantalla) ── */}
-      {c.images?.[2] && (
+      {galleryUrls[2] && (
         <div className="photo-center reveal--image">
           <picture style={{ width: '100%', height: '100%', display: 'block' }}>
-            <source srcSet={cld(c.images[2], T.centered)} />
+            <source srcSet={cld(galleryUrls[2], T.centered)} />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={cld(c.images[2], T.centered)} alt="Foto de los novios" className="photo-img photo-img--hover" />
+            <img src={cld(galleryUrls[2], T.centered)} alt="Foto de los novios" className="photo-img photo-img--hover" />
           </picture>
         </div>
       )}
@@ -344,9 +338,9 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
           </div>
 
           {(c.dressCode?.avoid?.length ?? 0) > 0 && (
-            <div className="reveal" style={{ marginTop: '2rem', textAlign: 'center' }}>
-              <p className="label muted" style={{ marginBottom: '1.25rem' }}>Por favor evita</p>
-              <div className="swatches" style={{ justifyContent: 'center' }}>
+            <div className="dresscode-avoid reveal">
+              <p className="label muted">Por favor evita</p>
+              <div className="swatches">
                 {c.dressCode!.avoid!.map((s, i) => (
                   <div key={i} className="swatch-item">
                     <div className="swatch-circle swatch-avoid" style={{ backgroundColor: s.color }} />
@@ -377,23 +371,23 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
       )}
 
       {/* ── FOTOS 4 y 5 (dúo) ── */}
-      {(c.images?.[3] || c.images?.[4]) && (
+      {(galleryUrls[3] || galleryUrls[4]) && (
         <div className="photo-duo reveal--image">
-          {c.images?.[3] && (
+          {galleryUrls[3] && (
             <div className="photo-duo-item photo-duo-item--large">
               <picture style={{ width: '100%', height: '100%', display: 'block' }}>
-                <source srcSet={cld(c.images[3], T.duo)} />
+                <source srcSet={cld(galleryUrls[3], T.duo)} />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={cld(c.images[3], T.duo)} alt="Foto de los novios" className="photo-img photo-img--hover" />
+                <img src={cld(galleryUrls[3], T.duo)} alt="Foto de los novios" className="photo-img photo-img--hover" />
               </picture>
             </div>
           )}
-          {c.images?.[4] && (
+          {galleryUrls[4] && (
             <div className="photo-duo-item photo-duo-item--small">
               <picture style={{ width: '100%', height: '100%', display: 'block' }}>
-                <source srcSet={cld(c.images[4], T.duo)} />
+                <source srcSet={cld(galleryUrls[4], T.duo)} />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={cld(c.images[4], T.duo)} alt="Foto de los novios" className="photo-img photo-img--hover" />
+                <img src={cld(galleryUrls[4], T.duo)} alt="Foto de los novios" className="photo-img photo-img--hover" />
               </picture>
             </div>
           )}
@@ -406,12 +400,12 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
       {hasGifts && (
         <section className="section">
           <h2 className="section-heading section-heading--display reveal">Mesa de Regalos</h2>
-          <p className="label muted reveal" style={{ maxWidth: '360px', lineHeight: '1.9', marginBottom: '2.5rem' }}>
+          <p className="label muted reveal" style={{ maxWidth: '520px', lineHeight: '1.9', marginBottom: '2.5rem' }}>
             Tu presencia es el mejor regalo. Si deseas obsequiarnos algo, aquí encontrarás nuestras opciones.
           </p>
 
           <div className="gifts-grid">
-            {(c.gifts?.bank || c.gifts?.holder || c.gifts?.account || c.gifts?.clabe) && (
+            {c.gifts?.giftTypes?.includes('transfer') && (c.gifts?.bank || c.gifts?.holder || c.gifts?.account || c.gifts?.clabe) && (
               <div className="gift-card reveal">
                 <p className="gift-card-title">Transferencia Bancaria</p>
                 {[
@@ -428,7 +422,7 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
               </div>
             )}
 
-            {c.gifts?.giftListUrl && (
+            {c.gifts?.giftTypes?.includes('list') && c.gifts?.giftListUrl && (
               <div className="gift-card gift-card--list reveal delay-1">
                 <GiftIcon />
                 <p className="gift-card-title" style={{ marginTop: '1.25rem', textAlign: 'center' }}>Mesa de Regalos</p>
@@ -438,6 +432,16 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
                 <a href={c.gifts.giftListUrl} target="_blank" rel="noopener noreferrer" className="btn-outline btn-outline--sm">
                   Ver mesa de regalos →
                 </a>
+              </div>
+            )}
+
+            {c.gifts?.giftTypes?.includes('envelope') && (
+              <div className="gift-card gift-card--list reveal delay-2">
+                <EnvelopeIcon />
+                <p className="gift-card-title" style={{ marginTop: '1.25rem', textAlign: 'center' }}>Sobre de Efectivo</p>
+                <p className="gift-value" style={{ textAlign: 'center', marginBottom: '0' }}>
+                  {c.gifts.envelopeMessage || 'Si prefieres hacerlo en efectivo, habrá un sobre disponible en el evento'}
+                </p>
               </div>
             )}
           </div>
@@ -482,18 +486,18 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
 
       {/* ── FOOTER ── */}
       <footer className="footer">
-        <p className="label muted footer-year">{c.date?.year}</p>
         <p className="footer-names">
           {c.couple?.person1} <span className="footer-amp">&</span> {c.couple?.person2}
         </p>
         <p className="label muted" style={{ marginTop: '0.75rem' }}>
-          {c.date?.day} · {c.date?.month} · {c.date?.year} · {c.location}
+          {c.date?.day} {c.date?.month} {c.date?.year} · {c.location}
         </p>
         <p className="footer-powered">
           powered by <span className="footer-brand">moments</span>
         </p>
       </footer>
     </div>
+    </ContentProtection>
   );
 }
 
@@ -572,6 +576,15 @@ function GiftIcon() {
   );
 }
 
+function EnvelopeIcon() {
+  return (
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+      <rect x="4" y="10" width="32" height="22" rx="2.5" stroke="var(--gold, #B8965A)" strokeWidth="1.4" />
+      <path d="M4 13l16 11 16-11" stroke="var(--gold, #B8965A)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function WhatsAppIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
@@ -580,935 +593,3 @@ function WhatsAppIcon() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-const css = `
-  /* ---------- Tokens — definidos en .essential-root para que el inline style los sobreescriba sin conflicto ---------- */
-  .essential-root {
-    --ivory:      #F8F3EC;
-    --charcoal:   #1C1611;
-    --gold:       #B8965A;
-    --muted:      color-mix(in srgb, var(--ivory) 85%, var(--charcoal));
-    --muted-fg:   color-mix(in srgb, var(--ivory) 45%, var(--charcoal));
-    --tinted:     color-mix(in srgb, var(--ivory) 93%, var(--charcoal));
-    --cream-deep: color-mix(in srgb, var(--ivory) 80%, var(--charcoal));
-    --gold-light: color-mix(in srgb, var(--gold) 30%, white);
-    --gold-dim:   color-mix(in srgb, var(--gold) 12%, var(--ivory));
-    --section-gap: clamp(3rem, 5vw, 4.5rem);
-    background-image:
-      radial-gradient(circle, color-mix(in srgb, var(--gold) 14%, transparent) 0.7px, transparent 0.7px);
-    background-size: 28px 28px;
-  }
-
-  /* ---------- Shared helpers ---------- */
-  .label {
-    font-family: var(--font-body);
-    font-size: 11px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    font-weight: 400;
-  }
-  .gold  { color: var(--gold); }
-  .muted { color: var(--muted-fg); }
-  .text-center { text-align: center; }
-
-  .sep-line {
-    display: block;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    flex: 1;
-  }
-  .sep-line.short { max-width: 48px; flex: none; }
-
-  /* ---------- Scroll reveal ---------- */
-  .reveal {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.75s cubic-bezier(0.16,1,0.3,1),
-                transform 0.75s cubic-bezier(0.16,1,0.3,1);
-  }
-  .reveal.is-visible { opacity: 1; transform: translateY(0); }
-
-  .reveal--image {
-    opacity: 0;
-    transform: translateY(40px) scale(0.98);
-    transition: opacity 1.1s cubic-bezier(0.16,1,0.3,1),
-                transform 1.1s cubic-bezier(0.16,1,0.3,1);
-  }
-  .reveal--image.is-visible { opacity: 1; transform: translateY(0) scale(1); }
-
-  .reveal--slide-left {
-    opacity: 0;
-    transform: translateX(-32px);
-    transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1),
-                transform 0.8s cubic-bezier(0.16,1,0.3,1);
-  }
-  .reveal--slide-left.is-visible { opacity: 1; transform: translateX(0); }
-
-  .delay-1 { transition-delay: 0.1s; }
-  .delay-2 { transition-delay: 0.2s; }
-  .delay-3 { transition-delay: 0.3s; }
-  .delay-4 { transition-delay: 0.4s; }
-  .delay-5 { transition-delay: 0.5s; }
-
-  /* ---------- Hero ---------- */
-  .hero {
-    position: relative;
-    min-height: 100svh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    overflow: hidden;
-    color: #fff;
-  }
-  .hero-bg {
-    position: absolute;
-    inset: 0;
-    background-color: #14100c;
-    z-index: 0;
-    overflow: hidden;
-    animation: heroZoom 14s ease-in-out infinite alternate;
-  }
-  @keyframes heroZoom {
-    from { transform: scale(1.04); }
-    to   { transform: scale(1.09); }
-  }
-  .hero-overlay {
-    position: absolute;
-    inset: 0;
-    background:
-      linear-gradient(to bottom, rgba(20,14,10,0.3) 0%, rgba(20,14,10,0.08) 35%, rgba(20,14,10,0.82) 100%),
-      radial-gradient(ellipse 80% 80% at center, transparent 40%, rgba(20,14,10,0.45) 100%);
-    z-index: 1;
-  }
-
-  /* Animated gold line — sweeps in on load */
-  .hero::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: var(--gold);
-    transform-origin: left;
-    animation: heroLine 0.7s cubic-bezier(0.16,1,0.3,1) 0s both;
-    z-index: 3;
-  }
-  @keyframes heroLine {
-    from { transform: scaleX(0); opacity: 0; }
-    to   { transform: scaleX(1); opacity: 1; }
-  }
-  .hero::after {
-    content: '';
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    z-index: 3;
-  }
-
-  .hero-content {
-    position: relative;
-    z-index: 2;
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.5rem;
-  }
-
-  /* 5-phase staggered hero animations */
-  .hero-label {
-    font-family: var(--font-body);
-    font-size: clamp(13px, 1.8vw, 16px);
-    letter-spacing: 0.4em;
-    text-transform: uppercase;
-    color: var(--gold);
-    margin: 0;
-    font-style: italic;
-    opacity: 0;
-    animation: heroFadeUp 0.9s cubic-bezier(0.16,1,0.3,1) 0.5s both;
-  }
-  .hero-names {
-    font-family: var(--font-display);
-    font-size: clamp(56px, 13vw, 140px);
-    font-weight: 300;
-    font-style: italic;
-    letter-spacing: -0.025em;
-    line-height: 0.95;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.05em;
-  }
-  .hero-name-1 {
-    opacity: 0;
-    animation: heroFadeUp 1.4s cubic-bezier(0.16,1,0.3,1) 0.7s both;
-  }
-  .hero-amp {
-    display: inline-block;
-    font-family: var(--font-playfair), serif;
-    font-style: italic;
-    font-weight: 300;
-    font-size: 0.45em;
-    color: var(--gold);
-    margin: 0 0.5rem;
-    position: relative;
-    opacity: 0;
-    animation: heroFadeUp 1.4s cubic-bezier(0.16,1,0.3,1) 0.75s both;
-  }
-  .hero-amp::after {
-    content: '';
-    position: absolute;
-    left: 50%; top: 50%;
-    transform: translate(-50%, -50%) rotate(45deg);
-    width: 1em; height: 1em;
-    border: 1px solid var(--gold);
-    opacity: 0.15;
-    z-index: -1;
-  }
-  .hero-name-2 {
-    opacity: 0;
-    animation: heroFadeUp 1.4s cubic-bezier(0.16,1,0.3,1) 0.8s both;
-  }
-  .hero-divider-line {
-    width: 40px;
-    height: 1px;
-    background: var(--gold);
-    opacity: 0;
-    animation: heroFadeUp 0.8s ease 1.1s both;
-  }
-  .hero-meta {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-    justify-content: center;
-    opacity: 0;
-    animation: heroFadeUp 0.9s cubic-bezier(0.16,1,0.3,1) 1.1s both;
-  }
-  .hero-meta-text {
-    font-family: var(--font-body);
-    font-size: 11px;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.75);
-  }
-  .hero-meta-dot {
-    width: 3px; height: 3px;
-    border-radius: 50%;
-    background: var(--gold);
-    opacity: 0.6;
-    flex-shrink: 0;
-  }
-
-  @keyframes heroFadeUp {
-    from { opacity: 0; transform: translateY(24px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Scroll indicator */
-  .hero-scroll-indicator {
-    position: absolute;
-    bottom: 2.5rem;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.6rem;
-    z-index: 2;
-    opacity: 0;
-    animation: heroFadeUp 1s ease 1.6s both;
-  }
-  .scroll-label {
-    font-family: var(--font-body);
-    font-size: 10px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.5);
-  }
-  .scroll-bar {
-    width: 1px;
-    height: 48px;
-    background: rgba(255,255,255,0.15);
-    overflow: hidden;
-  }
-  .scroll-thumb {
-    width: 100%;
-    height: 50%;
-    background: rgba(255,255,255,0.5);
-    animation: scrollDown 1.6s ease-in-out infinite;
-  }
-  @keyframes scrollDown {
-    0%   { transform: translateY(-100%); }
-    100% { transform: translateY(200%); }
-  }
-
-  /* ---------- Sections ---------- */
-  .section {
-    max-width: 680px;
-    margin: 0 auto;
-    padding: var(--section-gap) 2rem;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .section--left {
-    align-items: flex-start;
-    text-align: left;
-  }
-  .section--wide {
-    max-width: 860px;
-  }
-  .section--tinted {
-    /* kept for legacy — background removed for unified single-color design */
-  }
-
-  /* ---------- Section headings ---------- */
-  .section-heading {
-    font-family: var(--font-display);
-    font-size: clamp(2.5rem, 6vw, 4rem);
-    font-weight: 300;
-    font-style: italic;
-    letter-spacing: -0.02em;
-    line-height: 0.95;
-    margin: 0 0 1.25rem;
-    color: var(--charcoal);
-  }
-  .section-heading--display {
-    font-family: var(--font-display);
-    font-size: clamp(3.5rem, 9vw, 7.5rem);
-    font-weight: 300;
-    font-style: italic;
-    letter-spacing: -0.03em;
-    line-height: 0.92;
-    margin: 0 0 1.5rem;
-    color: var(--charcoal);
-  }
-
-  /* ---------- Ornament ---------- */
-  .ornament {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    padding: 2.5rem 3rem;
-    max-width: 360px;
-    margin: 0 auto;
-  }
-  .ornament .sep-line { max-width: 120px; }
-
-  /* ---------- Quote ---------- */
-  .quote-mark {
-    font-family: var(--font-display);
-    font-size: clamp(8rem, 18vw, 14rem);
-    line-height: 0.7;
-    color: var(--gold);
-    opacity: 0.25;
-    margin-bottom: -1rem;
-    margin-top: -2rem;
-    user-select: none;
-  }
-  .quote-text {
-    font-family: var(--font-display);
-    font-size: clamp(1.5rem, 4vw, 2.25rem);
-    font-style: italic;
-    font-weight: 300;
-    line-height: 1.45;
-    color: var(--charcoal);
-    margin: 0 0 2rem;
-  }
-  .quote-attribution {
-    display: flex;
-    align-items: center;
-    border-left: 2px solid var(--gold);
-    padding-left: 1.25rem;
-  }
-  .quote-ref {
-    font-family: var(--font-body);
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted-fg);
-  }
-
-  /* ---------- Parents ---------- */
-  .parents-header {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    width: 100%;
-    margin-bottom: 3.5rem;
-  }
-  .parents-header-label {
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-  .parents-grid {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 2rem;
-    width: 100%;
-    align-items: start;
-  }
-  .parents-symbol {
-    font-family: serif;
-    color: var(--gold);
-    font-size: 1.25rem;
-    flex-shrink: 0;
-    padding: 0 0.5rem;
-    align-self: center;
-  }
-  .display-name {
-    font-family: var(--font-display);
-    font-size: clamp(1.2rem, 3vw, 1.75rem);
-    font-weight: 400;
-    font-style: italic;
-    color: var(--charcoal);
-    margin: 0;
-  }
-  .name-sep { display: flex; justify-content: center; margin: 0.75rem 0; }
-  @media (max-width: 600px) {
-    .parents-grid { grid-template-columns: 1fr; }
-    .parents-symbol { display: none; }
-  }
-
-  /* ---------- Itinerary ---------- */
-  .itinerary {
-    width: 100%;
-    max-width: 580px;
-    display: flex;
-    flex-direction: column;
-  }
-  .itinerary-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 1.5rem;
-    text-align: left;
-  }
-  .itinerary-timeline {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex-shrink: 0;
-    padding-top: 1.5rem;
-  }
-  .itinerary-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: var(--gold);
-    border: 2px solid var(--ivory);
-    outline: 1px solid var(--gold);
-    flex-shrink: 0;
-    z-index: 1;
-  }
-  .itinerary-line {
-    width: 1px;
-    flex: 1;
-    min-height: 2.5rem;
-    background: linear-gradient(to bottom, var(--gold), transparent);
-    margin-top: 4px;
-    opacity: 0.35;
-  }
-  .itinerary-card {
-    flex: 1;
-    background: transparent;
-    border: 1px solid var(--muted);
-    border-radius: 6px;
-    overflow: hidden;
-    margin-bottom: 1rem;
-    transition: box-shadow 0.3s ease, transform 0.3s ease;
-  }
-  .itinerary-card:hover {
-    box-shadow: 0 8px 32px rgba(28,22,17,0.1);
-    transform: translateY(-2px);
-  }
-  .itinerary-card-header {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-    padding: 1rem 1.25rem;
-    border-bottom: 1px solid var(--muted);
-  }
-  .itinerary-time { flex-shrink: 0; line-height: 1; }
-  .time-h {
-    font-family: var(--font-display);
-    font-size: 2.75rem;
-    font-weight: 300;
-    color: var(--gold);
-    line-height: 1;
-  }
-  .time-m {
-    font-family: var(--font-display);
-    font-size: 1.25rem;
-    font-weight: 300;
-    color: var(--gold);
-  }
-  .itinerary-name {
-    font-family: var(--font-display);
-    font-size: 1.25rem;
-    font-weight: 400;
-    color: var(--charcoal);
-    margin: 0;
-  }
-  .itinerary-card-body { padding: 0.875rem 1.25rem; }
-  .itinerary-venue {
-    font-family: var(--font-body);
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--charcoal);
-    margin: 0 0 0.4rem;
-  }
-  .itinerary-address {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.35rem;
-  }
-  .itinerary-address span {
-    font-family: var(--font-body);
-    font-size: 12px;
-    color: var(--muted-fg);
-    line-height: 1.5;
-  }
-
-  /* ---------- Photos ---------- */
-  .photo-img {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  .photo-img--hover {
-    overflow: hidden;
-    position: relative;
-    cursor: default;
-    transition: box-shadow 0.4s ease;
-    width: 100%; height: 100%;
-    display: block;
-  }
-  .photo-img--hover::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(135deg, rgba(184,150,90,0.15) 0%, transparent 60%);
-    opacity: 0;
-    transition: opacity 0.4s ease;
-    pointer-events: none;
-  }
-  .photo-img--hover:hover { box-shadow: 0 20px 60px rgba(28,22,17,0.22); }
-  .photo-img--hover:hover::after { opacity: 1; }
-  .photo-img--hover img {
-    transition: transform 0.7s cubic-bezier(0.25,0.46,0.45,0.94);
-  }
-  .photo-img--hover:hover img { transform: scale(1.04); }
-
-  /* Foto 2 */
-  .photo-full {
-    width: 100%;
-    height: clamp(380px, 55vw, 640px);
-    overflow: hidden;
-    position: relative;
-  }
-  .photo-full-caption {
-    position: absolute;
-    bottom: 0; right: 0;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem 1.5rem;
-    opacity: 0.7;
-  }
-  .photo-caption-text {
-    font-family: var(--font-body);
-    font-size: 9px;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    color: #fff;
-  }
-  @media (max-width: 600px) {
-    .photo-full { height: clamp(240px, 55vw, 360px); }
-  }
-
-  /* Foto 3 */
-  .photo-center {
-    width: 100%;
-    height: clamp(440px, 65vw, 720px);
-    overflow: hidden;
-    position: relative;
-  }
-  .photo-center::before,
-  .photo-center::after {
-    content: '';
-    position: absolute;
-    top: 50%; transform: translateY(-50%);
-    width: 1px; height: 80px;
-    background: var(--gold);
-    opacity: 0.45;
-    z-index: 2;
-  }
-  .photo-center::before { left: 1.5rem; }
-  .photo-center::after  { right: 1.5rem; }
-  @media (max-width: 600px) {
-    .photo-center { height: clamp(300px, 65vw, 440px); }
-  }
-
-  /* Fotos dúo */
-  .photo-duo {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2px;
-    width: 100%;
-  }
-  .photo-duo-item {
-    height: clamp(240px, 38vw, 480px);
-    overflow: hidden;
-  }
-  @media (max-width: 600px) {
-    .photo-duo-item { height: clamp(160px, 40vw, 240px); }
-  }
-
-  /* ---------- Dress code ---------- */
-  .dresscode-label {
-    font-family: var(--font-display);
-    font-size: clamp(1.25rem, 3.5vw, 1.875rem);
-    font-style: italic;
-    color: var(--gold);
-    margin: 0 0 2rem;
-    font-weight: 300;
-  }
-  .dresscode-gender {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 1.5rem;
-    width: 100%;
-    max-width: 540px;
-    align-items: start;
-    text-align: left;
-  }
-  .dc-gender-block { display: flex; flex-direction: column; align-items: flex-start; }
-  .dc-gender-icon  { margin-bottom: 0.75rem; }
-  .dc-gender-label-text {
-    font-family: var(--font-display);
-    font-size: 1.1rem;
-    font-style: italic;
-    color: var(--gold);
-    margin: 0 0 0.4rem;
-    font-weight: 300;
-  }
-  .dc-gender-divider { width: 1px; background: var(--muted); align-self: stretch; }
-  .dc-gender-text {
-    font-family: var(--font-body);
-    font-size: 13px;
-    color: var(--muted-fg);
-    line-height: 1.8;
-    margin: 0;
-  }
-  @media (max-width: 560px) {
-    .dresscode-gender {
-      grid-template-columns: 1fr;
-      gap: 0; max-width: 340px; text-align: center;
-    }
-    .dc-gender-block { align-items: center; padding: 1.5rem 0; }
-    .dc-gender-block:first-child { padding-top: 0; }
-    .dc-gender-divider { width: 60%; height: 1px; margin: 0 auto; align-self: auto; }
-  }
-
-  /* ---------- Swatches ---------- */
-  .swatches {
-    display: flex;
-    gap: 1.75rem;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  .swatch-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.75rem;
-    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-  }
-  .swatch-item:hover { transform: translateY(-8px); }
-  .swatch-circle {
-    width: 64px; height: 64px;
-    border-radius: 50%;
-    border: 1px solid var(--muted);
-    box-shadow: 0 4px 16px rgba(28,22,17,0.1);
-  }
-  .swatch-avoid { border-color: #d4a5a5; opacity: 0.65; }
-
-  /* ---------- Notes ---------- */
-  .notes-list {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    max-width: 540px;
-  }
-  .note-item {
-    display: flex;
-    align-items: baseline;
-    gap: 1.25rem;
-    padding: 1.25rem 0;
-    border-top: 1px solid var(--muted);
-  }
-  .note-item:last-child { border-bottom: 1px solid var(--muted); }
-  .note-counter {
-    font-family: var(--font-display);
-    font-size: 3rem;
-    font-weight: 300;
-    font-style: italic;
-    color: var(--charcoal);
-    opacity: 0.12;
-    line-height: 1;
-    flex-shrink: 0;
-    user-select: none;
-  }
-  .note-text {
-    font-family: var(--font-body);
-    font-size: 13px;
-    color: var(--charcoal);
-    line-height: 1.75;
-    margin: 0;
-  }
-
-  /* ---------- No children ---------- */
-  .no-children-block {
-    display: flex;
-    align-items: flex-start;
-    gap: 1.25rem;
-    background: var(--gold-dim);
-    border: 1px solid color-mix(in srgb, var(--gold) 20%, transparent);
-    border-radius: 12px;
-    padding: 1.5rem 1.75rem;
-    max-width: 480px;
-    text-align: left;
-  }
-  .no-children-title {
-    font-family: var(--font-display);
-    font-size: 1.15rem;
-    font-weight: 400;
-    color: var(--charcoal);
-    margin: 0 0 0.4rem;
-  }
-  .no-children-desc {
-    font-family: var(--font-body);
-    font-size: 12px;
-    color: var(--muted-fg);
-    line-height: 1.8;
-    margin: 0;
-  }
-
-  /* ---------- Gifts ---------- */
-  .gifts-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
-    width: 100%;
-    max-width: 640px;
-  }
-  @media (max-width: 600px) {
-    .gifts-grid { grid-template-columns: 1fr; }
-  }
-  .gift-card {
-    width: 100%;
-    background: transparent;
-    border: 1px solid var(--muted);
-    border-top: 2px solid var(--gold);
-    border-radius: 4px;
-    padding: 2rem;
-    text-align: left;
-  }
-  .gift-card--list {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 2rem 1.5rem;
-  }
-  .gift-card-title {
-    font-family: var(--font-body);
-    font-size: 9px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--muted-fg);
-    margin: 0 0 1.25rem;
-  }
-  .gift-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 1rem;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--muted);
-  }
-  .gift-row:last-child { border-bottom: none; }
-  .gift-label {
-    font-family: var(--font-body);
-    font-size: 12px;
-    color: var(--muted-fg);
-    flex-shrink: 0;
-  }
-  .gift-value {
-    font-family: var(--font-body);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--charcoal);
-    text-align: right;
-  }
-
-  /* ---------- RSVP ---------- */
-  .rsvp-section {
-    padding-left: max(2rem, calc((100vw - 680px) / 2));
-    padding-right: max(2rem, calc((100vw - 680px) / 2));
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-  .rsvp-heading {
-    color: var(--charcoal);
-    margin-bottom: 2rem;
-    font-size: clamp(4rem, 12vw, 10rem);
-  }
-  .rsvp-deadline {
-    margin-bottom: 2.5rem;
-  }
-  .rsvp-date {
-    font-family: var(--font-display);
-    font-size: 1.75rem;
-    font-style: italic;
-    font-weight: 300;
-    color: var(--charcoal);
-  }
-
-  /* ---------- Buttons ---------- */
-  .btn-outline {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.875rem 2.25rem;
-    border-radius: 100px;
-    border: 1px solid var(--gold);
-    color: var(--gold);
-    font-family: var(--font-body);
-    font-size: 11px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    text-decoration: none;
-    transition: background 0.2s, color 0.2s;
-  }
-  .btn-outline:hover { background: var(--gold); color: #fff; }
-  .btn-outline--sm { padding: 0.625rem 1.5rem; font-size: 10px; }
-
-  .btn-whatsapp {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.875rem;
-    padding: 1.1rem 2.5rem;
-    width: 100%;
-    max-width: 440px;
-    background: #25D366;
-    color: #fff;
-    font-family: var(--font-body);
-    font-size: 12px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    text-decoration: none;
-    overflow: hidden;
-    border-radius: 4px;
-    transition: box-shadow 0.3s ease, transform 0.2s ease;
-  }
-  .btn-whatsapp::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgba(255,255,255,0.15);
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
-  }
-  .btn-whatsapp:hover::before { transform: scaleX(1); }
-  .btn-whatsapp:hover {
-    box-shadow: 0 12px 36px rgba(37,211,102,0.3);
-    transform: translateY(-2px);
-  }
-  .btn-whatsapp span { position: relative; z-index: 1; }
-
-  /* ---------- Footer ---------- */
-  .footer {
-    text-align: center;
-    padding: calc(var(--section-gap) * 1.2) 2rem calc(var(--section-gap) * 0.8);
-    border-top: 1px solid transparent;
-    border-image: linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold) 70%, transparent) 1;
-  }
-  .footer-year {
-    display: block;
-    margin-bottom: 0.75rem;
-  }
-  .footer-names {
-    font-family: var(--font-display);
-    font-size: clamp(1.5rem, 4vw, 2.75rem);
-    font-style: italic;
-    font-weight: 300;
-    letter-spacing: -0.02em;
-    color: var(--charcoal);
-    margin: 0;
-    line-height: 1;
-  }
-  .footer-amp {
-    color: var(--gold);
-  }
-  .footer-powered {
-    font-family: var(--font-body);
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted-fg);
-    opacity: 0.5;
-    margin-top: 2rem;
-  }
-  .footer-brand {
-    font-family: 'Montserrat', var(--font-montserrat), sans-serif;
-    font-weight: 500;
-    color: var(--gold);
-    opacity: 1;
-    letter-spacing: 0.05em;
-  }
-
-  /* ---------- Mobile adjustments ---------- */
-  @media (max-width: 768px) {
-    :root { --section-gap: 3rem; }
-    .section { padding: 3rem 1.5rem; max-width: 100%; }
-    .section--left { padding-left: 1.5rem; padding-right: 1.5rem; }
-    .section--wide { max-width: 100%; padding-left: 1.5rem; padding-right: 1.5rem; }
-    .parents-grid { grid-template-columns: 1fr; }
-    .parents-symbol { display: none; }
-    .dresscode-gender { grid-template-columns: 1fr; }
-    .gifts-grid { grid-template-columns: 1fr; }
-    .itinerary { max-width: 100%; }
-    .notes-list { max-width: 100%; }
-  }
-  @media (max-width: 480px) {
-    :root { --section-gap: 2.5rem; }
-    .hero-meta { flex-direction: column; gap: 0.4rem; }
-    .hero-meta-dot { display: none; }
-    .section { padding: 2.5rem 1.25rem; }
-    .section--left { padding-left: 1.25rem; padding-right: 1.25rem; }
-    .section--wide { padding-left: 1.25rem; padding-right: 1.25rem; }
-    .section-heading--display { font-size: clamp(2.5rem, 10vw, 4rem); }
-    .rsvp-heading { font-size: clamp(3rem, 13vw, 5rem); }
-    .quote-mark { font-size: clamp(5rem, 18vw, 8rem); margin-top: -1rem; }
-    .quote-text { font-size: clamp(1.2rem, 5vw, 1.6rem); }
-    .dresscode-gender { max-width: 100%; }
-    .rsvp-section { padding-left: 1.25rem; padding-right: 1.25rem; }
-    .ornament { padding: 1.5rem 2rem; }
-    .parents-header { gap: 0.75rem; }
-    .hero-scroll-indicator { bottom: 1.75rem; }
-    .swatches { gap: 1.25rem; }
-    .swatch-circle { width: 52px; height: 52px; }
-    .footer-names { font-size: clamp(1.25rem, 7vw, 1.75rem); }
-  }
-`;

@@ -51,6 +51,7 @@ export interface DeluxeConfig {
   noChildrenMessage?: string;
   rsvpDeadline?: string;
   heroLabel?: string;
+  monogram?: string;
   whatsapp?: { number?: string; message?: string };
   rsvp?: {
     maxPlusOnes?: number;
@@ -76,6 +77,7 @@ interface Props {
   companionNames?: string[];
   guestName?: string;
   hasExistingRsvp?: boolean;
+  invalidToken?: boolean;
 }
 
 const cormorant = Cormorant_Garamond({
@@ -261,8 +263,16 @@ const css = `
   }
   .music-pill--minimized .music-pill-text,
   .music-pill--minimized .music-pill-wave { display: none; }
+  .music-pill--minimized:hover {
+    max-width: 260px;
+    width: auto;
+    border-radius: 100px;
+    padding: 0.75rem 1.25rem;
+  }
+  .music-pill--minimized:hover .music-pill-text { display: block; }
+  .music-pill--minimized:hover .music-pill-wave { display: flex; }
   .music-pill-icon { display: flex; align-items: center; justify-content: center; }
-  .music-pill:hover { border-color: var(--gold); transform: scale(1.05); }
+  .music-pill:hover { border-color: var(--gold); }
   .music-pill--playing { border-color: var(--gold); }
   .music-pill-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .music-pill-wave {
@@ -581,59 +591,19 @@ const css = `
   }
 
   /* ── Minimal Nav ── */
-  .dlx-min-nav {
-    position: fixed;
-    left: 2rem;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 100;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    opacity: 0;
-    pointer-events: none;
-    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .dlx-min-nav.is-active { opacity: 1; pointer-events: auto; }
-  .dlx-min-nav a {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    text-decoration: none;
-  }
-  .nav-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--gold);
-    opacity: 0.3;
-    transition: all 0.3s ease;
-  }
-  .nav-label {
-    font-family: var(--font-jost), system-ui, sans-serif;
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--gold);
-    opacity: 0;
-    transform: translateX(-10px);
-    transition: all 0.3s ease;
-  }
-  .dlx-min-nav a:hover .nav-dot,
-  .dlx-min-nav a.active .nav-dot { opacity: 1; transform: scale(1.4); }
-  .dlx-min-nav a:hover .nav-label,
-  .dlx-min-nav a.active .nav-label { opacity: 0.6; transform: translateX(0); }
-
-  @media (max-width: 1000px) { .dlx-min-nav { display: none; } }
 
   /* ── Ornament ── */
   .ornament {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 1.25rem;
-    max-width: 520px;
-    margin: 2.5rem auto;
-    padding: 0.5rem 2rem;
+    width: 100%;
+    padding: 2.5rem 0 0.5rem;
+  }
+  .ornament .sep-line {
+    flex: none;
+    width: 120px;
   }
   .ornament-motif {
     display: flex;
@@ -727,10 +697,11 @@ const css = `
   .dlx-carousel {
     position: relative;
     overflow: hidden;
-    aspect-ratio: 16 / 9;
+    width: 100%;
+    height: clamp(280px, 56.25vw, 70vh);
     background: var(--dark);
   }
-  @media (max-width: 600px) { .dlx-carousel { aspect-ratio: 3 / 4; } }
+  @media (max-width: 600px) { .dlx-carousel { height: clamp(260px, 75vw, 70vh); } }
   .dlx-carousel-track {
     display: flex;
     height: 100%;
@@ -747,51 +718,6 @@ const css = `
     object-fit: cover;
     display: block;
   }
-  .dlx-carousel-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(20, 16, 12, 0.65);
-    border: 1px solid rgba(184, 150, 90, 0.45);
-    color: var(--ivory);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(10px);
-    transition: background 0.25s, border-color 0.25s, transform 0.25s;
-    z-index: 2;
-  }
-  .dlx-carousel-btn--prev { left: 1.25rem; }
-  .dlx-carousel-btn--next { right: 1.25rem; }
-  .dlx-carousel-btn:hover { background: rgba(184, 150, 90, 0.75); border-color: var(--gold); transform: translateY(-50%) scale(1.08); }
-  .dlx-carousel-dots {
-    position: absolute;
-    bottom: 1.25rem;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 0.45rem;
-    z-index: 2;
-  }
-  .dlx-carousel-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(255, 255, 255, 0.35);
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    padding: 0;
-  }
-  .dlx-carousel-dot--active {
-    background: var(--gold);
-    width: 20px;
-    border-radius: 3px;
-  }
   .dlx-carousel-counter {
     position: absolute;
     top: 1.25rem;
@@ -802,6 +728,51 @@ const css = `
     border-radius: 100px;
     backdrop-filter: blur(8px);
     border: 1px solid rgba(184, 150, 90, 0.2);
+  }
+  .dlx-carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(20, 16, 12, 0.35);
+    border: 1px solid rgba(184, 150, 90, 0.25);
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+    transition: background 0.3s, border-color 0.3s, color 0.3s, opacity 0.3s;
+    z-index: 2;
+    opacity: 0.4;
+  }
+  .dlx-carousel-btn--prev { left: 1rem; }
+  .dlx-carousel-btn--next { right: 1rem; }
+  .dlx-carousel:hover .dlx-carousel-btn,
+  .dlx-carousel:focus-within .dlx-carousel-btn { opacity: 1; }
+  .dlx-carousel-btn:hover { background: rgba(184, 150, 90, 0.55); border-color: var(--gold); color: var(--ivory); }
+  @media (max-width: 600px) { .dlx-carousel-btn { opacity: 0.55; width: 28px; height: 28px; } }
+  .dlx-carousel-dots {
+    display: flex;
+    gap: 0.45rem;
+    align-items: center;
+  }
+  .dlx-carousel-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.25);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    padding: 0;
+  }
+  .dlx-carousel-dot--active {
+    background: var(--gold);
+    width: 20px;
+    border-radius: 3px;
   }
 
   /* ── Dietary ── */
@@ -1566,6 +1537,27 @@ const css = `
     color: var(--gold);
     line-height: 1;
   }
+  .attendee-badge {
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 0.18rem 0.55rem;
+    border-radius: 100px;
+    flex-shrink: 0;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .attendee-badge--yes {
+    background: rgba(74, 160, 90, 0.12);
+    color: #3d8b52;
+    border: 1px solid rgba(74, 160, 90, 0.28);
+  }
+  .attendee-badge--no {
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--muted-fg);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
   .form-input {
     width: 100%; padding: 0.875rem 1rem;
     border: 1px solid var(--muted); border-radius: 10px;
@@ -1715,9 +1707,6 @@ function DeluxeCarouselBlock({ srcs, positions, scales, names }: { srcs: string[
               />
             ))}
           </div>
-          <div className="dlx-carousel-counter">
-            <span className="label gold">{idx + 1} / {total}</span>
-          </div>
         </>
       )}
     </div>
@@ -1759,6 +1748,7 @@ export default function DeluxeTemplate({
   companionNames: initialCompanionNames = [],
   guestName,
   hasExistingRsvp = false,
+  invalidToken = false,
 }: Props) {
   // ── Build data from config with defaults ────────────────────────────────
   const cfg = (config ?? {}) as DeluxeConfig;
@@ -1883,7 +1873,11 @@ export default function DeluxeTemplate({
   };
   const notes       = cfg.notes  ?? [];
   const gifts       = cfg.gifts  ?? {};
-  const music       = { url: cfg.music?.url || '', title: cfg.music?.title || '', artist: cfg.music?.artist || '' };
+  const rawMusicUrl = cfg.music?.url || '';
+  const audioSrc = rawMusicUrl.includes('drive.google.com')
+    ? `/api/audio-proxy?url=${encodeURIComponent(rawMusicUrl)}`
+    : rawMusicUrl;
+  const music       = { url: audioSrc, title: cfg.music?.title || '', artist: cfg.music?.artist || '' };
   const destination = cfg.destination ?? {};
   const noChildren  = cfg.noChildren ?? false;
   const rsvpDeadline = cfg.rsvpDeadline || '';
@@ -1923,7 +1917,6 @@ export default function DeluxeTemplate({
   const itineraryRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const [musicMinimized, setMusicMinimized] = useState(false);
-  const [activeSection, setActiveSection] = useState('hero');
 
   const hasToken = !!guestToken;
   const isDemo = !eventId && !guestToken;
@@ -1945,25 +1938,24 @@ export default function DeluxeTemplate({
     return () => clearTimeout(timer);
   }, [loading]);
 
-  // Active Section Tracker (for minimal nav)
+  // Music Autoplay + fallback on first interaction
   useEffect(() => {
-    if (loading) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Find the section that is most in view
-        const mostInView = entries
-          .filter(e => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        
-        if (mostInView) {
-          setActiveSection(mostInView.target.id || 'hero');
-        }
-      },
-      { threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] }
-    );
-    document.querySelectorAll('section[id]').forEach((s) => observer.observe(s));
-    return () => observer.disconnect();
-  }, [loading]);
+    if (loading || !music.url) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.play().then(() => {
+      setPlaying(true);
+    }).catch(() => {
+      // Browser blocked autoplay — wait for first user interaction
+      const unlock = () => {
+        audio.play().then(() => { setPlaying(true); }).catch(() => {});
+        document.removeEventListener('click', unlock);
+        document.removeEventListener('touchstart', unlock);
+      };
+      document.addEventListener('click', unlock, { once: true });
+      document.addEventListener('touchstart', unlock, { once: true });
+    });
+  }, [loading, music.url]);
 
   // Scroll reveal
   useEffect(() => {
@@ -2048,9 +2040,15 @@ export default function DeluxeTemplate({
         <style suppressHydrationWarning>{dynamicCss}</style>
         <div className={`loader ${loaderOut ? 'loader--out' : ''}`}>
           <div className="loader-monogram">
-            <span className="loader-initial">{initials.person1}</span>
-            <span className="loader-amp">&</span>
-            <span className="loader-initial">{initials.person2}</span>
+            {cfg.monogram ? (
+              <span className="loader-initial">{cfg.monogram}</span>
+            ) : (
+              <>
+                <span className="loader-initial">{initials.person1}</span>
+                <span className="loader-amp">&</span>
+                <span className="loader-initial">{initials.person2}</span>
+              </>
+            )}
           </div>
           <div className="loader-line" />
           <p className="loader-date label">
@@ -2079,37 +2077,19 @@ export default function DeluxeTemplate({
             if (musicMinimized) setMusicMinimized(false);
             else toggleMusic();
           }}
-          aria-label="Música"
+          aria-label="Play"
         >
           <div className="music-pill-icon">
             {playing ? <PauseIcon /> : <PlayIcon />}
           </div>
           <span className="music-pill-text">
-            {playing ? `${music.title || 'Música'} · ${music.artist || ''}` : 'Música'}
+            {playing
+              ? [music.title, music.artist].filter(Boolean).join(' · ') || 'Reproduciendo'
+              : 'Reproducir'}
           </span>
           {playing && <span className="music-pill-wave"><span/><span/><span/><span/></span>}
         </button>
       )}
-
-      {/* ── MINIMAL NAV ── */}
-      <nav className={`dlx-min-nav ${loading ? '' : 'is-active'}`}>
-        {cfg.sections?.itinerary !== false && itinerary.length > 0 && (
-          <a href="#itinerary" className={activeSection === 'itinerary' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">Programa</span></a>
-        )}
-        {showDestination && (
-          <a href="#destination" className={activeSection === 'destination' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">Mapa</span></a>
-        )}
-        {cfg.sections?.dressCode !== false && dressCode.label && (
-          <a href="#dresscode" className={activeSection === 'dresscode' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">Vestimenta</span></a>
-        )}
-        {cfg.sections?.notes !== false && notes.length > 0 && (
-          <a href="#notes" className={activeSection === 'notes' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">Notas</span></a>
-        )}
-        {cfg.sections?.gifts !== false && (gifts.bank || gifts.giftListUrl || (gifts.giftTypes?.length ?? 0) > 0) && (
-          <a href="#gifts" className={activeSection === 'gifts' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">Regalos</span></a>
-        )}
-        <a href="#rsvp" className={activeSection === 'rsvp' ? 'active' : ''}><span className="nav-dot" /><span className="nav-label">RSVP</span></a>
-      </nav>
 
       {/* ── HERO ── */}
       <section className="dlx-hero" id="hero">
@@ -2559,7 +2539,23 @@ export default function DeluxeTemplate({
           </p>
         )}
         <div className="dlx-rsvp-actions reveal">
-          {(hasToken || isDemo) ? (
+          {invalidToken ? (
+            <div style={{ textAlign: 'center' }}>
+              <p style={{
+                fontFamily: 'var(--font-jost)',
+                fontSize: '12px',
+                letterSpacing: '0.05em',
+                color: '#9B8B78',
+                padding: '1.25rem 2rem',
+                border: '1px solid color-mix(in srgb, var(--gold), transparent 80%)',
+                borderRadius: '0',
+                maxWidth: '400px',
+                lineHeight: '1.8'
+              }}>
+                El enlace que utilizaste no es válido. Contacta a los novios para obtener tu invitación personalizada.
+              </p>
+            </div>
+          ) : (hasToken || isDemo) ? (
             <button className="btn-rsvp" onClick={() => setModalOpen(true)}>
               {hasExistingRsvp ? 'Actualizar mi respuesta' : 'Confirmar mi asistencia'}
             </button>
@@ -2692,25 +2688,31 @@ export default function DeluxeTemplate({
                         <span className="label muted">Titular</span>
                       </div>
                       {/* Acompañantes con checkbox */}
-                      {attendeeNames.map((name, i) => (
-                        <div key={i} className="attendee-row">
-                          <label className="attendee-check-label">
-                            <input
-                              type="checkbox"
-                              checked={attendeeChecked[i] ?? true}
-                              onChange={() => {
-                                const updated = [...attendeeChecked];
-                                updated[i] = !updated[i];
-                                setAttendeeChecked(updated);
-                              }}
-                            />
-                            <span className="attendee-check-box" />
-                          </label>
-                          <span className={`attendee-name${!(attendeeChecked[i] ?? true) ? ' attendee-name--muted' : ''}`}>
-                            {name}
-                          </span>
-                        </div>
-                      ))}
+                      {attendeeNames.map((name, i) => {
+                        const attending = attendeeChecked[i] ?? true;
+                        return (
+                          <div key={i} className="attendee-row">
+                            <label className="attendee-check-label">
+                              <input
+                                type="checkbox"
+                                checked={attending}
+                                onChange={() => {
+                                  const updated = [...attendeeChecked];
+                                  updated[i] = !updated[i];
+                                  setAttendeeChecked(updated);
+                                }}
+                              />
+                              <span className="attendee-check-box" />
+                            </label>
+                            <span className={`attendee-name${!attending ? ' attendee-name--muted' : ''}`}>
+                              {name}
+                            </span>
+                            <span className={`attendee-badge ${attending ? 'attendee-badge--yes' : 'attendee-badge--no'}`}>
+                              {attending ? 'Asistirá' : 'No asistirá'}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
 
                     {/* Opciones Dietéticas por Persona */}

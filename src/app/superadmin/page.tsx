@@ -28,6 +28,14 @@ const STATUS_MAP: Record<string, { label: string; color: string; bg: string; glo
   finished:  { label: 'finished', color: C.muted, bg: 'rgba(255,255,255,0.04)', glow: undefined },
 };
 
+const PAYMENT_MAP: Record<string, { label: string; color: string; bg: string }> = {
+  pending:  { label: 'pendiente',   color: C.red,      bg: C.redDim },
+  partial:  { label: 'parcial',     color: C.amber,    bg: C.amberDim },
+  paid:     { label: 'pagado',      color: C.green,    bg: C.greenDim },
+  refunded: { label: 'reembolso',   color: C.mutedMid, bg: 'rgba(255,255,255,0.04)' },
+  expired:  { label: 'expirado',    color: C.muted,    bg: 'rgba(255,255,255,0.04)' },
+};
+
 const PLAN_MAP: Record<string, { label: string; color: string }> = {
   essential: { label: 'ESSENTIAL', color: C.mutedMid },
   plus:      { label: 'PLUS', color: C.accent },
@@ -50,8 +58,16 @@ export default async function SuperadminPage() {
 
   const { data: events } = await supabase
     .from('events')
-    .select('*, profiles(full_name, email)')
+    .select('*')
     .order('created_at', { ascending: false });
+
+  // Fetch organizer profiles separately to avoid PostgREST FK ambiguity
+  // (event_organizers creates a second path events→profiles via junction table)
+  const ownerIds = [...new Set((events ?? []).map(e => e.owner_id).filter(Boolean))];
+  const { data: orgProfiles } = ownerIds.length
+    ? await supabase.from('profiles').select('id, full_name, email').in('id', ownerIds)
+    : { data: [] };
+  const profileMap = Object.fromEntries((orgProfiles ?? []).map(p => [p.id, p]));
 
   const total = events?.length ?? 0;
   const live = events?.filter(e => e.status === 'published').length ?? 0;
@@ -174,7 +190,7 @@ export default async function SuperadminPage() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-              {['evento', 'tipo', 'plan', 'organizador', 'estado', 'creado', ''].map(h => (
+              {['evento', 'tipo', 'plan', 'organizador', 'estado', 'pago', 'creado', ''].map(h => (
                 <th
                   key={h}
                   style={{
@@ -205,7 +221,8 @@ export default async function SuperadminPage() {
             {events?.map((event, i) => {
               const status = STATUS_MAP[event.status] ?? STATUS_MAP.draft;
               const plan = PLAN_MAP[event.plan] ?? PLAN_MAP.essential;
-              const org = (event.profiles as { full_name?: string; email?: string } | null);
+              const payment = PAYMENT_MAP[event.payment_status ?? 'pending'] ?? PAYMENT_MAP.pending;
+              const org = profileMap[event.owner_id] as { full_name?: string; email?: string } | undefined;
               const createdAt = new Date(event.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: '2-digit' });
 
               return (
@@ -257,6 +274,16 @@ export default async function SuperadminPage() {
                       />
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: status.color, letterSpacing: '0.05em' }}>
                         {status.label}
+                      </span>
+                    </span>
+                  </td>
+
+                  {/* Pago */}
+                  <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '4px', backgroundColor: payment.bg }}>
+                      <span style={{ display: 'inline-block', width: '5px', height: '5px', borderRadius: '50%', backgroundColor: payment.color, flexShrink: 0 }} />
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: payment.color, letterSpacing: '0.05em' }}>
+                        {payment.label}
                       </span>
                     </span>
                   </td>

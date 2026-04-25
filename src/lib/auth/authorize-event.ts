@@ -13,13 +13,22 @@ export async function authorizeEvent(eventId: string) {
     .eq('id', user.id)
     .single();
 
-  let query = supabase.from('events').select('*').eq('id', eventId);
-
   if (profile?.role === 'organizador') {
-    query = query.eq('owner_id', user.id);
+    const { data: membership } = await supabase
+      .from('event_organizers')
+      .select('role')
+      .eq('event_id', eventId)
+      .eq('profile_id', user.id)
+      .single();
+
+    if (!membership) redirect('/admin');
   }
 
-  const { data: event, error } = await query.single();
+  const { data: event, error } = await supabase
+    .from('events')
+    .select('*')
+    .eq('id', eventId)
+    .single();
 
   if (!event || error) redirect('/admin');
 

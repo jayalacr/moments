@@ -19,7 +19,7 @@ export default function AdminLayoutClient({ children, profile, events }: AdminLa
   const isPreview = pathname?.includes('/preview');
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', width: '100%', overflow: 'hidden' }}>
       {/* Desktop Toggle Button (when hidden) */}
       {!isPreview && isSidebarHidden && (
         <button
@@ -64,7 +64,7 @@ export default function AdminLayoutClient({ children, profile, events }: AdminLa
         </div>
       )}
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
+      <div style={{ display: 'flex', flex: 1, minHeight: 0, position: 'relative' }}>
         <AdminSidebar 
           profile={profile} 
           events={events} 

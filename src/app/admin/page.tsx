@@ -39,11 +39,38 @@ export default async function AdminPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: events } = await supabase
-    .from('events')
-    .select('*')
-    .eq('owner_id', user.id)
-    .order('created_at', { ascending: false });
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let events: any[] | null = null;
+
+  if (profile?.role === 'superadmin') {
+    const { data } = await supabase
+      .from('events')
+      .select('*')
+      .order('created_at', { ascending: false });
+    events = data;
+  } else {
+    const { data: orgEntries } = await supabase
+      .from('event_organizers')
+      .select('event_id')
+      .eq('profile_id', user.id);
+
+    const eventIds = orgEntries?.map(e => e.event_id) ?? [];
+
+    if (eventIds.length) {
+      const { data } = await supabase
+        .from('events')
+        .select('*')
+        .in('id', eventIds)
+        .order('created_at', { ascending: false });
+      events = data;
+    }
+  }
 
   return (
     <div className="admin-dashboard-container">

@@ -12,8 +12,7 @@ export async function updateEventConfig(eventId: string, config: Record<string, 
   const { error } = await supabase
     .from('events')
     .update({ config })
-    .eq('id', eventId)
-    .eq('owner_id', user.id);
+    .eq('id', eventId);
 
   if (error) throw new Error(error.message);
 

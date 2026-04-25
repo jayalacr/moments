@@ -18,7 +18,6 @@ export default async function PreviewPage({ params }: Props) {
     .from('events')
     .select('template_type, config')
     .eq('id', eventId)
-    .eq('owner_id', user.id)
     .single();
 
   if (!event) redirect('/admin');

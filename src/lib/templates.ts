@@ -19,6 +19,7 @@ export type TemplateComponent = ComponentType<{
   companionNames?: string[];
   guestName?: string;
   hasExistingRsvp?: boolean;
+  invalidToken?: boolean;
 }>;
 
 export interface TemplateEntry {
@@ -30,8 +31,6 @@ export interface TemplateEntry {
 import EssentialTemplate from '@/components/templates/essential/EssentialTemplate';
 import PlusTemplate from '@/components/templates/plus/PlusTemplate';
 import DeluxeTemplate from '@/components/templates/deluxe/DeluxeTemplate';
-import WeddingDarkTemplate from '@/components/templates/wedding-dark/WeddingDarkTemplate';
-import WeddingBeachTemplate from '@/components/templates/wedding-beach/WeddingBeachTemplate';
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'essential-demo': {
@@ -50,19 +49,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
     component: DeluxeTemplate as TemplateComponent,
     label: 'Deluxe — Clásico',
     plan: 'deluxe',
-  },
-
-  'wedding-dark-deluxe': {
-    component: WeddingDarkTemplate as TemplateComponent,
-    label: 'Wedding — Dark Deluxe',
-    plan: 'deluxe',
-  },
-
-  'wedding-beach-essential': {
-    component: WeddingBeachTemplate as TemplateComponent,
-    label: 'Wedding — Beach Essential',
-    plan: 'essential',
-  },
+  }
 
   // Agrega nuevos templates aquí:
   // 'boda-rustica-2025': {

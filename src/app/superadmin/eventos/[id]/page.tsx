@@ -4,6 +4,10 @@ import Link from 'next/link';
 import { toggleEventStatus, setEventDraft } from '@/app/superadmin/_actions';
 import TemplateSelector from './_components/TemplateSelector';
 import PlanChanger from './_components/PlanChanger';
+import PricingEditor from './_components/PricingEditor';
+import OrganizersEditor from './_components/OrganizersEditor';
+import type { DesignType, ExtensionKey, Plan } from '@/lib/pricing';
+import type { OrganizerRow } from './_components/OrganizersEditor';
 
 const C = {
   bg: '#0D1117',
@@ -44,11 +48,32 @@ export default async function EventoDetailPage({ params }: Props) {
 
   const { data: event } = await supabase
     .from('events')
-    .select('*, profiles(full_name, email)')
+    .select('*')
     .eq('id', id)
     .single();
 
   if (!event) redirect('/superadmin');
+
+  const { data: ownerProfile } = await supabase
+    .from('profiles')
+    .select('full_name, email')
+    .eq('id', event.owner_id)
+    .single();
+
+  const { data: organizerRows } = await supabase
+    .from('event_organizers')
+    .select('role, profiles(id, full_name, email)')
+    .eq('event_id', id);
+
+  const organizers: OrganizerRow[] = (organizerRows ?? []).map(row => {
+    const p = row.profiles as unknown as { id: string; full_name: string | null; email: string } | null;
+    return {
+      profileId: p?.id ?? '',
+      fullName: p?.full_name ?? null,
+      email: p?.email ?? '',
+      role: row.role as 'owner' | 'collaborator',
+    };
+  }).filter(o => o.profileId);
 
   const status = STATUS_MAP[event.status] ?? STATUS_MAP.draft;
 
@@ -154,7 +179,7 @@ export default async function EventoDetailPage({ params }: Props) {
       <div className="sa-info-grid">
         {[
           { label: 'slug', value: `/${event.event_type}/${event.slug}` },
-          { label: 'organizador', value: (event.profiles as { full_name?: string; email?: string } | null)?.full_name || (event.profiles as { email?: string } | null)?.email || '—' },
+          { label: 'organizador', value: ownerProfile?.full_name || ownerProfile?.email || '—' },
           { label: 'creado', value: new Date(event.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) },
           { label: 'actualizado', value: new Date(event.updated_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) },
         ].map(item => (
@@ -216,6 +241,17 @@ export default async function EventoDetailPage({ params }: Props) {
       {/* Separador */}
       <div style={{ height: '1px', backgroundColor: C.border, marginTop: '28px', marginBottom: '28px' }} />
 
+      {/* Organizadores */}
+      <div style={{ marginBottom: '8px' }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: C.muted, letterSpacing: '2px', marginBottom: '16px' }}>
+          ORGANIZADORES
+        </p>
+        <OrganizersEditor eventId={event.id} initialOrganizers={organizers} />
+      </div>
+
+      {/* Separador */}
+      <div style={{ height: '1px', backgroundColor: C.border, marginTop: '28px', marginBottom: '28px' }} />
+
       {/* Cambiar plan */}
       <div style={{ marginBottom: '8px' }}>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: C.muted, letterSpacing: '2px', marginBottom: '16px' }}>
@@ -225,6 +261,27 @@ export default async function EventoDetailPage({ params }: Props) {
           eventId={event.id}
           currentPlan={event.plan as 'essential' | 'plus' | 'deluxe'}
           currentTemplateType={event.template_type ?? null}
+        />
+      </div>
+
+      {/* Separador */}
+      <div style={{ height: '1px', backgroundColor: C.border, marginTop: '28px', marginBottom: '28px' }} />
+
+      {/* Costeo */}
+      <div style={{ marginBottom: '8px' }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: C.muted, letterSpacing: '2px', marginBottom: '16px' }}>
+          COSTEO
+        </p>
+        <PricingEditor
+          eventId={event.id}
+          plan={event.plan as Plan}
+          initial={{
+            designType: (event.design_type as DesignType) ?? 'template',
+            extensionKey: (event.extension_key as ExtensionKey) ?? 'none',
+            customDesignFeeMxn: event.custom_design_fee_mxn ?? 0,
+            paymentStatus: (event.payment_status as 'pending' | 'partial' | 'paid' | 'refunded' | 'expired') ?? 'pending',
+            paymentNotes: event.payment_notes ?? null,
+          }}
         />
       </div>
     </div>

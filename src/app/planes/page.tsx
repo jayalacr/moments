@@ -1,7 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { Cormorant_Garamond, Jost } from 'next/font/google';
 import { Check, Minus, Sparkles, Star, Crown } from 'lucide-react';
+import Link from 'next/link';
+import { BASE_PRICES, formatMXN } from '@/lib/pricing';
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
@@ -16,9 +19,8 @@ const jost = Jost({
   variable: '--font-jost',
 });
 
-// ── Data ────────────────────────────────────────────────────────────────────
-
 type Val = true | false | string;
+type PlanKey = 'essential' | 'plus' | 'deluxe';
 
 interface Feature {
   label: string;
@@ -33,6 +35,21 @@ interface Section {
   features: Feature[];
 }
 
+const TIER_MAP: Record<PlanKey, 'e' | 'p' | 'd'> = { essential: 'e', plus: 'p', deluxe: 'd' };
+const BG_MAP: Record<PlanKey, string> = { essential: 'bg-e', plus: 'bg-p', deluxe: 'bg-d' };
+
+function getPlanVal(feat: Feature, plan: PlanKey): Val {
+  if (plan === 'essential') return feat.essential;
+  if (plan === 'plus') return feat.plus;
+  return feat.deluxe;
+}
+
+function getPlanNote(feat: Feature, plan: PlanKey): string | undefined {
+  if (plan === 'essential') return feat.note?.essential;
+  if (plan === 'plus') return feat.note?.plus;
+  return feat.note?.deluxe;
+}
+
 const sections: Section[] = [
   {
     title: 'Presentación',
@@ -43,24 +60,9 @@ const sections: Section[] = [
         plus: 'Frase, cita, nombres y padres',
         deluxe: 'Frase, cita, nombres y padres',
       },
-      {
-        label: 'Loader animado',
-        essential: false,
-        plus: false,
-        deluxe: 'Animación de entrada personalizada',
-      },
-      {
-        label: 'Cuenta regresiva',
-        essential: false,
-        plus: true,
-        deluxe: true,
-      },
-      {
-        label: 'Música de fondo',
-        essential: false,
-        plus: false,
-        deluxe: true,
-      },
+      { label: 'Loader animado', essential: false, plus: false, deluxe: 'Animación de entrada personalizada' },
+      { label: 'Cuenta regresiva', essential: false, plus: true, deluxe: true },
+      { label: 'Música de fondo', essential: false, plus: false, deluxe: true },
     ],
   },
   {
@@ -69,8 +71,8 @@ const sections: Section[] = [
       {
         label: 'Imágenes en la invitación',
         essential: 'Hasta 5 imágenes',
-        plus: 'De 5 a 10 imágenes',
-        deluxe: 'Imágenes ilimitadas',
+        plus: 'Hasta 10 imágenes',
+        deluxe: 'Hasta 15 imágenes',
         note: {
           essential: '5 imágenes + portada',
           plus: 'De 5 a 10 imágenes + portada',
@@ -82,36 +84,11 @@ const sections: Section[] = [
   {
     title: 'Logística',
     features: [
-      {
-        label: 'Itinerario',
-        essential: 'Estático',
-        plus: 'Animado',
-        deluxe: 'Animado',
-      },
-      {
-        label: 'Ubicaciones',
-        essential: false,
-        plus: 'Google Maps interactivo',
-        deluxe: 'Google Maps interactivo',
-      },
-      {
-        label: 'Dress code',
-        essential: true,
-        plus: true,
-        deluxe: true,
-      },
-      {
-        label: 'Boda destino',
-        essential: false,
-        plus: 'Hoteles y transporte',
-        deluxe: 'Hoteles y transporte',
-      },
-      {
-        label: 'Agendar en Google Calendar',
-        essential: false,
-        plus: false,
-        deluxe: true,
-      },
+      { label: 'Itinerario', essential: 'Estático', plus: 'Animado', deluxe: 'Animado' },
+      { label: 'Ubicaciones', essential: false, plus: 'Google Maps interactivo', deluxe: 'Google Maps interactivo' },
+      { label: 'Dress code', essential: true, plus: true, deluxe: true },
+      { label: 'Boda destino', essential: false, plus: 'Hoteles y transporte', deluxe: 'Hoteles y transporte' },
+      { label: 'Agendar en Google Calendar', essential: false, plus: false, deluxe: true },
     ],
   },
   {
@@ -119,23 +96,11 @@ const sections: Section[] = [
     features: [
       {
         label: 'Datos de transferencia',
-        essential: true,
-        plus: true,
-        deluxe: true,
+        essential: true, plus: true, deluxe: true,
         note: { essential: 'Banco, cuenta, CLABE', plus: 'Banco, cuenta, CLABE', deluxe: 'Banco, cuenta, CLABE' },
       },
-      {
-        label: 'Mesa de regalos',
-        essential: 'Link externo',
-        plus: 'Link externo',
-        deluxe: 'Link externo',
-      },
-      {
-        label: 'Sobre de regalo',
-        essential: true,
-        plus: true,
-        deluxe: true,
-      },
+      { label: 'Mesa de regalos', essential: 'Link externo', plus: 'Link externo', deluxe: 'Link externo' },
+      { label: 'Sobre de regalo', essential: true, plus: true, deluxe: true },
     ],
   },
   {
@@ -145,7 +110,7 @@ const sections: Section[] = [
         label: 'Tipo de confirmación',
         essential: 'Botón a WhatsApp',
         plus: 'Formulario interno',
-        deluxe: 'Formulario interno personalizado',
+        deluxe: 'Formulario personalizado',
         note: {
           essential: 'Mensaje pre-escrito',
           plus: 'El invitado escribe su nombre',
@@ -157,10 +122,7 @@ const sections: Section[] = [
         essential: false,
         plus: 'Máximo global',
         deluxe: 'Por invitado individual',
-        note: {
-          plus: 'El organizador define el límite',
-          deluxe: 'Cupo asignado por persona',
-        },
+        note: { plus: 'El organizador define el límite', deluxe: 'Cupo asignado por persona' },
       },
       {
         label: 'Panel de confirmaciones',
@@ -176,7 +138,50 @@ const sections: Section[] = [
   },
 ];
 
-// ── Cell renderer ───────────────────────────────────────────────────────────
+const PLAN_DATA = [
+  {
+    key: 'essential' as PlanKey,
+    name: 'Essential',
+    tagline: 'Sencillo y elegante',
+    Icon: Sparkles,
+    accentColor: '#9B8B78',
+    popular: false,
+    highlights: [
+      'Invitación digital elegante y personalizada',
+      'Hasta 5 fotografías + foto de portada',
+      'Itinerario, dress code y regalos',
+      'Confirmación directa por WhatsApp',
+    ],
+  },
+  {
+    key: 'plus' as PlanKey,
+    name: 'Plus',
+    tagline: 'Experiencia completa',
+    Icon: Star,
+    accentColor: '#B8965A',
+    popular: true,
+    highlights: [
+      'Todo lo del plan Essential',
+      'Cuenta regresiva al gran evento',
+      'Carrusel fotográfico (hasta 10 fotos)',
+      'Formulario RSVP y dashboard de confirmaciones',
+    ],
+  },
+  {
+    key: 'deluxe' as PlanKey,
+    name: 'Deluxe',
+    tagline: 'Premium e inmersivo',
+    Icon: Crown,
+    accentColor: '#8B6030',
+    popular: false,
+    highlights: [
+      'Todo lo del plan Plus',
+      'Loader animado y música de fondo',
+      'Links únicos personalizados por invitado',
+      'Dashboard con estado individual y reenvío',
+    ],
+  },
+];
 
 function Cell({ val, note, tier }: { val: Val; note?: string; tier: 'e' | 'p' | 'd' }) {
   const colors = {
@@ -211,9 +216,13 @@ function Cell({ val, note, tier }: { val: Val; note?: string; tier: 'e' | 'p' | 
   );
 }
 
-// ── Page ────────────────────────────────────────────────────────────────────
-
 export default function PlanesPage() {
+  const [activeTab, setActiveTab] = useState<PlanKey>('plus');
+
+  const activeTier = TIER_MAP[activeTab];
+  const activeBg = BG_MAP[activeTab];
+  const activePlanData = PLAN_DATA.find((p) => p.key === activeTab)!;
+
   const css = `
     :root {
       --ivory: #FAF7F2;
@@ -233,7 +242,7 @@ export default function PlanesPage() {
     /* ── Hero ── */
     .planes-hero {
       text-align: center;
-      padding: 72px 24px 56px;
+      padding: 72px 24px 48px;
       position: relative;
     }
     .planes-hero::before {
@@ -245,8 +254,8 @@ export default function PlanesPage() {
       background: linear-gradient(to bottom, transparent, var(--gold));
     }
     .planes-wordmark {
-      font-family: var(--font-montserrat);
-      font-size: 30px;
+      font-family: var(--font-cormorant), Georgia, serif;
+      font-size: 28px;
       font-weight: 300;
       letter-spacing: 0.45em;
       color: #B28735;
@@ -260,16 +269,13 @@ export default function PlanesPage() {
       color: var(--charcoal);
       margin-bottom: 20px;
     }
-    .planes-title em {
-      font-style: italic;
-      color: var(--gold);
-    }
+    .planes-title em { font-style: italic; color: var(--gold); }
     .planes-sub {
       font-size: 14px;
       font-weight: 300;
       color: var(--muted-fg);
       max-width: 460px;
-      margin: 0 auto;
+      margin: 20px auto 0;
       line-height: 1.75;
     }
     .planes-ornament {
@@ -281,131 +287,238 @@ export default function PlanesPage() {
       max-width: 200px;
       opacity: 0.5;
     }
-    .planes-ornament-line {
-      flex: 1;
-      height: 1px;
+    .planes-ornament-line { flex: 1; height: 1px; background: var(--gold); }
+
+    /* ── Plan Cards ── */
+    .plan-cards-section {
+      padding: 0 20px 48px;
+      max-width: 1020px;
+      margin: 0 auto;
+    }
+    .plan-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      align-items: end;
+    }
+    .plan-card {
+      border: 1px solid var(--muted);
+      border-radius: 20px;
+      padding: 28px 22px 24px;
+      position: relative;
+      transition: box-shadow 0.25s ease, transform 0.25s ease;
+    }
+    .plan-card:hover { box-shadow: 0 8px 32px rgba(28,22,17,0.1); transform: translateY(-4px); }
+    .plan-card.card-essential { background: #F5F1EC; }
+    .plan-card.card-plus {
+      background: #FDFBF7;
+      border-color: var(--gold);
+      border-width: 1.5px;
+      box-shadow: 0 8px 28px rgba(184,150,90,0.16);
+      padding: 36px 26px 30px;
+      transform: translateY(-6px);
+      z-index: 1;
+    }
+    .plan-card.card-plus:hover {
+      box-shadow: 0 14px 44px rgba(184,150,90,0.24);
+      transform: translateY(-10px);
+    }
+    .plan-card.card-deluxe { background: #F7F2EA; }
+
+    .plan-card-badge {
+      position: absolute;
+      top: -13px; left: 50%;
+      transform: translateX(-50%);
       background: var(--gold);
+      color: white;
+      font-size: 9.5px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-family: var(--font-jost);
+      white-space: nowrap;
+    }
+    .plan-card-icon-wrap {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 12px;
+    }
+    .card-essential .plan-card-icon-wrap { background: #EAE4DB; }
+    .card-plus .plan-card-icon-wrap { background: rgba(184,150,90,0.15); }
+    .card-deluxe .plan-card-icon-wrap { background: rgba(139,96,48,0.15); }
+
+    .plan-card-name {
+      font-family: var(--font-cormorant), Georgia, serif;
+      font-size: 24px;
+      font-weight: 400;
+      color: var(--charcoal);
+      line-height: 1;
+      margin-bottom: 3px;
+    }
+    .card-plus .plan-card-name { font-size: 28px; }
+    .plan-card-tagline {
+      font-size: 11px;
+      font-weight: 300;
+      color: var(--muted-fg);
+      letter-spacing: 0.06em;
+      font-family: var(--font-jost);
+      margin-bottom: 16px;
+    }
+    .plan-card-divider { height: 1px; background: var(--muted); margin-bottom: 16px; }
+
+    .plan-card-price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      margin-bottom: 18px;
+    }
+    .plan-card-price-from {
+      font-size: 10px; font-weight: 400; color: var(--muted-fg);
+      font-family: var(--font-jost); letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .plan-card-price-amount {
+      font-family: var(--font-cormorant), Georgia, serif;
+      font-size: 30px; font-weight: 400; color: var(--charcoal); line-height: 1;
+    }
+    .card-plus .plan-card-price-amount { font-size: 36px; color: #3D2E1A; }
+    .plan-card-price-note {
+      font-size: 10px; font-weight: 300; color: var(--muted-fg); font-family: var(--font-jost);
+    }
+
+    .plan-card-features {
+      list-style: none; padding: 0; margin: 0 0 22px;
+      display: flex; flex-direction: column; gap: 9px;
+    }
+    .plan-card-feature-item { display: flex; align-items: flex-start; gap: 8px; }
+    .plan-card-feature-text {
+      font-size: 12px; color: #5C5248; font-family: var(--font-jost); line-height: 1.45;
+    }
+    .card-plus .plan-card-feature-text { font-size: 12.5px; color: #3D2E1A; }
+
+    .plan-card-cta {
+      display: block; text-align: center;
+      font-family: var(--font-jost), system-ui, sans-serif;
+      font-size: 10.5px; font-weight: 500; letter-spacing: 0.12em;
+      text-transform: uppercase; padding: 10px 20px; border-radius: 100px;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .plan-card-cta:hover { opacity: 0.82; transform: translateY(-1px); }
+    .card-essential .plan-card-cta { background: #EAE4DB; color: #5C5248; }
+    .card-plus .plan-card-cta { background: var(--gold); color: white; }
+    .card-deluxe .plan-card-cta { background: var(--charcoal); color: rgba(184,150,90,0.9); }
+
+    /* ── Compare section header ── */
+    .compare-section-header {
+      display: flex; align-items: center; gap: 16px;
+      max-width: 1020px; margin: 0 auto;
+      padding: 0 20px 20px;
+    }
+    .compare-section-header-line { flex: 1; height: 1px; background: var(--muted); }
+    .compare-section-header-label {
+      font-size: 10px; font-weight: 500; letter-spacing: 0.22em;
+      text-transform: uppercase; color: var(--muted-fg);
+      font-family: var(--font-jost); white-space: nowrap;
     }
 
     /* ── Wrap ── */
-    .planes-wrap {
-      max-width: 1020px;
-      margin: 0 auto;
-      padding: 0 20px 96px;
-    }
+    .planes-wrap { max-width: 1020px; margin: 0 auto; padding: 0 20px 96px; }
 
-    /* ── Sticky plan header ── */
+    /* ── Desktop: sticky plan header ── */
     .plans-header {
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      position: sticky; top: 0; z-index: 10;
       display: grid;
       grid-template-columns: 200px repeat(3, minmax(0, 1fr));
       background: var(--ivory);
       border-bottom: 1px solid var(--muted);
-      padding-bottom: 0;
       box-shadow: 0 4px 24px rgba(28,22,17,0.06);
     }
     .ph-spacer { width: 200px; }
     .ph-plan {
-      padding: 20px 16px 18px;
-      text-align: center;
-      position: relative;
-      border-top: 2px solid transparent;
+      padding: 20px 16px 18px; text-align: center;
+      position: relative; border-top: 2px solid transparent;
     }
     .ph-plan.e { border-top-color: var(--muted); background: #F5F1EC; }
     .ph-plan.p { border-top-color: var(--gold); background: #FDFBF7; }
     .ph-plan.d { border-top-color: #8B6030; background: #F7F2EA; }
-
     .ph-badge {
-      position: absolute;
-      top: -12px; left: 50%;
+      position: absolute; top: -12px; left: 50%;
       transform: translateX(-50%);
-      background: var(--gold);
-      color: white;
-      font-size: 9px;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      padding: 3px 10px;
-      border-radius: 20px;
-      white-space: nowrap;
-      font-family: var(--font-jost);
+      background: var(--gold); color: white;
+      font-size: 9px; font-weight: 500; letter-spacing: 0.12em;
+      text-transform: uppercase; padding: 3px 10px; border-radius: 20px;
+      white-space: nowrap; font-family: var(--font-jost);
     }
     .ph-icon-wrap {
-      width: 34px; height: 34px;
-      border-radius: 50%;
-      margin: 0 auto 8px;
-      display: flex; align-items: center; justify-content: center;
+      width: 34px; height: 34px; border-radius: 50%;
+      margin: 0 auto 8px; display: flex; align-items: center; justify-content: center;
     }
     .ph-icon-wrap.e { background: #EAE4DB; }
     .ph-icon-wrap.p { background: rgba(184,150,90,0.15); }
     .ph-icon-wrap.d { background: rgba(139,96,48,0.18); }
-
     .ph-name {
       font-family: var(--font-cormorant), Georgia, serif;
-      font-size: 20px;
-      font-weight: 400;
-      color: var(--charcoal);
-      margin-bottom: 2px;
+      font-size: 20px; font-weight: 400; color: var(--charcoal); margin-bottom: 2px;
     }
-    .ph-desc {
-      font-size: 10px;
-      font-weight: 300;
-      color: var(--muted-fg);
-      letter-spacing: 0.05em;
-      font-family: var(--font-jost);
+    .ph-desc { font-size: 10px; font-weight: 300; color: var(--muted-fg); letter-spacing: 0.05em; font-family: var(--font-jost); }
+    .btn-example {
+      font-size: 10px; color: var(--gold); text-decoration: none;
+      border-bottom: 1px solid transparent; transition: border-color 0.2s;
+      margin-top: 10px; display: inline-block; letter-spacing: 0.05em; text-transform: uppercase;
     }
+    .btn-example:hover { border-bottom-color: var(--gold); }
 
     /* ── Table ── */
-    .plans-table {
-      border: 1px solid var(--muted);
-      border-top: none;
-      border-radius: 0 0 16px 16px;
-      overflow: hidden;
-    }
-
-    /* Section divider */
-    .sec-div {
-      background: var(--charcoal);
-      padding: 7px 20px;
-    }
+    .plans-table { border: 1px solid var(--muted); border-top: none; border-radius: 0 0 16px 16px; overflow: hidden; }
+    .sec-div { background: var(--charcoal); padding: 7px 20px; }
     .sec-div-label {
-      font-size: 9px;
-      font-weight: 500;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: rgba(184,150,90,0.75);
-      font-family: var(--font-jost);
+      font-size: 9px; font-weight: 500; letter-spacing: 0.2em;
+      text-transform: uppercase; color: rgba(184,150,90,0.75); font-family: var(--font-jost);
     }
-
-    /* Feature row */
     .feat-row {
       display: grid;
       grid-template-columns: 200px repeat(3, minmax(0, 1fr));
       border-top: 1px solid var(--muted);
     }
     .feat-row:hover { background: rgba(184,150,90,0.025); }
-
     .feat-label {
-      padding: 13px 20px;
-      font-size: 12px;
-      color: var(--muted-fg);
-      font-weight: 400;
-      font-family: var(--font-jost);
-      display: flex;
-      align-items: flex-start;
-      padding-top: 14px;
-      line-height: 1.45;
+      padding: 14px 20px; font-size: 12px; color: var(--muted-fg);
+      font-weight: 400; font-family: var(--font-jost);
+      display: flex; align-items: flex-start; line-height: 1.45;
     }
-    .feat-cell {
-      padding: 12px 16px;
-    }
+    .feat-cell { padding: 12px 16px; }
     .feat-cell.e { background: #F5F1EC; }
     .feat-cell.p { background: #FDFBF7; border-left: 1px solid rgba(184,150,90,0.35); border-right: 1px solid rgba(184,150,90,0.35); }
     .feat-cell.d { background: #F7F2EA; }
 
-    /* Footer row */
+    .price-row {
+      display: grid;
+      grid-template-columns: 200px repeat(3, minmax(0, 1fr));
+      border-top: 1px solid var(--muted);
+    }
+    .price-label {
+      padding: 22px 20px; font-size: 11px; color: var(--muted-fg);
+      font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase;
+      font-family: var(--font-jost); display: flex; align-items: center;
+    }
+    .price-cell {
+      padding: 22px 16px 20px; text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .price-cell.e { background: #F5F1EC; }
+    .price-cell.p { background: #FDFBF7; border-left: 1px solid rgba(184,150,90,0.35); border-right: 1px solid rgba(184,150,90,0.35); }
+    .price-cell.d { background: #F7F2EA; }
+    .price-from { font-size: 9px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted-fg); font-family: var(--font-jost); }
+    .price-amount {
+      font-family: var(--font-cormorant), Georgia, serif;
+      font-size: 28px; font-weight: 400; line-height: 1; color: var(--charcoal);
+    }
+    .price-cell.p .price-amount, .price-cell.d .price-amount { color: #3D2E1A; }
+    .price-note { font-size: 10px; font-weight: 300; color: var(--muted-fg); font-family: var(--font-jost); letter-spacing: 0.04em; }
+
     .plans-footer {
       display: grid;
       grid-template-columns: 200px repeat(3, minmax(0, 1fr));
@@ -413,83 +526,122 @@ export default function PlanesPage() {
     }
     .pf-spacer { padding: 20px; }
     .pf-cell {
-      padding: 20px 16px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
+      padding: 20px 16px; text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
     }
     .pf-cell.e { background: #F5F1EC; border-radius: 0 0 0 16px; }
     .pf-cell.p { background: #FDFBF7; border-left: 1.5px solid var(--gold); border-right: 1.5px solid var(--gold); border-bottom: 1.5px solid var(--gold); border-radius: 0 0 12px 12px; }
     .pf-cell.d { background: #F7F2EA; border-radius: 0 0 16px 0; }
 
     .btn-cta {
-      display: inline-block;
-      font-family: var(--font-jost), system-ui, sans-serif;
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 9px 20px;
-      border-radius: 100px;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.2s;
-      border: none;
-      outline: none;
+      display: inline-block; font-family: var(--font-jost), system-ui, sans-serif;
+      font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 9px 20px; border-radius: 100px; cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s; border: none; outline: none;
     }
     .btn-cta:hover { opacity: 0.82; transform: translateY(-1px); }
     .btn-e { background: var(--muted); color: #5C5248; }
     .btn-p { background: var(--gold); color: white; }
     .btn-d { background: var(--charcoal); color: rgba(184,150,90,0.9); }
 
-    .btn-example {
-      font-size: 10px;
-      color: var(--gold);
-      text-decoration: none;
-      border-bottom: 1px solid transparent;
-      transition: border-color 0.2s;
-      margin-top: 10px;
-      display: inline-block;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
+    /* ── Quote CTA + note ── */
+    .quote-cta-wrap { text-align: center; padding: 28px 24px 0; }
+    .quote-cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-jost), system-ui, sans-serif;
+      font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--gold); text-decoration: none; padding: 11px 22px;
+      border: 1px solid var(--gold); border-radius: 100px;
+      transition: background 0.2s, color 0.2s;
     }
-    .btn-example:hover {
-      border-bottom-color: var(--gold);
-    }
-
+    .quote-cta:hover { background: var(--gold); color: white; }
     .plans-note {
-      text-align: center;
-      padding: 32px 24px 0;
-      font-size: 12px;
-      color: var(--muted-fg);
-      font-weight: 300;
-      font-family: var(--font-jost);
+      text-align: center; padding: 32px 24px 0;
+      font-size: 12px; color: var(--muted-fg); font-weight: 300; font-family: var(--font-jost);
     }
     .plans-note span { color: var(--gold); }
 
-    /* ── Mobile ── */
+    /* ── Mobile: hide desktop table ── */
+    .mobile-tabs { display: none; }
+    .mobile-feature-list { display: none; }
+
+    /* ── Mobile layout ── */
     @media (max-width: 720px) {
-      .plans-header,
-      .sec-div,
-      .feat-row,
-      .plans-footer {
-        grid-template-columns: 1fr;
+      .planes-hero { padding: 56px 20px 36px; }
+
+      .plan-cards-grid { grid-template-columns: 1fr; gap: 12px; }
+      .plan-card.card-plus { transform: none; padding: 28px 22px 24px; }
+      .card-plus .plan-card-name { font-size: 24px; }
+      .card-plus .plan-card-price-amount { font-size: 30px; }
+      .card-plus .plan-card-feature-text { font-size: 12px; }
+
+      .desktop-table { display: none; }
+
+      .mobile-tabs {
+        display: flex;
+        border: 1px solid var(--muted);
+        border-radius: 12px 12px 0 0;
+        overflow: hidden;
+        background: white;
+        margin-bottom: 0;
       }
-      .ph-spacer,
-      .feat-label,
-      .pf-spacer { display: none; }
-      .ph-plan.e,
-      .ph-plan.p,
-      .ph-plan.d { text-align: left; padding-left: 20px; }
-      .ph-icon-wrap { margin: 0 0 8px; }
-      .feat-cell.e,
-      .feat-cell.p,
-      .feat-cell.d { padding: 10px 20px; border-left: none !important; border-right: none !important; }
-      .feat-cell.e::before { content: 'Essential — '; font-weight: 500; color: #9B8B78; font-size: 10px; display: block; margin-bottom: 4px; font-family: var(--font-jost); letter-spacing: 0.05em; }
-      .feat-cell.p::before { content: 'Plus — '; font-weight: 500; color: var(--gold); font-size: 10px; display: block; margin-bottom: 4px; font-family: var(--font-jost); letter-spacing: 0.05em; }
-      .feat-cell.d::before { content: 'Deluxe — '; font-weight: 500; color: #8B6030; font-size: 10px; display: block; margin-bottom: 4px; font-family: var(--font-jost); letter-spacing: 0.05em; }
-      .pf-cell.e, .pf-cell.p, .pf-cell.d { border-radius: 0 !important; border: none !important; }
+      .mobile-tab {
+        flex: 1; padding: 12px 8px;
+        font-family: var(--font-jost); font-size: 11px; font-weight: 500;
+        letter-spacing: 0.08em; text-transform: uppercase;
+        background: white; color: var(--muted-fg);
+        border: none; cursor: pointer;
+        transition: background 0.18s, color 0.18s;
+        border-bottom: 2px solid transparent;
+      }
+      .mobile-tab + .mobile-tab { border-left: 1px solid var(--muted); }
+      .mobile-tab.tab-e { background: #F5F1EC; color: #5C5248; border-bottom-color: var(--muted); }
+      .mobile-tab.tab-p { background: #FDFBF7; color: #3D2E1A; border-bottom-color: var(--gold); }
+      .mobile-tab.tab-d { background: #F7F2EA; color: #3D2E1A; border-bottom-color: #8B6030; }
+
+      .mobile-feature-list {
+        display: block;
+        border: 1px solid var(--muted);
+        border-top: none;
+        border-radius: 0 0 16px 16px;
+        overflow: hidden;
+      }
+      .mobile-sec-div {
+        background: var(--charcoal); padding: 7px 16px;
+        font-size: 9px; font-weight: 500; letter-spacing: 0.2em;
+        text-transform: uppercase; color: rgba(184,150,90,0.75); font-family: var(--font-jost);
+      }
+      .mobile-feat-row {
+        display: grid; grid-template-columns: 1fr 1fr;
+        border-top: 1px solid var(--muted); align-items: start;
+      }
+      .mobile-feat-label {
+        padding: 12px 14px; font-size: 11.5px; color: var(--muted-fg);
+        font-family: var(--font-jost); line-height: 1.4; padding-top: 13px;
+      }
+      .mobile-feat-val { padding: 11px 14px; }
+      .mobile-feat-val.bg-e { background: #F5F1EC; }
+      .mobile-feat-val.bg-p { background: #FDFBF7; }
+      .mobile-feat-val.bg-d { background: #F7F2EA; }
+
+      .mobile-price-section {
+        border-top: 1px solid var(--muted); padding: 20px 16px;
+        text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px;
+      }
+      .mobile-price-section.bg-e { background: #F5F1EC; }
+      .mobile-price-section.bg-p { background: #FDFBF7; }
+      .mobile-price-section.bg-d { background: #F7F2EA; }
+      .mobile-price-from { font-size: 9px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted-fg); font-family: var(--font-jost); }
+      .mobile-price-amount { font-family: var(--font-cormorant), Georgia, serif; font-size: 34px; font-weight: 400; color: var(--charcoal); line-height: 1; }
+      .mobile-price-note { font-size: 10px; font-weight: 300; color: var(--muted-fg); font-family: var(--font-jost); }
+
+      .mobile-cta-section {
+        border-top: 1px solid var(--muted); padding: 18px 16px;
+        display: flex; justify-content: center;
+      }
+      .mobile-cta-section.bg-e { background: #F5F1EC; border-radius: 0 0 16px 16px; }
+      .mobile-cta-section.bg-p { background: #FDFBF7; border-radius: 0 0 16px 16px; }
+      .mobile-cta-section.bg-d { background: #F7F2EA; border-radius: 0 0 16px 16px; }
     }
   `;
 
@@ -501,7 +653,7 @@ export default function PlanesPage() {
       <div className="planes-hero">
         <p className="planes-wordmark">moments</p>
         <h1 className="planes-title">
-          Elige el plan para<br /><em>su gran día</em>
+          Elige el plan perfecto<br /><em>para tu celebración</em>
         </h1>
         <div className="planes-ornament">
           <span className="planes-ornament-line" />
@@ -510,90 +662,164 @@ export default function PlanesPage() {
           </svg>
           <span className="planes-ornament-line" />
         </div>
-        <p className="planes-sub" style={{ marginTop: '20px' }}>
-          Cada plan incluye una invitación diseñada a medida, adaptada al estilo y necesidades de cada pareja.
+        <p className="planes-sub">
+          Cada plan incluye una invitación diseñada a medida. Tú editas libremente la información —nombres, fechas, fotos, mensajes— dentro de la estructura del plan que elijas.
         </p>
       </div>
 
+      {/* ── Plan Cards ── */}
+      <div className="plan-cards-section">
+        <div className="plan-cards-grid">
+          {PLAN_DATA.map(({ key, name, tagline, Icon, accentColor, popular, highlights }) => (
+            <div key={key} className={`plan-card card-${key}`}>
+              {popular && <div className="plan-card-badge">Más popular</div>}
+              <div className="plan-card-icon-wrap">
+                <Icon size={16} color={accentColor} strokeWidth={1.5} />
+              </div>
+              <p className="plan-card-name">{name}</p>
+              <p className="plan-card-tagline">{tagline}</p>
+              <div className="plan-card-divider" />
+              <div className="plan-card-price-row">
+                <span className="plan-card-price-from">Desde</span>
+                <span className="plan-card-price-amount">{formatMXN(BASE_PRICES[key])}</span>
+                <span className="plan-card-price-note">MXN</span>
+              </div>
+              <ul className="plan-card-features">
+                {highlights.map((h) => (
+                  <li key={h} className="plan-card-feature-item">
+                    <Check size={13} color={accentColor} strokeWidth={2.5} style={{ flexShrink: 0, marginTop: '2px' }} />
+                    <span className="plan-card-feature-text">{h}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link href={`/plantillas/${key}`} className="plan-card-cta" target="_blank">
+                Ver demo
+              </Link>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Compare header ── */}
+      <div className="compare-section-header">
+        <span className="compare-section-header-line" />
+        <span className="compare-section-header-label">Comparar en detalle</span>
+        <span className="compare-section-header-line" />
+      </div>
+
       <div className="planes-wrap">
-
-        {/* ── Sticky plan headers ── */}
-        <div className="plans-header">
-          <div className="ph-spacer" />
-
-          <div className="ph-plan e">
-            <div className="ph-icon-wrap e">
-              <Sparkles size={16} color="#9B8B78" strokeWidth={1.5} />
-            </div>
-            <p className="ph-name">Essential</p>
-            <p className="ph-desc">Sencillo y elegante</p>
-            <a href="/plantillas/essential" target="_blank" className="btn-example">Ver ejemplo</a>
-          </div>
-
-          <div className="ph-plan p">
-            <div className="ph-badge">Más popular</div>
-            <div className="ph-icon-wrap p">
-              <Star size={16} color="#B8965A" strokeWidth={1.5} />
-            </div>
-            <p className="ph-name">Plus</p>
-            <p className="ph-desc">Experiencia completa</p>
-            <a href="/plantillas/plus" target="_blank" className="btn-example">Ver ejemplo</a>
-          </div>
-
-          <div className="ph-plan d">
-            <div className="ph-icon-wrap d">
-              <Crown size={16} color="#8B6030" strokeWidth={1.5} />
-            </div>
-            <p className="ph-name">Deluxe</p>
-            <p className="ph-desc">Premium e inmersivo</p>
-            <a href="/plantillas/deluxe" target="_blank" className="btn-example">Ver ejemplo</a>
-          </div>
+        {/* ── Mobile tabs ── */}
+        <div className="mobile-tabs">
+          {PLAN_DATA.map(({ key, name }) => {
+            const isActive = activeTab === key;
+            return (
+              <button
+                key={key}
+                className={`mobile-tab${isActive ? ` tab-${TIER_MAP[key]}` : ''}`}
+                onClick={() => setActiveTab(key)}
+              >
+                {name}
+              </button>
+            );
+          })}
         </div>
 
-        {/* ── Table ── */}
-        <div className="plans-table">
+        {/* ── Mobile feature list ── */}
+        <div className="mobile-feature-list">
           {sections.map((section) => (
             <div key={section.title}>
-              {/* Section header */}
-              <div className="sec-div">
-                <span className="sec-div-label">{section.title}</span>
-              </div>
-
-              {/* Feature rows */}
+              <div className="mobile-sec-div">{section.title}</div>
               {section.features.map((feat) => (
-                <div key={feat.label} className="feat-row">
-                  <div className="feat-label">{feat.label}</div>
-                  <div className="feat-cell e">
-                    <Cell val={feat.essential} note={feat.note?.essential} tier="e" />
-                  </div>
-                  <div className="feat-cell p">
-                    <Cell val={feat.plus} note={feat.note?.plus} tier="p" />
-                  </div>
-                  <div className="feat-cell d">
-                    <Cell val={feat.deluxe} note={feat.note?.deluxe} tier="d" />
+                <div key={feat.label} className="mobile-feat-row">
+                  <div className="mobile-feat-label">{feat.label}</div>
+                  <div className={`mobile-feat-val ${activeBg}`}>
+                    <Cell val={getPlanVal(feat, activeTab)} note={getPlanNote(feat, activeTab)} tier={activeTier} />
                   </div>
                 </div>
               ))}
             </div>
           ))}
 
-          {/* Footer */}
-          <div className="plans-footer">
-            <div className="pf-spacer" />
-            <div className="pf-cell e">
-              <button className="btn-cta btn-e">Elegir Essential</button>
+          <div className="mobile-sec-div">Inversión</div>
+          <div className={`mobile-price-section ${activeBg}`}>
+            <span className="mobile-price-from">Desde</span>
+            <span className="mobile-price-amount">{formatMXN(BASE_PRICES[activeTab])}</span>
+            <span className="mobile-price-note">pago único · 1 mes incluido</span>
+          </div>
+
+        </div>
+
+        {/* ── Desktop table ── */}
+        <div className="desktop-table">
+          <div className="plans-header">
+            <div className="ph-spacer" />
+            <div className="ph-plan e">
+              <div className="ph-icon-wrap e"><Sparkles size={16} color="#9B8B78" strokeWidth={1.5} /></div>
+              <p className="ph-name">Essential</p>
+              <p className="ph-desc">Sencillo y elegante</p>
+              <a href="/plantillas/essential" target="_blank" className="btn-example">Ver demo</a>
             </div>
-            <div className="pf-cell p">
-              <button className="btn-cta btn-p">Elegir Plus</button>
+            <div className="ph-plan p">
+              <div className="ph-badge">Más popular</div>
+              <div className="ph-icon-wrap p"><Star size={16} color="#B8965A" strokeWidth={1.5} /></div>
+              <p className="ph-name">Plus</p>
+              <p className="ph-desc">Experiencia completa</p>
+              <a href="/plantillas/plus" target="_blank" className="btn-example">Ver demo</a>
             </div>
-            <div className="pf-cell d">
-              <button className="btn-cta btn-d">Elegir Deluxe</button>
+            <div className="ph-plan d">
+              <div className="ph-icon-wrap d"><Crown size={16} color="#8B6030" strokeWidth={1.5} /></div>
+              <p className="ph-name">Deluxe</p>
+              <p className="ph-desc">Premium e inmersivo</p>
+              <a href="/plantillas/deluxe" target="_blank" className="btn-example">Ver demo</a>
             </div>
+          </div>
+
+          <div className="plans-table">
+            {sections.map((section) => (
+              <div key={section.title}>
+                <div className="sec-div"><span className="sec-div-label">{section.title}</span></div>
+                {section.features.map((feat) => (
+                  <div key={feat.label} className="feat-row">
+                    <div className="feat-label">{feat.label}</div>
+                    <div className="feat-cell e"><Cell val={feat.essential} note={feat.note?.essential} tier="e" /></div>
+                    <div className="feat-cell p"><Cell val={feat.plus} note={feat.note?.plus} tier="p" /></div>
+                    <div className="feat-cell d"><Cell val={feat.deluxe} note={feat.note?.deluxe} tier="d" /></div>
+                  </div>
+                ))}
+              </div>
+            ))}
+
+            <div className="sec-div"><span className="sec-div-label">Inversión</span></div>
+            <div className="price-row">
+              <div className="price-label">Precio base</div>
+              <div className="price-cell e">
+                <span className="price-from">Desde</span>
+                <span className="price-amount">{formatMXN(BASE_PRICES.essential)}</span>
+                <span className="price-note">pago único · 1 mes incluido</span>
+              </div>
+              <div className="price-cell p">
+                <span className="price-from">Desde</span>
+                <span className="price-amount">{formatMXN(BASE_PRICES.plus)}</span>
+                <span className="price-note">pago único · 1 mes incluido</span>
+              </div>
+              <div className="price-cell d">
+                <span className="price-from">Desde</span>
+                <span className="price-amount">{formatMXN(BASE_PRICES.deluxe)}</span>
+                <span className="price-note">pago único · 1 mes incluido</span>
+              </div>
+            </div>
+
           </div>
         </div>
 
+        <div className="quote-cta-wrap">
+          <Link href="/cotizar" className="quote-cta">
+            Simular mi cotización completa →
+          </Link>
+        </div>
+
         <p className="plans-note">
-          Todos los planes incluyen diseño personalizado · <span>Hecho con amor en México</span>
+          Tú editas la información · diseño personalizado incluido · <span>Hecho con amor en México</span>
         </p>
       </div>
     </div>

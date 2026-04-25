@@ -231,7 +231,6 @@ export default function InvitadosClient({
 
   function openWhatsApp(guest: GuestRow) {
     const url = buildInviteUrl(event, guest.token);
-    // Sustituir variables en el template
     const message = waTemplate
       .replace(/\{nombre\}/gi, guest.name || 'Invitado')
       .replace(/\{link\}/gi, url);

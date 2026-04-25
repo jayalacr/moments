@@ -18,12 +18,20 @@ export async function getRsvpsForOwnEvent(): Promise<{
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return empty;
 
+  const { data: orgEntry } = await supabase
+    .from('event_organizers')
+    .select('event_id')
+    .eq('profile_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!orgEntry) return empty;
+
   const { data: event } = await supabase
     .from('events')
     .select('id, slug, event_type, plan, config')
-    .eq('owner_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(1)
+    .eq('id', orgEntry.event_id)
     .single();
 
   if (!event) return empty;
@@ -85,12 +93,20 @@ export async function saveMaxCapacity(capacity: number | null): Promise<{ error?
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'No autorizado.' };
 
+  const { data: orgEntry } = await supabase
+    .from('event_organizers')
+    .select('event_id')
+    .eq('profile_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!orgEntry) return { error: 'No se encontró el evento.' };
+
   const { data: event } = await supabase
     .from('events')
     .select('id, config')
-    .eq('owner_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(1)
+    .eq('id', orgEntry.event_id)
     .single();
 
   if (!event) return { error: 'No se encontró el evento.' };
@@ -122,16 +138,22 @@ export async function updateGuestCompanions(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'No autorizado.' };
 
-  // Verificar que el invitado pertenece a un evento del usuario
   const { data: guest } = await supabase
     .from('guests')
-    .select('id, event_id, events(owner_id)')
+    .select('id, event_id')
     .eq('id', guestId)
     .single();
 
   if (!guest) return { error: 'Invitado no encontrado.' };
-  const eventOwner = (guest as unknown as { events: { owner_id: string } }).events?.owner_id;
-  if (eventOwner !== user.id) return { error: 'No autorizado.' };
+
+  const { data: membership } = await supabase
+    .from('event_organizers')
+    .select('role')
+    .eq('event_id', guest.event_id)
+    .eq('profile_id', user.id)
+    .single();
+
+  if (!membership) return { error: 'No autorizado.' };
 
   const { error } = await supabase
     .from('guests')

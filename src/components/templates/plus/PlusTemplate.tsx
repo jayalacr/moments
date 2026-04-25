@@ -3,6 +3,7 @@
 import { Cormorant_Garamond, Jost, Montserrat } from 'next/font/google';
 import React, { useEffect, useState, useRef } from 'react';
 import type { ImageBlock, PhotoEntry } from '@/lib/imageLayout';
+import ContentProtection from '@/components/templates/shared/ContentProtection';
 
 // ---------------------------------------------------------------------------
 // Config type
@@ -540,7 +541,8 @@ export default function PlusTemplate({
   const heroBgPosition = heroEntry?.objectPosition ?? 'center center';
 
   return (
-    <div 
+    <ContentProtection>
+    <div
       className={`${cormorant.variable} ${jost.variable} ${montserrat.variable} plus-root`}
       style={{
         '--ivory': backgroundColor,
@@ -560,7 +562,7 @@ export default function PlusTemplate({
         }
         .btn-rsvp { background-color: ${textColor} !important; color: ${backgroundColor} !important; border-color: ${textColor} !important; }
         .btn-rsvp:hover { background-color: ${accentColor} !important; border-color: ${accentColor} !important; color: #fff !important; }
-        .section--tinted, .section--tinted-wide, .note-item, .dest-card, .gift-card, .form-input, .counter-btn, .dietary-btn, .footer {
+        .section--tinted, .section--tinted-wide, .note-item, .dest-card, .form-input, .counter-btn, .dietary-btn, .footer {
            background-color: color-mix(in srgb, ${backgroundColor} 94%, ${textColor}) !important;
         }
       `}</style>
@@ -660,7 +662,10 @@ export default function PlusTemplate({
           <div className="dlx-itinerary">
             <div className="dlx-axis" ref={axisRef} />
             {E.itinerary.map((item, i) => {
-              const [h, m] = item.time.split(':');
+              const timeParts = item.time.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+              const h = timeParts?.[1] ?? item.time;
+              const m = timeParts?.[2] ?? '';
+              const period = timeParts?.[3]?.toUpperCase() ?? '';
               const manualUrl = (item as { mapsUrl?: string }).mapsUrl?.trim();
               const mapsUrl = manualUrl
                 || (item.address ? `https://maps.google.com/?q=${encodeURIComponent(item.address)}` : null);
@@ -668,7 +673,8 @@ export default function PlusTemplate({
                 <div key={i} className={`dlx-irow slide-up delay-${i + 1}`}>
                   <div className="dlx-irow-time">
                     <span className="time-h">{h}</span>
-                    <span className="time-m">:{m}</span>
+                    {m && <span className="time-m">:{m}</span>}
+                    {period && <span className="time-period">{period}</span>}
                   </div>
                   <div className="dlx-irow-node">
                     <div className="dlx-inode" />
@@ -766,40 +772,61 @@ export default function PlusTemplate({
 
       {/* ── DRESS CODE ── */}
       {E.sections.dressCode === true && (
-      <section className="section section--tinted">
-        <h2 className="section-heading reveal">Dress Code</h2>
-        <p className="label gold reveal" style={{ marginBottom: '2rem' }}>{E.dressCode.label}</p>
+      <section className="section section--tinted" style={{ maxWidth: '100%', width: '100%' }}>
+        <p className="label gold reveal" style={{ letterSpacing: '0.25em', marginBottom: '0.75rem' }}>Dress Code</p>
+        <h2 className="section-heading reveal" style={{ marginBottom: '0.75rem' }}>{E.dressCode.label}</h2>
+        <span className="sep-line reveal" style={{ maxWidth: '72px', marginBottom: '0' }} />
 
-        <div className="dresscode-gender reveal">
-          <div className="dc-gender-block">
-            <div className="dc-gender-icon"><WomenIcon /></div>
-            <p className="label muted dc-gender-label">Ellas</p>
-            <p className="dc-gender-text">{E.dressCode.women}</p>
+        {(E.dressCode.women || E.dressCode.men) && (
+          <div className="dc-gender-grid reveal">
+            {E.dressCode.women && (
+              <div className="dc-gender-card">
+                <div className="dc-gender-icon-ring"><WomenIcon /></div>
+                <p className="label gold" style={{ letterSpacing: '0.2em', margin: '0 0 0.1rem' }}>Ellas</p>
+                <div className="dc-gender-divider-line" />
+                <p className="dc-gender-desc">{E.dressCode.women}</p>
+              </div>
+            )}
+            {E.dressCode.men && (
+              <div className="dc-gender-card">
+                <div className="dc-gender-icon-ring"><MenIcon /></div>
+                <p className="label gold" style={{ letterSpacing: '0.2em', margin: '0 0 0.1rem' }}>Ellos</p>
+                <div className="dc-gender-divider-line" />
+                <p className="dc-gender-desc">{E.dressCode.men}</p>
+              </div>
+            )}
           </div>
-          <div className="dc-gender-divider" />
-          <div className="dc-gender-block">
-            <div className="dc-gender-icon"><MenIcon /></div>
-            <p className="label muted dc-gender-label">Ellos</p>
-            <p className="dc-gender-text">{E.dressCode.men}</p>
-          </div>
-        </div>
+        )}
 
-        <div className="swatches reveal" style={{ marginTop: '2rem' }}>
-          {E.dressCode.swatches.map((s, i) => (
-            <div key={i} className="swatch-item">
-              <div className="swatch-circle" style={{ backgroundColor: s.color }} />
-              <span className="label muted">{s.name}</span>
-            </div>
-          ))}
-        </div>
-        {E.dressCode.avoid.length > 0 && (
-          <div className="reveal" style={{ marginTop: '2rem', textAlign: 'center' }}>
-            <p className="label muted" style={{ marginBottom: '1rem' }}>Por favor evita</p>
-            <div className="swatches" style={{ justifyContent: 'center' }}>
-              {E.dressCode.avoid.map((s, i) => (
+        {E.dressCode.swatches.length > 0 && (
+          <div className="reveal" style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+            <p className="dc-swatches-label">Colores sugeridos</p>
+            <div className="swatches">
+              {E.dressCode.swatches.map((s, i) => (
                 <div key={i} className="swatch-item">
-                  <div className="swatch-circle swatch-avoid" style={{ backgroundColor: s.color }} />
-                  <span className="label muted">{s.name}</span>
+                  <div className="swatch-circle" style={{ backgroundColor: s.color }} />
+                  <span className="swatch-name">{s.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {E.dressCode.avoid.length > 0 && (
+          <div className="reveal" style={{ textAlign: 'center', marginTop: '2rem' }}>
+            <p className="dc-swatches-label">Por favor evita</p>
+            <div className="swatches">
+              {E.dressCode.avoid.map((s, i) => (
+                <div key={i} className="swatch-item swatch-item--avoid">
+                  <div style={{ position: 'relative', width: 52, height: 52 }}>
+                    <div className="swatch-circle" style={{ backgroundColor: s.color, width: '100%', height: '100%' }} />
+                    <div className="swatch-avoid-x">
+                      <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+                        <path d="M4 4l10 10M14 4L4 14" stroke="rgba(255,255,255,0.55)" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <span className="swatch-name">{s.name}</span>
                 </div>
               ))}
             </div>
@@ -839,51 +866,65 @@ export default function PlusTemplate({
         const showEnvelope = gt.includes('envelope');
         if (!showTransfer && !showList && !showEnvelope) return null;
         return (
-          <section className="section">
+          <section className="section" id="gifts">
             <h2 className="section-heading reveal">Mesa de Regalos</h2>
-            <p className="label muted reveal" style={{ maxWidth: '360px', lineHeight: '1.9', marginBottom: '2rem' }}>
-              Tu presencia es el mejor regalo. Si deseas obsequiarnos algo, aquí encontrarás las opciones disponibles.
+            <p className="label muted reveal" style={{ maxWidth: '360px', lineHeight: '1.9', marginBottom: '2.5rem' }}>
+              Tu presencia es nuestro mayor regalo. Si deseas obsequiarnos algo, aquí encontrarás las opciones.
             </p>
-            <div className="gifts-grid">
+            <div className="gifts-grid-v2">
               {showTransfer && (E.gifts.bank || E.gifts.holder || E.gifts.account || E.gifts.clabe) && (
-                <div className="gift-card reveal">
-                  <p className="label" style={{ letterSpacing: '0.18em', marginBottom: '1rem', color: '#9B8B78' }}>
-                    Transferencia
-                  </p>
-                  {[
-                    { label: 'Banco',   value: E.gifts.bank },
-                    { label: 'Nombre',  value: E.gifts.holder },
-                    { label: 'Cuenta',  value: E.gifts.account },
-                    { label: 'CLABE',   value: E.gifts.clabe },
-                  ].filter(({ value }) => value).map(({ label, value }) => (
-                    <div key={label} className="gift-row">
-                      <span className="gift-label">{label}</span>
-                      <span className="gift-value">{value}</span>
+                <div className="gift-card-v2 gift-card-v2--transfer reveal">
+                  <div className="gct-header">
+                    <span className="gct-badge">Transferencia</span>
+                    <div className="gct-icon-wrap">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--gold)' }}>
+                        <rect x="2" y="5" width="20" height="14" rx="2"/>
+                        <path d="M2 10h20"/>
+                      </svg>
                     </div>
-                  ))}
+                  </div>
+                  <div className="gct-rows">
+                    {[
+                      { label: 'Banco',  value: E.gifts.bank,    mono: false },
+                      { label: 'Nombre', value: E.gifts.holder,  mono: false },
+                      { label: 'Cuenta', value: E.gifts.account, mono: true  },
+                      { label: 'CLABE',  value: E.gifts.clabe,   mono: true  },
+                    ].filter(r => r.value).map(({ label, value, mono }, idx) => (
+                      <React.Fragment key={label}>
+                        {idx > 0 && <div className="gct-divider" />}
+                        <div className="gct-row">
+                          <span className="gct-row-label">{label}</span>
+                          <span className={`gct-row-value${mono ? ' gct-row-value--mono' : ''}`}>{value}</span>
+                        </div>
+                      </React.Fragment>
+                    ))}
+                  </div>
                 </div>
               )}
               {showList && E.gifts.giftListUrl && (
-                <div className="gift-card gift-card--list reveal delay-1">
-                  <GiftIcon />
-                  <p className="label" style={{ letterSpacing: '0.18em', margin: '1rem 0 0.4rem', color: '#9B8B78' }}>
-                    Mesa de Regalos
-                  </p>
-                  {E.gifts.giftListLabel && (
-                    <p className="gift-value" style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-                      {E.gifts.giftListLabel}
-                    </p>
-                  )}
+                <div className="gift-card-v2 gift-card-v2--list reveal delay-1">
+                  <div className="gcl-icon-ring">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--gold)' }}>
+                      <path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+                    </svg>
+                  </div>
+                  <p className="gcl-title">Mesa de Regalos</p>
+                  {E.gifts.giftListLabel && <p className="gcl-subtitle">{E.gifts.giftListLabel}</p>}
                   <a href={E.gifts.giftListUrl} target="_blank" rel="noopener noreferrer" className="btn-outline btn-outline--sm">
-                    Ver mesa →
+                    Ver lista →
                   </a>
                 </div>
               )}
               {showEnvelope && (
-                <div className="gift-card gift-card--envelope reveal delay-2">
-                  <EnvelopeSmallIcon />
-                  <p className="label" style={{ letterSpacing: '0.18em', margin: '1rem 0 0.4rem', color: '#9B8B78' }}>Sobre de Regalo</p>
-                  <p className="gift-envelope-note">
+                <div className="gift-card-v2 gift-card-v2--envelope reveal delay-2">
+                  <div className="gce-icon-ring">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                      <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                  </div>
+                  <p className="gcl-title">Sobre de Regalo</p>
+                  <p className="gce-note">
                     {(E.gifts as { envelopeMessage?: string }).envelopeMessage || 'Con gusto recibimos sobres el día del evento'}
                   </p>
                 </div>
@@ -925,7 +966,7 @@ export default function PlusTemplate({
             <strong style={{ color: '#1C1611' }}>{E.rsvp.deadline}</strong>
           </p>
         )}
-        <button className="btn-rsvp reveal" onClick={() => setModalOpen(true)}>
+        <button className="btn-rsvp reveal" style={{ marginTop: E.rsvp.deadline ? '0' : '2.5rem' }} onClick={() => setModalOpen(true)}>
           Confirmar asistencia
         </button>
       </section>
@@ -1104,6 +1145,7 @@ export default function PlusTemplate({
         </div>
       )}
     </div>
+    </ContentProtection>
   );
 }
 
@@ -1480,10 +1522,13 @@ const css = `
   .ornament {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 1rem;
-    padding: 0 3rem;
-    max-width: 480px;
-    margin: 0 auto;
+    width: 100%;
+  }
+  .ornament .sep-line {
+    flex: none;
+    width: 120px;
   }
 
   /* ── Quote ── */
@@ -1765,16 +1810,27 @@ const css = `
     color: var(--gold); 
     display: inline;
   }
-  .time-m { 
-    font-family: var(--font-cormorant), Georgia, serif; 
-    font-size: 1.2rem; 
-    font-weight: 300; 
-    color: var(--gold); 
+  .time-m {
+    font-family: var(--font-cormorant), Georgia, serif;
+    font-size: 1.2rem;
+    font-weight: 300;
+    color: var(--gold);
     opacity: 0.8;
     display: inline;
     margin-left: 1px;
   }
-  
+  .time-period {
+    display: block;
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+    opacity: 0.7;
+    text-align: right;
+    margin-top: 2px;
+  }
+
   .dlx-irow-node { display: flex; flex-direction: column; align-items: center; padding-top: 1.25rem; }
   .dlx-inode {
     width: 12px;
@@ -1812,23 +1868,23 @@ const css = `
   .dlx-iimg { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s ease; display: block; }
   .dlx-irow:hover .dlx-iimg { transform: scale(1.04); }
 
-  .dlx-iname { 
-    font-family: var(--font-cormorant), Georgia, serif; 
-    font-size: 1.6rem; 
-    font-style: italic;
-    font-weight: 400; 
-    color: var(--charcoal); 
-    margin: 0 0 0.5rem; 
-    line-height: 1.2;
-  }
-  .dlx-ivenue { 
-    font-family: var(--font-jost), system-ui, sans-serif; 
-    font-size: 11px; 
-    font-weight: 600; 
-    color: var(--gold); 
-    margin: 0 0 0.75rem; 
-    letter-spacing: 0.12em; 
+  .dlx-iname {
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--gold);
+    margin: 0 0 0.4rem;
+    letter-spacing: 0.13em;
     text-transform: uppercase;
+  }
+  .dlx-ivenue {
+    font-family: var(--font-cormorant), Georgia, serif;
+    font-size: 1.6rem;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--charcoal);
+    margin: 0 0 0.5rem;
+    line-height: 1.2;
   }
   .dlx-iaddress {
     display: flex;
@@ -1867,9 +1923,10 @@ const css = `
   @media (max-width: 480px) {
     .dlx-itinerary { padding-left: 1.5rem; }
     .dlx-irow { grid-template-columns: 60px 30px 1fr; }
+    .dlx-axis { left: 99px; }
     .time-h { font-size: 1.8rem; }
     .dlx-icard { padding: 1rem; }
-    .dlx-iname { font-size: 1.35rem; }
+    .dlx-ivenue { font-size: 1.35rem; }
   }
 
   /* ── Destination ── */
@@ -1987,31 +2044,43 @@ const css = `
   .ornament {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 1.25rem;
-    padding: 1rem 3rem;
-    max-width: 480px;
-    margin: 0 auto;
+    padding: 1rem 0;
+    width: 100%;
+  }
+  .ornament .sep-line {
+    flex: none;
+    width: 120px;
   }
 
   /* ── Dress code gender ── */
-  .dresscode-gender {
+  .dc-gender-grid {
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 1.5rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
     width: 100%;
-    max-width: 520px;
-    align-items: start;
-    text-align: left;
+    max-width: 580px;
+    margin-bottom: 2.75rem;
   }
-  @media (max-width: 560px) {
-    .dresscode-gender { grid-template-columns: 1fr; }
-    .dc-gender-divider { display: none; }
+  @media (max-width: 560px) { .dc-gender-grid { grid-template-columns: 1fr; max-width: 360px; } }
+  .dc-gender-card {
+    background: color-mix(in srgb, var(--ivory) 94%, var(--gold) 6%);
+    border: 1px solid rgba(184,150,90,0.22);
+    border-radius: 18px;
+    padding: 2rem 1.5rem;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    transition: border-color 0.35s ease, box-shadow 0.35s ease;
   }
-  .dc-gender-block { display: flex; flex-direction: column; align-items: flex-start; }
-  .dc-gender-icon { margin-bottom: 0.5rem; }
-  .dc-gender-label { margin-bottom: 0.4rem !important; }
-  .dc-gender-divider { width: 1px; background: var(--muted); align-self: stretch; }
-  .dc-gender-text { font-family: var(--font-jost), system-ui, sans-serif; font-size: 13px; color: var(--muted-fg); line-height: 1.8; margin: 0; }
+  .dc-gender-card:hover { border-color: rgba(184,150,90,0.55); box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
+  .dc-gender-icon-ring {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(184,150,90,0.1); border: 1px solid rgba(184,150,90,0.28);
+    display: flex; align-items: center; justify-content: center; margin-bottom: 0.85rem;
+  }
+  .dc-gender-divider-line { width: 32px; height: 1px; background: rgba(184,150,90,0.3); margin: 0.6rem 0 0.85rem; }
+  .dc-gender-desc { font-family: var(--font-jost), system-ui, sans-serif; font-size: 12.5px; color: var(--muted-fg); line-height: 1.85; margin: 0; }
+  .dc-swatches-label { font-family: var(--font-jost), system-ui, sans-serif; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted-fg); margin-bottom: 1.25rem; }
 
   /* ── No children ── */
   .no-children-block { display: flex; align-items: flex-start; gap: 1.25rem; background: #F0E9DF; border: 1px solid var(--muted); border-left: 3px solid var(--gold); border-radius: 12px; padding: 1.5rem 1.75rem; max-width: 480px; text-align: left; }
@@ -2025,50 +2094,113 @@ const css = `
   .note-text { font-family: var(--font-jost), system-ui, sans-serif; font-size: 13px; color: var(--charcoal); line-height: 1.7; margin: 0; }
 
   /* ── Swatches ── */
-  .swatches { display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center; }
-  .swatch-item { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); }
-  .swatch-item:hover { transform: translateY(-8px); }
-  .swatch-circle { width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--muted); }
-  .swatch-avoid { border-color: #d4a5a5; opacity: 0.7; }
+  .swatches { display: flex; gap: 1.75rem; flex-wrap: wrap; justify-content: center; }
+  .swatch-item { display: flex; flex-direction: column; align-items: center; gap: 0.65rem; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), filter 0.3s ease; }
+  .swatch-item:hover { transform: translateY(-6px); filter: brightness(1.08); }
+  .swatch-circle { width: 52px; height: 52px; border-radius: 50%; border: 1.5px solid var(--muted); box-shadow: 0 4px 16px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25); }
+  .swatch-name { font-family: var(--font-jost), system-ui, sans-serif; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted-fg); text-align: center; }
+  .swatch-item--avoid .swatch-circle { border-color: rgba(196,130,130,0.45); opacity: 0.65; position: relative; }
+  .swatch-avoid-x { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
 
   /* ── Gifts ── */
-  .gifts-grid {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
+  /* ── Gifts v2 ── */
+  .gifts-grid-v2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1.25rem;
     width: 100%;
-    max-width: 420px;
+    max-width: 720px;
   }
-  .gift-card {
+  .gifts-grid-v2 .gift-card-v2:last-child:nth-child(3) {
+    grid-column: 1 / -1;
+    justify-self: center;
     width: 100%;
+    max-width: 320px;
+  }
+  @media (max-width: 560px) {
+    .gifts-grid-v2 { grid-template-columns: 1fr; max-width: 380px; }
+    .gifts-grid-v2 .gift-card-v2:last-child:nth-child(3) { grid-column: auto; justify-self: auto; max-width: 100%; }
+  }
+  .gift-card-v2 {
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.35s ease;
+    cursor: default;
+  }
+  .gift-card-v2:hover { transform: translateY(-5px); box-shadow: 0 20px 48px rgba(28,22,17,0.13); }
+  .gift-card-v2--transfer {
+    background: color-mix(in srgb, var(--ivory) 94%, var(--gold) 6%);
+    border: 1px solid rgba(184,150,90,0.22);
+    padding: 1.75rem;
+    display: flex; flex-direction: column; gap: 1.25rem;
+  }
+  .gift-card-v2--transfer::after {
+    content: ''; position: absolute; top: -50px; right: -50px;
+    width: 160px; height: 160px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(184,150,90,0.09) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .gct-header { display: flex; align-items: center; justify-content: space-between; }
+  .gct-badge {
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--gold); opacity: 0.7;
+  }
+  .gct-icon-wrap {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: rgba(184,150,90,0.1); border: 1px solid rgba(184,150,90,0.25);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .gct-rows { display: flex; flex-direction: column; gap: 0.75rem; }
+  .gct-row { display: flex; flex-direction: column; gap: 0.1rem; }
+  .gct-row-label {
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(184,150,90,0.55);
+  }
+  .gct-row-value {
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 13px; font-weight: 400; color: var(--charcoal); letter-spacing: 0.01em;
+  }
+  .gct-row-value--mono { font-size: 12px; letter-spacing: 0.12em; opacity: 0.85; }
+  .gct-divider { height: 1px; background: rgba(184,150,90,0.12); margin: 0; }
+  .gift-card-v2--list {
     background: color-mix(in srgb, var(--ivory) 94%, var(--gold));
     border: 1px solid var(--muted);
-    border-radius: 14px;
-    padding: 1.25rem 1.5rem;
-    text-align: left;
-    box-sizing: border-box;
+    padding: 2rem 1.75rem;
+    display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center;
   }
-  .gift-card--list {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; padding: 1.5rem 1rem;
+  .gcl-icon-ring {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: color-mix(in srgb, var(--ivory) 82%, var(--gold));
+    border: 1px solid rgba(184,150,90,0.3);
+    display: flex; align-items: center; justify-content: center; margin-bottom: 0.25rem;
   }
-  .gift-card--envelope {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; padding: 1.5rem 1rem; gap: 0;
+  .gcl-title {
+    font-family: var(--font-cormorant), Georgia, serif;
+    font-size: 1.3rem; font-style: italic; font-weight: 400; color: var(--charcoal); margin: 0;
   }
-  .gift-envelope-note {
+  .gcl-subtitle {
     font-family: var(--font-jost), system-ui, sans-serif;
-    font-size: 12px;
-    color: var(--muted-fg);
-    line-height: 1.6;
-    max-width: 140px;
-    text-align: center;
+    font-size: 12px; color: var(--muted-fg); line-height: 1.7; max-width: 180px; margin: 0.1rem 0 0.75rem;
   }
-  .gift-row { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; padding: 0.45rem 0; border-bottom: 1px solid var(--muted); }
-  .gift-row:last-child { border-bottom: none; }
-  .gift-label { font-family: var(--font-jost), system-ui, sans-serif; font-size: 11px; color: var(--muted-fg); flex-shrink: 0; }
-  .gift-value { font-family: var(--font-jost), system-ui, sans-serif; font-size: 12px; font-weight: 500; color: var(--charcoal); text-align: right; }
+  .gift-card-v2--envelope {
+    background: color-mix(in srgb, var(--ivory) 94%, var(--gold));
+    border: 1px solid var(--muted);
+    padding: 2rem 1.75rem;
+    display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center;
+  }
+  .gce-icon-ring {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(184,150,90,0.1); border: 1px solid rgba(184,150,90,0.3);
+    display: flex; align-items: center; justify-content: center; margin-bottom: 0.25rem;
+  }
+  .gce-note {
+    font-family: var(--font-cormorant), Georgia, serif;
+    font-size: 1.05rem; font-style: italic; color: var(--muted-fg);
+    line-height: 1.65; max-width: 200px; margin: 0.1rem 0 0;
+  }
 
   /* ── Buttons ── */
   .btn-outline {
@@ -2347,9 +2479,9 @@ const css = `
     .hero-meta { flex-direction: column; gap: 0.4rem; }
     .hero-meta-dot { display: none; }
     .section { padding: 3rem 1.25rem; }
-    .dresscode-gender { grid-template-columns: 1fr; }
-    .dc-gender-divider { width: 80%; height: 1px; margin: 0.5rem auto; }
+    .dc-gender-grid { grid-template-columns: 1fr; max-width: 360px; }
     .dlx-itinerary { padding-left: 1.25rem; }
     .dlx-irow { grid-template-columns: 50px 16px 1fr; }
+    .dlx-axis { left: 78px; }
   }
 `;

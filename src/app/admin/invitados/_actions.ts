@@ -21,12 +21,20 @@ async function getOwnEvent(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
+  const { data: orgEntry } = await supabase
+    .from('event_organizers')
+    .select('event_id')
+    .eq('profile_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!orgEntry) return null;
+
   const { data: event } = await supabase
     .from('events')
     .select('id, slug, event_type, plan, config')
-    .eq('owner_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(1)
+    .eq('id', orgEntry.event_id)
     .single();
 
   return event ?? null;

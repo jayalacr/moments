@@ -17,7 +17,6 @@ export default async function EditarPage({ params }: Props) {
     .from('events')
     .select('id, title, slug, plan, config')
     .eq('id', eventId)
-    .eq('owner_id', user.id)
     .single();
 
   if (!event) redirect('/admin');

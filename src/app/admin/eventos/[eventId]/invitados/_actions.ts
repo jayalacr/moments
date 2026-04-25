@@ -6,14 +6,10 @@ import { redirect } from 'next/navigation';
 import type { GuestRow, RsvpRow, GuestWithRsvp, RsvpStats } from '@/app/admin/invitados/types';
 
 async function getAuthorizedEvent(supabase: Awaited<ReturnType<typeof createClient>>, eventId: string) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-
   const { data: event } = await supabase
     .from('events')
     .select('id, slug, event_type, plan, config')
     .eq('id', eventId)
-    .eq('owner_id', user.id)
     .single();
 
   return event ?? null;
@@ -174,16 +170,7 @@ export async function saveWhatsappTemplate(eventId: string, template: string): P
 
 export async function saveMaxCapacity(eventId: string, capacity: number | null): Promise<{ error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
-
-  const { data: event } = await supabase
-    .from('events')
-    .select('id, config')
-    .eq('id', eventId)
-    .eq('owner_id', user.id)
-    .single();
-
+  const event = await getAuthorizedEvent(supabase, eventId);
   if (!event) return { error: 'No se encontró el evento.' };
 
   const currentConfig = (event.config as Record<string, unknown>) ?? {};
@@ -233,20 +220,10 @@ export async function updateGuestCompanions(
   maxCompanions: number,
 ): Promise<{ error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: 'No autorizado.' };
+  const event = await getAuthorizedEvent(supabase, eventId);
+  if (!event) return { error: 'No autorizado.' };
 
-  const { data: guest } = await supabase
-    .from('guests')
-    .select('id, event_id, events(owner_id)')
-    .eq('id', guestId)
-    .single();
-
-  if (!guest) return { error: 'Invitado no encontrado.' };
-  const eventOwner = (guest as unknown as { events: { owner_id: string } }).events?.owner_id;
-  if (eventOwner !== user.id) return { error: 'No autorizado.' };
-
-  const { error } = await supabase.from('guests').update({ max_companions: maxCompanions }).eq('id', guestId);
+  const { error } = await supabase.from('guests').update({ max_companions: maxCompanions }).eq('id', guestId).eq('event_id', eventId);
   if (error) return { error: error.message };
 
   revalidatePath(`/admin/eventos/${eventId}/invitados`);

@@ -41,27 +41,34 @@ export default async function EventoPage({ params }: Props) {
     .from('events')
     .select('*')
     .eq('id', eventId)
-    .eq('owner_id', user.id)
     .single();
 
   if (!event) redirect('/admin');
 
-  // Fetch stats
-  const { count: registeredCount } = await supabase
-    .from('guests')
-    .select('*', { count: 'exact', head: true })
-    .eq('event_id', event.id);
+  const isEssential = event.plan === 'essential';
 
-  const { data: rsvps } = await supabase
-    .from('rsvps')
-    .select('seats')
-    .eq('event_id', event.id)
-    .eq('status', 'confirmed');
+  // Stats only apply to Plus/Deluxe (Essential uses WhatsApp RSVP)
+  let registeredCount = 0;
+  let confirmedSeats = 0;
+  let maxCapacity = 0;
 
-  const confirmedSeats = rsvps?.reduce((acc, r) => acc + (r.seats || 0), 0) || 0;
-  
-  const config = (event.config as any) ?? {};
-  const maxCapacity = config.rsvp?.maxCapacity || 0;
+  if (!isEssential) {
+    const { count } = await supabase
+      .from('guests')
+      .select('*', { count: 'exact', head: true })
+      .eq('event_id', event.id);
+    registeredCount = count ?? 0;
+
+    const { data: rsvps } = await supabase
+      .from('rsvps')
+      .select('seats')
+      .eq('event_id', event.id)
+      .eq('status', 'confirmed');
+    confirmedSeats = rsvps?.reduce((acc, r) => acc + (r.seats || 0), 0) ?? 0;
+
+    const config = (event.config as any) ?? {};
+    maxCapacity = config.rsvp?.maxCapacity || 0;
+  }
 
   const s = STATUS_LABELS[event.status] ?? STATUS_LABELS.draft;
 
@@ -168,30 +175,32 @@ export default async function EventoPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Grid de Métricas */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px' }}>
-        <div className="stat-card">
-          <div className="stat-icon"><Trophy size={20} /></div>
-          <div>
-            <p style={{ fontSize: '12px', color: C.muted, fontWeight: 500, margin: 0 }}>Cupo Total</p>
-            <p style={{ fontSize: '28px', color: C.text, fontWeight: 600, margin: '4px 0 0' }}>{maxCapacity || '∞'}</p>
+      {/* Grid de Métricas — solo Plus/Deluxe */}
+      {!isEssential && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px' }}>
+          <div className="stat-card">
+            <div className="stat-icon"><Trophy size={20} /></div>
+            <div>
+              <p style={{ fontSize: '12px', color: C.muted, fontWeight: 500, margin: 0 }}>Cupo Total</p>
+              <p style={{ fontSize: '28px', color: C.text, fontWeight: 600, margin: '4px 0 0' }}>{maxCapacity || '∞'}</p>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon"><Users size={20} /></div>
+            <div>
+              <p style={{ fontSize: '12px', color: C.muted, fontWeight: 500, margin: 0 }}>Invitados Registrados</p>
+              <p style={{ fontSize: '28px', color: C.text, fontWeight: 600, margin: '4px 0 0' }}>{registeredCount || 0}</p>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon" style={{ background: '#E8F5E9', color: '#2E7D32' }}><CheckCircle2 size={20} /></div>
+            <div>
+              <p style={{ fontSize: '12px', color: C.muted, fontWeight: 500, margin: 0 }}>Confirmaciones</p>
+              <p style={{ fontSize: '28px', color: C.text, fontWeight: 600, margin: '4px 0 0' }}>{confirmedSeats || 0}</p>
+            </div>
           </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon"><Users size={20} /></div>
-          <div>
-            <p style={{ fontSize: '12px', color: C.muted, fontWeight: 500, margin: 0 }}>Invitados Registrados</p>
-            <p style={{ fontSize: '28px', color: C.text, fontWeight: 600, margin: '4px 0 0' }}>{registeredCount || 0}</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: '#E8F5E9', color: '#2E7D32' }}><CheckCircle2 size={20} /></div>
-          <div>
-            <p style={{ fontSize: '12px', color: C.muted, fontWeight: 500, margin: 0 }}>Confirmaciones</p>
-            <p style={{ fontSize: '28px', color: C.text, fontWeight: 600, margin: '4px 0 0' }}>{confirmedSeats || 0}</p>
-          </div>
-        </div>
-      </div>
+      )}
 
       <div className="event-main-grid" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px' }}>
         {/* Detalles del Evento */}
@@ -239,18 +248,35 @@ export default async function EventoPage({ params }: Props) {
               <p style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: C.accent, fontWeight: 600, marginBottom: '12px' }}>
                 Próximos pasos
               </p>
-              <p style={{ fontSize: '16px', fontWeight: 300, lineHeight: 1.4, margin: '0 0 20px' }}>
-                ¿Ya terminaste de configurar los detalles? Comienza a enviar las invitaciones.
-              </p>
-              <Link href={`/admin/eventos/${event.id}/invitados`} style={{ display: 'block', padding: '12px', background: C.accent, color: 'white', borderRadius: '10px', textAlign: 'center', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>
-                Ir a Invitados
-              </Link>
+              {isEssential ? (
+                <>
+                  <p style={{ fontSize: '16px', fontWeight: 300, lineHeight: 1.4, margin: '0 0 20px' }}>
+                    ¿Lista la invitación? Comparte el link con tus invitados y recibe sus confirmaciones por WhatsApp.
+                  </p>
+                  <Link
+                    href={event.status === 'published' ? `/${event.event_type}/${event.slug}` : `/admin/eventos/${event.id}/preview`}
+                    target="_blank"
+                    style={{ display: 'block', padding: '12px', background: C.accent, color: 'white', borderRadius: '10px', textAlign: 'center', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}
+                  >
+                    Ver invitación
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <p style={{ fontSize: '16px', fontWeight: 300, lineHeight: 1.4, margin: '0 0 20px' }}>
+                    ¿Ya terminaste de configurar los detalles? Comienza a enviar las invitaciones.
+                  </p>
+                  <Link href={`/admin/eventos/${event.id}/invitados`} style={{ display: 'block', padding: '12px', background: C.accent, color: 'white', borderRadius: '10px', textAlign: 'center', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>
+                    Ir a Invitados
+                  </Link>
+                </>
+              )}
            </div>
            
            <div style={{ padding: '24px', background: 'white', border: `1px solid ${C.border}`, borderRadius: '20px' }}>
               <p style={{ fontSize: '13px', fontWeight: 600, color: C.text, marginBottom: '8px' }}>¿Necesitas ayuda?</p>
               <p style={{ fontSize: '13px', color: C.muted, lineHeight: 1.5, margin: 0 }}>
-                Nuestro equipo de soporte está disponible para ayudarte a personalizar tu invitación deluxe.
+                Para cualquier duda o sugerencia, contacta al administrador del sitio.
               </p>
            </div>
 

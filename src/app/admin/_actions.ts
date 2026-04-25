@@ -3,8 +3,20 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
-export async function updateEventConfig(eventId: string, config: Record<string, unknown>) {
+// Acepta el config como string JSON para evitar problemas de serialización
+// con objetos complejos (NaN, undefined, objetos no-serializables) en React Server Actions.
+export async function updateEventConfig(eventId: string, configJson: string) {
+  let config: unknown;
+  try {
+    config = JSON.parse(configJson);
+  } catch {
+    throw new Error('Config inválido: no es JSON válido.');
+  }
+
   const supabase = await createClient();
+
+  const { data: me } = await supabase.auth.getUser();
+  if (!me.user) throw new Error('No autenticado.');
 
   const { error } = await supabase
     .from('events')
@@ -21,7 +33,6 @@ export async function updateEventConfig(eventId: string, config: Record<string, 
     .single();
 
   revalidatePath('/admin');
-  revalidatePath('/admin/editar');
   if (event) {
     revalidatePath(`/${event.event_type}/${event.slug}`);
   }

@@ -522,7 +522,9 @@ export default function EditarForm({
 
   function handleSave() {
     startTransition(async () => {
-      await updateEventConfig(eventId, cfg as unknown as Record<string, unknown>);
+      // Serializar a JSON antes de enviar: limpia NaN, undefined anidados, y evita
+      // problemas de serialización de React con objetos complejos en Server Actions.
+      await updateEventConfig(eventId, JSON.stringify(cfg));
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     });
@@ -679,8 +681,8 @@ export default function EditarForm({
           );
         })()}
 
-        {/* ── Layout de Fotos (Plus / Deluxe) ── */}
-        {isPlus && (() => {
+        {/* ── Layout de Fotos ── */}
+        {(() => {
           const heroOk  = cfg.photos.some(p => p.role === 'hero');
           const blocks  = cfg.photos.filter(p => p.role === 'block').length;
           const summary = heroOk

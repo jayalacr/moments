@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { EliminarOrganizadorBtn } from './_components/EliminarOrganizadorBtn';
 
 const C = {
   bg: '#0D1117', border: '#222D3F', borderBright: '#2D3F57',
@@ -78,7 +79,7 @@ export default async function OrganizadoresPage() {
                 gap: '16px',
               }}
             >
-              <div>
+              <div style={{ flex: 1 }}>
                 <p style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: C.text, marginBottom: '2px' }}>
                   {org.full_name || '—'}
                 </p>
@@ -89,6 +90,11 @@ export default async function OrganizadoresPage() {
               <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted, flexShrink: 0 }}>
                 {new Date(org.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
               </p>
+              <EliminarOrganizadorBtn
+                organizadorId={org.id}
+                nombre={org.full_name ?? ''}
+                email={org.email}
+              />
             </div>
           ))}
         </div>

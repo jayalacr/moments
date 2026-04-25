@@ -77,9 +77,8 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
           borderRight: `1px solid ${C.border}`,
           display: 'flex',
           flexDirection: 'column',
-          height: '100vh',
-          position: 'sticky',
-          top: 0,
+          height: '100%',
+          alignSelf: 'stretch',
           zIndex: 50,
           transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), width 0.3s ease, margin-left 0.3s ease',
         }}

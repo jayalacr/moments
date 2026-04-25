@@ -17,7 +17,6 @@ export default async function EventoLayout({ children, params }: Props) {
     .from('events')
     .select('id')
     .eq('id', eventId)
-    .eq('owner_id', user.id)
     .single();
 
   if (!event) redirect('/admin');

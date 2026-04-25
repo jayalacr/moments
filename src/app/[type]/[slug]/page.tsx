@@ -63,14 +63,49 @@ export default async function InvitacionPage({ params, searchParams }: Props) {
 
   const { data: event } = await supabase
     .from('events')
-    .select('id, title, template_type, config, status')
+    .select('id, title, template_type, config, status, payment_status, expires_at')
     .eq('event_type', type)
     .eq('slug', slug)
     .single();
 
   if (!event) notFound();
 
+  const NotReady = ({ message }: { message: string }) => (
+    <div
+      className={jost.className}
+      style={{
+        minHeight: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#F8F3EC',
+        padding: '24px',
+        textAlign: 'center',
+      }}
+    >
+      <p style={{ fontSize: '18px', letterSpacing: '4px', color: '#C9A87C', marginBottom: '32px' }}>
+        moments
+      </p>
+      <div style={{ width: '40px', height: '1px', background: '#C9A87C', margin: '0 auto 32px' }} />
+      <h1 style={{ fontSize: '26px', fontWeight: 300, color: '#1C1611', letterSpacing: '1px', marginBottom: '16px' }}>
+        {event.title}
+      </h1>
+      <p style={{ fontSize: '13px', color: '#9C8E82', lineHeight: 1.8, maxWidth: '280px' }}>
+        {message}
+      </p>
+    </div>
+  );
+
   if (event.status !== 'published') {
+    return <NotReady message={'Esta invitación está siendo preparada.\nPronto estará lista.'} />;
+  }
+
+  if (event.payment_status !== 'paid') {
+    return <NotReady message={'Esta invitación está en preparación.\nPronto estará disponible.'} />;
+  }
+
+  if (event.expires_at && new Date() > new Date(event.expires_at)) {
     return (
       <div
         className={jost.className}
@@ -85,16 +120,42 @@ export default async function InvitacionPage({ params, searchParams }: Props) {
           textAlign: 'center',
         }}
       >
-        <p style={{ fontSize: '11px', letterSpacing: '4px', color: '#C9A87C', textTransform: 'uppercase', marginBottom: '32px' }}>
-          Moments
+        <p style={{ fontSize: '18px', letterSpacing: '4px', color: '#C9A87C', marginBottom: '32px' }}>
+          moments
         </p>
         <div style={{ width: '40px', height: '1px', background: '#C9A87C', margin: '0 auto 32px' }} />
-        <h1 style={{ fontSize: '26px', fontWeight: 300, color: '#1C1611', letterSpacing: '1px', marginBottom: '16px' }}>
-          {event.title}
+        <h1
+          style={{
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontSize: 'clamp(22px, 5vw, 32px)',
+            fontWeight: 300,
+            color: '#1C1611',
+            letterSpacing: '1px',
+            marginBottom: '16px',
+            lineHeight: 1.3,
+            maxWidth: '320px',
+          }}
+        >
+          Esta invitación ya no está disponible
         </h1>
-        <p style={{ fontSize: '13px', color: '#9C8E82', lineHeight: 1.8, maxWidth: '280px' }}>
-          Esta invitación está siendo preparada.<br />Pronto estará lista.
+        <div style={{ width: '24px', height: '1px', background: '#C9A87C', margin: '0 auto 24px' }} />
+        <p style={{ fontSize: '13px', color: '#9C8E82', lineHeight: 1.8, marginBottom: '40px' }}>
+          ¿Quieres crear la tuya?
         </p>
+        <a
+          href="http://localhost:3000/planes"
+          style={{
+            display: 'inline-block',
+            padding: '12px 32px',
+            border: '1px solid #C9A87C',
+            color: '#C9A87C',
+            fontSize: '13px',
+            letterSpacing: '3px',
+            textDecoration: 'none',
+          }}
+        >
+          Visita moments.mx
+        </a>
       </div>
     );
   }
@@ -108,6 +169,7 @@ export default async function InvitacionPage({ params, searchParams }: Props) {
   let companionNames: string[] | undefined;
   let guestName: string | undefined;
   let hasExistingRsvp = false;
+  let invalidToken = false;
 
   if (guestToken) {
     const { data: guest } = await supabase
@@ -129,6 +191,8 @@ export default async function InvitacionPage({ params, searchParams }: Props) {
         .maybeSingle();
 
       hasExistingRsvp = !!existingRsvp;
+    } else {
+      invalidToken = true;
     }
   } else if (passesCode) {
     const decoded = decodePasses(passesCode);
@@ -148,6 +212,7 @@ export default async function InvitacionPage({ params, searchParams }: Props) {
       companionNames={companionNames}
       guestName={guestName}
       hasExistingRsvp={hasExistingRsvp}
+      invalidToken={invalidToken}
     />
   );
 }

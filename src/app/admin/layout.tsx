@@ -26,15 +26,35 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, email')
+    .select('full_name, email, role')
     .eq('id', user?.id ?? '')
     .single();
 
-  const { data: events } = await supabase
-    .from('events')
-    .select('id, title, plan')
-    .eq('owner_id', user?.id ?? '')
-    .order('created_at', { ascending: false });
+  let events: { id: string; title: string; plan: string }[] | null = null;
+
+  if (profile?.role === 'superadmin') {
+    const { data } = await supabase
+      .from('events')
+      .select('id, title, plan')
+      .order('created_at', { ascending: false });
+    events = data;
+  } else {
+    const { data: orgEntries } = await supabase
+      .from('event_organizers')
+      .select('event_id')
+      .eq('profile_id', user?.id ?? '');
+
+    const eventIds = orgEntries?.map(e => e.event_id) ?? [];
+
+    if (eventIds.length) {
+      const { data } = await supabase
+        .from('events')
+        .select('id, title, plan')
+        .in('id', eventIds)
+        .order('created_at', { ascending: false });
+      events = data;
+    }
+  }
 
   return (
     <div
