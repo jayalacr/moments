@@ -893,15 +893,17 @@
   font-family: var(--font-body);
   font-size: 9px;
   letter-spacing: 0.2em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--muted-fg);
   opacity: 0.5;
   margin-top: 2rem;
 }
 .footer-brand {
   font-family: 'Montserrat', var(--font-montserrat), sans-serif;
-  font-weight: 500;
-  color: var(--gold);
+  font-size: 1.1em;
+  font-weight: 400;
+  font-style: normal;
+  color: #b28375;
   opacity: 1;
   letter-spacing: 0.05em;
 }

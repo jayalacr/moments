@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { JetBrains_Mono, DM_Sans } from 'next/font/google';
 import Link from 'next/link';
 import LogoutButton from '@/components/auth/LogoutButton';
@@ -32,6 +33,7 @@ const C = {
 
 export default function SuperadminLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <div
@@ -182,14 +184,14 @@ export default function SuperadminLayout({ children }: { children: React.ReactNo
               SISTEMA
             </p>
 
-            <Link href="/superadmin" className="sa-nav-item active" onClick={() => setSidebarOpen(false)}>
+            <Link href="/superadmin" className={`sa-nav-item${pathname === '/superadmin' || pathname.startsWith('/superadmin/eventos') ? ' active' : ''}`} onClick={() => setSidebarOpen(false)}>
               <span className="nav-icon">▣</span>
               Eventos
             </Link>
 
-            <Link href="/superadmin/organizadores" className="sa-nav-item" onClick={() => setSidebarOpen(false)}>
+            <Link href="/superadmin/organizadores" className={`sa-nav-item${pathname.startsWith('/superadmin/organizadores') ? ' active' : ''}`} onClick={() => setSidebarOpen(false)}>
               <span className="nav-icon">◈</span>
-              Organizadores
+              Usuarios
             </Link>
 
             <div style={{ margin: '16px 0 8px', borderTop: '1px solid ' + C.border }} />

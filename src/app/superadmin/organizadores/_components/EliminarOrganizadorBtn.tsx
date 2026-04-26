@@ -79,7 +79,7 @@ export function EliminarOrganizadorBtn({ organizadorId, nombre, email }: Props) 
               {nombre || email}
             </p>
             <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: C.muted, lineHeight: 1.6, marginBottom: '20px' }}>
-              Se eliminará la cuenta del organizador y perderá acceso a todos sus eventos. Los eventos quedarán reasignados al superadmin. No se puede deshacer.
+              Se eliminará la cuenta del usuario y perderá acceso a todos los eventos asignados. Los eventos quedarán reasignados al superadmin. No se puede deshacer.
             </p>
 
             {error && (

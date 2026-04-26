@@ -23,7 +23,7 @@ export async function sendExpirationWarningEmail(params: ExpirationWarningParams
   });
 
   await resend.emails.send({
-    from: 'Moments <onboarding@resend.dev>',
+    from: process.env.RESEND_FROM_EMAIL || 'moments <onboarding@resend.dev>',
     to,
     subject: `Aviso: "${eventTitle}" expira en 7 días`,
     html: `
@@ -43,7 +43,7 @@ export async function sendExpirationWarningEmail(params: ExpirationWarningParams
           <tr>
             <td style="text-align:center;padding-bottom:32px;">
               <p style="margin:0;font-size:11px;letter-spacing:4px;color:#C9A87C;text-transform:uppercase;">
-                Moments
+                moments
               </p>
             </td>
           </tr>
@@ -95,7 +95,7 @@ export async function sendExpirationWarningEmail(params: ExpirationWarningParams
               </table>
 
               <p style="margin:0;font-size:12px;color:#9C8E82;text-align:center;line-height:1.6;">
-                Este es un aviso automático del sistema Moments.
+                Este es un aviso automático del sistema moments.
               </p>
             </td>
           </tr>
@@ -104,7 +104,7 @@ export async function sendExpirationWarningEmail(params: ExpirationWarningParams
           <tr>
             <td style="text-align:center;padding-top:24px;">
               <p style="margin:0;font-size:11px;color:#B5A99A;">
-                © ${new Date().getFullYear()} Moments · Invitaciones digitales
+                © ${new Date().getFullYear()} moments · Invitaciones digitales
               </p>
             </td>
           </tr>
@@ -123,9 +123,9 @@ export async function sendWelcomeEmail(to: string, name: string) {
   const adminUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/admin`;
 
   await resend.emails.send({
-    from: 'Moments <onboarding@resend.dev>',
+    from: process.env.RESEND_FROM_EMAIL || 'moments <onboarding@resend.dev>',
     to,
-    subject: 'Bienvenido a Moments — Tu panel está listo',
+    subject: 'Bienvenido a moments — Tu panel está listo',
     html: `
 <!DOCTYPE html>
 <html lang="es">
@@ -143,7 +143,7 @@ export async function sendWelcomeEmail(to: string, name: string) {
           <tr>
             <td style="text-align:center;padding-bottom:32px;">
               <p style="margin:0;font-size:11px;letter-spacing:4px;color:#C9A87C;text-transform:uppercase;">
-                Moments
+                moments
               </p>
             </td>
           </tr>
@@ -162,7 +162,7 @@ export async function sendWelcomeEmail(to: string, name: string) {
               <div style="height:1px;background:linear-gradient(90deg,transparent,#C9A87C,transparent);margin:0 0 24px;"></div>
 
               <p style="margin:0 0 16px;font-size:14px;color:#4A3F35;line-height:1.7;">
-                Tu acceso al panel de Moments ha sido creado. Desde aquí podrás
+                Tu acceso al panel de moments ha sido creado. Desde aquí podrás
                 personalizar tu invitación con todos los detalles de tu evento.
               </p>
 
@@ -192,7 +192,7 @@ export async function sendWelcomeEmail(to: string, name: string) {
           <tr>
             <td style="text-align:center;padding-top:24px;">
               <p style="margin:0;font-size:11px;color:#B5A99A;">
-                © ${new Date().getFullYear()} Moments · Invitaciones digitales
+                © ${new Date().getFullYear()} moments · Invitaciones digitales
               </p>
             </td>
           </tr>

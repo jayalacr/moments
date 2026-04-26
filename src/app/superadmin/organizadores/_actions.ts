@@ -33,17 +33,19 @@ export async function deleteOrganizador(organizadorId: string) {
 export async function inviteOrganizador(formData: FormData) {
   const name  = (formData.get('name')  as string).trim();
   const email = (formData.get('email') as string).trim();
+  const role  = (formData.get('role')  as string).trim() || 'organizador';
 
   if (!name || !email) throw new Error('Nombre y email son requeridos.');
+  if (!['organizador', 'wedding-planner'].includes(role)) throw new Error('Rol inválido.');
 
   const supabase = createAdminClient();
 
   const { error } = await supabase.auth.admin.inviteUserByEmail(email, {
     data: {
       full_name: name,
-      role: 'organizador',
+      role,
     },
-    redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback?type=invite`,
+    redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/confirm`,
   });
 
   if (error) throw new Error(error.message);

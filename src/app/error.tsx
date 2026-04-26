@@ -45,7 +45,7 @@ export default function Error({
         color: '#B8965A',
         marginBottom: '40px'
       }}>
-        Moments
+        moments
       </p>
       
       <div style={{ width: '40px', height: '1px', background: '#D2691E', marginBottom: '40px' }} />

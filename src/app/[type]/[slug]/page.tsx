@@ -142,7 +142,7 @@ export default async function InvitacionPage({ params, searchParams }: Props) {
           ¿Quieres crear la tuya?
         </p>
         <a
-          href="http://localhost:3000/planes"
+          href={`${process.env.NEXT_PUBLIC_BASE_URL}/planes`}
           style={{
             display: 'inline-block',
             padding: '12px 32px',

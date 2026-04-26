@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Moments — Invitaciones Digitales Premium",
+  title: "moments — Invitaciones Digitales Premium",
   description: "Crea experiencias inolvidables con nuestras invitaciones digitales premium. RSVP inteligente, itinerarios animados y diseño exclusivo para tu gran día.",
 };
 

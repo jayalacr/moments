@@ -2,18 +2,15 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Cormorant_Garamond, Jost } from 'next/font/google';
+import { Cormorant_Garamond, Jost, Montserrat } from 'next/font/google';
 import { Sparkles, Star, Crown } from 'lucide-react';
 import {
   BASE_PRICES,
-  EXTENSION_PRICES,
-  EXTENSION_LABEL,
+  EXTRA_MONTH_PRICE,
   PLAN_LABEL,
   PLAN_TAGLINE,
-  calcularTotal,
   formatMXN,
   type Plan,
-  type ExtensionKey,
   type DesignType,
 } from '@/lib/pricing';
 
@@ -30,6 +27,12 @@ const jost = Jost({
   variable: '--font-jost',
 });
 
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  weight: ['300', '400', '500'],
+  variable: '--font-montserrat',
+});
+
 const WHATSAPP_NUMBER = '528126390927';
 
 const PLAN_ICONS: Record<Plan, typeof Sparkles> = {
@@ -44,40 +47,37 @@ const PLAN_COLORS: Record<Plan, { dot: string; ring: string; bg: string }> = {
   deluxe:    { dot: '#8B6030', ring: 'rgba(139,96,48,0.55)', bg: '#F7F2EA' },
 };
 
+const MAX_EXTRA_MONTHS = 11;
+
 export default function CotizarPage() {
   const [plan, setPlan] = useState<Plan>('plus');
   const [designType, setDesignType] = useState<DesignType>('template');
-  const [extensionKey, setExtensionKey] = useState<ExtensionKey>('none');
+  const [extraMonths, setExtraMonths] = useState(0);
 
-  const breakdown = useMemo(
-    () => calcularTotal({ plan, designType, extensionKey }),
-    [plan, designType, extensionKey],
-  );
+  const extensionCost = extraMonths * EXTRA_MONTH_PRICE;
+  const totalMonths = 1 + extraMonths;
+  const hasCustomDesign = designType === 'custom';
 
-  function handlePlanChange(p: Plan) {
-    setPlan(p);
-  }
+  const breakdown = useMemo(() => {
+    const base = BASE_PRICES[plan];
+    const total = base + extensionCost;
+    return { base, extensionCost, total };
+  }, [plan, extensionCost]);
 
   const whatsappMessage = useMemo(() => {
+    const totalLabel = totalMonths === 1
+      ? '1 mes (incluido)'
+      : `${totalMonths} meses (1 incluido + ${extraMonths} adicional${extraMonths > 1 ? 'es' : ''})`;
     const lines: string[] = [
-      `Hola! Quiero solicitar una cotización para mi evento con Moments.`,
+      `Hola! Me interesa más información sobre moments.`,
       ``,
-      `Plan: ${PLAN_LABEL[plan]}`,
-      `Diseño: ${designType === 'template' ? 'Plantilla prediseñada' : 'Diseño personalizado'}`,
-      `Publicación: ${EXTENSION_LABEL[extensionKey]}`,
-      ``,
+      `Esto es lo que estoy buscando:`,
+      `• Plan: ${PLAN_LABEL[plan]}`,
+      `• Diseño: ${designType === 'template' ? 'Plantilla prediseñada' : 'Diseño personalizado'}`,
+      `• Publicación: ${totalLabel}`,
     ];
-    breakdown.lineItems.forEach((li) => {
-      lines.push(`• ${li.label}: ${li.isEstimate ? 'Por cotizar' : formatMXN(li.amount)}`);
-    });
-    lines.push('');
-    if (breakdown.hasCustomDesignEstimate) {
-      lines.push(`Total estimado (sin diseño custom): ${formatMXN(breakdown.total)}`);
-    } else {
-      lines.push(`Total: ${formatMXN(breakdown.total)}`);
-    }
     return encodeURIComponent(lines.join('\n'));
-  }, [plan, designType, extensionKey, breakdown]);
+  }, [plan, designType, extraMonths, totalMonths]);
 
   const css = `
     :root {
@@ -98,10 +98,12 @@ export default function CotizarPage() {
       padding: 64px 24px 32px;
     }
     .q-wordmark {
-      font-size: 28px;
-      font-weight: 300;
-      letter-spacing: 0.45em;
-      color: #B28735;
+      font-family: var(--font-montserrat), 'Montserrat', sans-serif;
+      font-size: 36px;
+      font-weight: 400;
+      font-style: normal;
+      letter-spacing: 0.18em;
+      color: #b28375;
       margin-bottom: 18px;
     }
     .q-title {
@@ -368,11 +370,10 @@ export default function CotizarPage() {
   `;
 
   const planList: Plan[] = ['essential', 'plus', 'deluxe'];
-  const extensions: ExtensionKey[] = ['none', '1m', '3m'];
   const designs: DesignType[] = ['template', 'custom'];
 
   return (
-    <div className={`${cormorant.variable} ${jost.variable} q-root`}>
+    <div className={`${cormorant.variable} ${jost.variable} ${montserrat.variable} q-root`}>
       <style suppressHydrationWarning>{css}</style>
 
       <div className="q-hero">
@@ -382,7 +383,7 @@ export default function CotizarPage() {
         </h1>
         <p className="q-sub">
           Elige el plan, el tiempo de publicación y los extras. El total se actualiza al instante.
-          Cuando estés listo, envíanos tu cotización por WhatsApp.
+          Cuando estés listo, escríbenos por WhatsApp y con gusto te damos todos los detalles.
         </p>
       </div>
 
@@ -403,7 +404,7 @@ export default function CotizarPage() {
                   <button
                     key={p}
                     type="button"
-                    onClick={() => handlePlanChange(p)}
+                    onClick={() => setPlan(p)}
                     className={`q-plan-card ${active ? 'active' : ''}`}
                   >
                     <div className="q-plan-icon" style={{ background: colors.bg }}>
@@ -455,29 +456,60 @@ export default function CotizarPage() {
           {/* Extension */}
           <div className="q-section">
             <h2 className="q-section-title">Tiempo de publicación</h2>
-            <p className="q-section-hint">Todos los planes incluyen 1 mes gratis. Agrega más si lo necesitas.</p>
-            <div className="q-opts">
-              {extensions.map((e) => {
-                const active = extensionKey === e;
-                const amount = EXTENSION_PRICES[plan][e];
-                return (
-                  <button
-                    key={e}
-                    type="button"
-                    onClick={() => setExtensionKey(e)}
-                    className={`q-opt ${active ? 'active' : ''}`}
-                  >
-                    <span className="q-opt-radio" />
-                    <div className="q-opt-body" style={{ textAlign: 'left' }}>
-                      <p className="q-opt-label">{EXTENSION_LABEL[e]}</p>
-                      {e === 'none' && <p className="q-opt-detail">Publicación base incluida en el plan.</p>}
-                    </div>
-                    <span className="q-opt-amount">
-                      {amount === 0 ? 'Gratis' : `+${formatMXN(amount)}`}
-                    </span>
-                  </button>
-                );
-              })}
+            <p className="q-section-hint">El primer mes está incluido en tu plan. Agrega los meses extra que necesites a <strong>{formatMXN(EXTRA_MONTH_PRICE)}</strong> c/u.</p>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginTop: '16px', flexWrap: 'wrap' }}>
+              {/* Stepper */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0', border: '1px solid var(--muted)', borderRadius: '10px', overflow: 'hidden' }}>
+                <button
+                  type="button"
+                  onClick={() => setExtraMonths(m => Math.max(0, m - 1))}
+                  disabled={extraMonths === 0}
+                  style={{
+                    width: '40px', height: '44px', border: 'none',
+                    background: extraMonths === 0 ? 'transparent' : 'var(--ivory)',
+                    color: extraMonths === 0 ? 'var(--muted)' : 'var(--charcoal)',
+                    fontSize: '20px', cursor: extraMonths === 0 ? 'not-allowed' : 'pointer',
+                    fontFamily: 'var(--font-jost)', lineHeight: 1,
+                    transition: 'background 0.15s',
+                  }}
+                >−</button>
+                <div style={{
+                  minWidth: '80px', height: '44px', display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center',
+                  borderLeft: '1px solid var(--muted)', borderRight: '1px solid var(--muted)',
+                  background: 'white',
+                }}>
+                  <span style={{ fontFamily: 'var(--font-cormorant)', fontSize: '22px', fontWeight: 400, color: 'var(--charcoal)', lineHeight: 1 }}>
+                    {totalMonths}
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-jost)', fontSize: '9px', color: 'var(--muted-fg)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    {totalMonths === 1 ? 'mes' : 'meses'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setExtraMonths(m => Math.min(MAX_EXTRA_MONTHS, m + 1))}
+                  disabled={extraMonths === MAX_EXTRA_MONTHS}
+                  style={{
+                    width: '40px', height: '44px', border: 'none',
+                    background: 'var(--ivory)',
+                    color: 'var(--charcoal)',
+                    fontSize: '20px', cursor: extraMonths === MAX_EXTRA_MONTHS ? 'not-allowed' : 'pointer',
+                    fontFamily: 'var(--font-jost)', lineHeight: 1,
+                    transition: 'background 0.15s',
+                  }}
+                >+</button>
+              </div>
+
+              {/* Desglose */}
+              <div style={{ fontFamily: 'var(--font-jost)', fontSize: '13px', color: 'var(--muted-fg)', lineHeight: 1.6 }}>
+                <span style={{ color: 'var(--charcoal)' }}>1 mes incluido</span>
+                {extraMonths > 0 && (
+                  <> + <span style={{ color: 'var(--charcoal)' }}>{extraMonths} mes{extraMonths > 1 ? 'es' : ''} adicional{extraMonths > 1 ? 'es' : ''}</span>
+                  {' '}({formatMXN(extensionCost)})</>
+                )}
+              </div>
             </div>
           </div>
 
@@ -488,30 +520,42 @@ export default function CotizarPage() {
           <h2 className="q-summary-title">Tu cotización</h2>
           <p className="q-summary-sub">Actualizada en tiempo real</p>
 
-          {breakdown.lineItems.map((li, idx) => (
-            <div key={idx} className="q-line">
-              <div style={{ flex: 1 }}>
-                <p className="q-line-label">{li.label}</p>
-                {li.detail && <p className="q-line-detail">{li.detail}</p>}
-              </div>
-              {li.isEstimate ? (
-                <span className="q-line-estimate">A cotizar</span>
-              ) : (
-                <span className="q-line-amount">{formatMXN(li.amount)}</span>
-              )}
+          <div className="q-line">
+            <div style={{ flex: 1 }}>
+              <p className="q-line-label">Plan {PLAN_LABEL[plan]}</p>
+              <p className="q-line-detail">Pago único · 1 mes de publicación incluido</p>
             </div>
-          ))}
+            <span className="q-line-amount">{formatMXN(breakdown.base)}</span>
+          </div>
+
+          {extraMonths > 0 && (
+            <div className="q-line">
+              <div style={{ flex: 1 }}>
+                <p className="q-line-label">Meses adicionales</p>
+                <p className="q-line-detail">{extraMonths} mes{extraMonths > 1 ? 'es' : ''} × {formatMXN(EXTRA_MONTH_PRICE)}</p>
+              </div>
+              <span className="q-line-amount">+{formatMXN(breakdown.extensionCost)}</span>
+            </div>
+          )}
+
+          {hasCustomDesign && (
+            <div className="q-line">
+              <div style={{ flex: 1 }}>
+                <p className="q-line-label">Diseño personalizado</p>
+                <p className="q-line-detail">Se define según el alcance de las modificaciones</p>
+              </div>
+              <span className="q-line-estimate">A cotizar</span>
+            </div>
+          )}
 
           <div className="q-total">
-            <span className="q-total-label">
-              {breakdown.hasCustomDesignEstimate ? 'Desde' : 'Total'}
-            </span>
+            <span className="q-total-label">{hasCustomDesign ? 'Desde' : 'Total'}</span>
             <span className="q-total-amount">{formatMXN(breakdown.total)}</span>
           </div>
 
-          {breakdown.hasCustomDesignEstimate && (
+          {hasCustomDesign && (
             <p className="q-estimate-note">
-              Este total no incluye el costo del diseño personalizado. Te contactamos para definirlo según tus necesidades.
+              Este total no incluye el costo del diseño personalizado. Te contactamos para definirlo.
             </p>
           )}
 
@@ -521,7 +565,7 @@ export default function CotizarPage() {
             rel="noopener noreferrer"
             className="q-cta"
           >
-            Solicitar por WhatsApp →
+            Pedir informes por WhatsApp →
           </a>
         </aside>
       </div>

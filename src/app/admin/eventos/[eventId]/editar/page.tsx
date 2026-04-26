@@ -13,6 +13,16 @@ export default async function EditarPage({ params }: Props) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (profile?.role === 'wedding-planner') {
+    redirect(`/admin/eventos/${eventId}/invitados`);
+  }
+
   const { data: event } = await supabase
     .from('events')
     .select('id, title, slug, plan, config')

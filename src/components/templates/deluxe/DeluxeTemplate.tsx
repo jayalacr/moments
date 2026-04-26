@@ -1379,8 +1379,8 @@ const css = `
     margin: 0 0 0.5rem;
   }
   .footer-names { font-family: var(--font-cormorant), Georgia, serif; font-size: 1.5rem; font-style: italic; font-weight: 300; color: var(--ivory); margin: 0; }
-  .footer-powered { font-family: var(--font-jost), sans-serif; font-size: 9px; letter-spacing: 0.2em; color: var(--ivory); opacity: 0.35; margin-top: 2rem; }
-  .footer-brand { font-family: var(--font-montserrat), 'Montserrat', sans-serif; font-weight: 500; color: var(--gold); letter-spacing: 0.05em; opacity: 1; }
+  .footer-powered { font-family: var(--font-jost), sans-serif; font-size: 9px; letter-spacing: 0.2em; text-transform: none; color: var(--ivory); opacity: 0.35; margin-top: 2rem; }
+  .footer-brand { font-family: var(--font-montserrat), 'Montserrat', sans-serif; font-size: 1.1em; font-weight: 400; font-style: normal; color: #b28375; letter-spacing: 0.05em; opacity: 1; }
 
   /* ── Modal ── */
   .modal-backdrop {

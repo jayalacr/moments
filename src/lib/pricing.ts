@@ -6,8 +6,10 @@ export type DesignType = 'template' | 'custom';
 export const BASE_PRICES: Record<Plan, number> = {
   essential: 699,
   plus: 1199,
-  deluxe: 1799,
+  deluxe: 1499,
 };
+
+export const EXTRA_MONTH_PRICE = 99;
 
 export const EXTENSION_PRICES: Record<Plan, Record<ExtensionKey, number>> = {
   essential: { none: 0, '1m': 99, '3m': 249},

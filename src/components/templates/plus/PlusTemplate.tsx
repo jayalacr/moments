@@ -2251,7 +2251,7 @@ const css = `
   .footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--muted); background: #F0E9DF; }
   .footer-names { font-family: var(--font-cormorant), Georgia, serif; font-size: 1.5rem; font-style: italic; font-weight: 300; color: var(--charcoal); margin: 0; }
   .footer-powered { font-family: var(--font-jost), sans-serif; font-size: 9px; letter-spacing: 0.2em; text-transform: none; color: var(--charcoal); opacity: 0.4; margin-top: 2rem; }
-  .footer-brand { font-family: var(--font-montserrat), 'Montserrat', sans-serif; font-weight: 500; letter-spacing: 0.05em; opacity: 1; }
+  .footer-brand { font-family: var(--font-montserrat), 'Montserrat', sans-serif; font-size: 1.1em; font-weight: 400; font-style: normal; color: #b28375; letter-spacing: 0.05em; opacity: 1; }
 
   /* ── Modal ── */
   .modal-backdrop {

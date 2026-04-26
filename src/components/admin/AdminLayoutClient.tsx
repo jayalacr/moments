@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 
 interface AdminLayoutClientProps {
   children: React.ReactNode;
-  profile: any;
+  profile: { full_name: string | null; email: string | null; role: string } | null;
   events: any[];
 }
 
@@ -52,10 +52,10 @@ export default function AdminLayoutClient({ children, profile, events }: AdminLa
           <p
             style={{
               fontFamily: 'var(--font-montserrat)',
-              fontSize: '20px',
-              fontWeight: 300,
-              fontStyle: 'italic',
-              color: '#B28735',
+              fontSize: '26px',
+              fontWeight: 400,
+              fontStyle: 'normal',
+              color: '#b28375',
               margin: 0,
             }}
           >

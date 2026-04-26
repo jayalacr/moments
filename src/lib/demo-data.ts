@@ -130,7 +130,7 @@ export const PLUS_DEMO: PlusConfig = {
     },
   },
   gifts: {
-    giftListUrl: 'https://www.zola.com/',
+    giftListUrl: 'https://www.amazon.com.mx/registries/custom',
     giftListLabel: 'Mesa de Regalos Digital',
     envelopeMessage: 'Su presencia es nuestro mejor regalo, pero si desean tener un detalle, tendremos lluvia de sobres.',
   },
@@ -149,9 +149,9 @@ export const DELUXE_DEMO: DeluxeConfig = {
   location: 'Toscana, Italia',
   targetDate: '2026-09-12T16:00:00',
   music: {
-    url: 'https://res.cloudinary.com/demo/video/upload/v1625587778/sample_audio.mp3',
-    title: 'A Thousand Years',
-    artist: 'Christina Perri (Piano Cover)'
+    url: 'https://drive.google.com/uc?export=download&id=1fPImssW-Q_GTZj9AdQB3oweUYzxSgWlp',
+    title: 'Perfect',
+    artist: 'Ed Sheeran'
   },
   theme: {
     accentColor: '#B8965A',

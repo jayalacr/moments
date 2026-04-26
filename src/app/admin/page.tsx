@@ -72,6 +72,11 @@ export default async function AdminPage() {
     }
   }
 
+  // Wedding planner va directo al panel de invitados de su primer evento asignado
+  if (profile?.role === 'wedding-planner' && events && events.length > 0) {
+    redirect(`/admin/eventos/${events[0].id}/invitados`);
+  }
+
   return (
     <div className="admin-dashboard-container">
       <style>{`

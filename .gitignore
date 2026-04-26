@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -43,3 +44,14 @@ next-env.d.ts
 # claude code files
 /.agents
 /.claude
+
+# Documentos generados (manuales, comparativos, etc.)
+*.docx
+*.xlsx
+*.pptx
+
+# Archivos HTML de referencia/comparativo
+comparativo_planes_boda.html
+
+# Prompts para Claude Code (son instrucciones internas, no código)
+/prompts/

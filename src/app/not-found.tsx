@@ -33,7 +33,7 @@ export default function NotFound() {
         color: '#B8965A',
         marginBottom: '40px'
       }}>
-        Moments
+        moments
       </p>
       
       <div style={{ width: '1px', height: '60px', background: 'linear-gradient(to bottom, transparent, #B8965A)', marginBottom: '40px' }} />

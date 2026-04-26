@@ -58,7 +58,7 @@ export default function SetupPasswordPage() {
       <div style={{ width: '100%', maxWidth: '380px' }}>
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
           <p style={{ fontSize: '11px', letterSpacing: '4px', color: '#C9A87C', textTransform: 'uppercase', marginBottom: '8px' }}>
-            Moments
+            moments
           </p>
           <h1 style={{ fontSize: '22px', fontWeight: 300, color: '#1C1611', letterSpacing: '1px' }}>
             Crea tu contraseña

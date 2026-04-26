@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Cormorant_Garamond, Jost } from 'next/font/google';
+import { Cormorant_Garamond, Jost, Montserrat } from 'next/font/google';
 import { Check, Minus, Sparkles, Star, Crown } from 'lucide-react';
 import Link from 'next/link';
 import { BASE_PRICES, formatMXN } from '@/lib/pricing';
@@ -19,6 +19,12 @@ const jost = Jost({
   variable: '--font-jost',
 });
 
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  weight: ['300', '400', '500'],
+  variable: '--font-montserrat',
+});
+
 type Val = true | false | string;
 type PlanKey = 'essential' | 'plus' | 'deluxe';
 
@@ -32,6 +38,7 @@ interface Feature {
 
 interface Section {
   title: string;
+  description: string;
   features: Feature[];
 }
 
@@ -53,6 +60,7 @@ function getPlanNote(feat: Feature, plan: PlanKey): string | undefined {
 const sections: Section[] = [
   {
     title: 'Presentación',
+    description: 'Frase especial, nombres, padres de familia, cuenta regresiva y música de fondo.',
     features: [
       {
         label: 'Apartado inicial',
@@ -67,6 +75,7 @@ const sections: Section[] = [
   },
   {
     title: 'Fotos',
+    description: 'Fotos de sesión o de compromiso mostradas como galería o carrusel a lo largo de la invitación.',
     features: [
       {
         label: 'Imágenes en la invitación',
@@ -83,6 +92,7 @@ const sections: Section[] = [
   },
   {
     title: 'Logística',
+    description: 'Programa del día, dirección con mapa, dress code y opciones de hospedaje para boda destino.',
     features: [
       { label: 'Itinerario', essential: 'Estático', plus: 'Animado', deluxe: 'Animado' },
       { label: 'Ubicaciones', essential: false, plus: 'Google Maps interactivo', deluxe: 'Google Maps interactivo' },
@@ -93,6 +103,7 @@ const sections: Section[] = [
   },
   {
     title: 'Regalos',
+    description: 'Datos bancarios, enlace a mesa de regalos y opción de sobre en efectivo.',
     features: [
       {
         label: 'Datos de transferencia',
@@ -105,6 +116,7 @@ const sections: Section[] = [
   },
   {
     title: 'Confirmación de asistencia',
+    description: 'Los invitados confirman desde la invitación. Tú controlas cupo y acompañantes desde tu panel.',
     features: [
       {
         label: 'Tipo de confirmación',
@@ -133,6 +145,34 @@ const sections: Section[] = [
           plus: 'Confirmados / Pendientes / Declinaron',
           deluxe: 'Estado individual + reenvío de links',
         },
+      },
+    ],
+  },
+  {
+    title: 'Panel de administración',
+    description: 'Edita tu invitación, previsualiza los cambios y revisa el estado de confirmaciones de tus invitados.',
+    features: [
+      {
+        label: 'Editar invitación',
+        essential: true,
+        plus: true,
+        deluxe: true,
+        note: { essential: 'Textos, fotos y configuración', plus: 'Textos, fotos y configuración', deluxe: 'Textos, fotos y configuración' },
+      },
+      { label: 'Vista previa en tiempo real', essential: true, plus: true, deluxe: true },
+      {
+        label: 'Estadísticas de confirmaciones',
+        essential: false,
+        plus: 'Totales generales',
+        deluxe: 'Por invitado individual',
+        note: { plus: 'Confirmados / Pendientes / Declinaron', deluxe: 'Nombre, estado, cupo y acciones' },
+      },
+      {
+        label: 'Gestión de lista de invitados',
+        essential: false,
+        plus: false,
+        deluxe: true,
+        note: { deluxe: 'Importar lista, reenviar links únicos' },
       },
     ],
   },
@@ -254,11 +294,12 @@ export default function PlanesPage() {
       background: linear-gradient(to bottom, transparent, var(--gold));
     }
     .planes-wordmark {
-      font-family: var(--font-cormorant), Georgia, serif;
-      font-size: 28px;
-      font-weight: 300;
-      letter-spacing: 0.45em;
-      color: #B28735;
+      font-family: var(--font-montserrat), 'Montserrat', sans-serif;
+      font-size: 36px;
+      font-weight: 400;
+      font-style: normal;
+      letter-spacing: 0.18em;
+      color: #b28375;
       margin-bottom: 20px;
     }
     .planes-title {
@@ -471,6 +512,42 @@ export default function PlanesPage() {
     }
     .btn-example:hover { border-bottom-color: var(--gold); }
 
+    /* ── What's included ── */
+    .includes-section {
+      max-width: 1020px; margin: 0 auto 40px; padding: 0 20px;
+    }
+    .includes-title {
+      font-family: var(--font-cormorant), Georgia, serif;
+      font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 300;
+      color: var(--charcoal); margin-bottom: 8px; line-height: 1.2;
+    }
+    .includes-title em { font-style: italic; color: var(--gold); }
+    .includes-subtitle {
+      font-size: 13px; font-weight: 300; color: var(--muted-fg);
+      font-family: var(--font-jost); margin-bottom: 28px; line-height: 1.6;
+    }
+    .includes-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    .includes-card {
+      background: white; border: 1px solid var(--muted);
+      border-radius: 12px; padding: 20px 20px 18px;
+    }
+    .includes-card-label {
+      font-size: 9px; font-weight: 500; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--gold);
+      font-family: var(--font-jost); margin-bottom: 8px;
+    }
+    .includes-card-desc {
+      font-size: 14px; font-weight: 300; color: #5C5248;
+      font-family: var(--font-jost); line-height: 1.6;
+    }
+    @media (max-width: 720px) {
+      .includes-grid { grid-template-columns: 1fr; gap: 10px; }
+    }
+
     /* ── Table ── */
     .plans-table { border: 1px solid var(--muted); border-top: none; border-radius: 0 0 16px 16px; overflow: hidden; }
     .sec-div { background: var(--charcoal); padding: 7px 20px; }
@@ -646,7 +723,7 @@ export default function PlanesPage() {
   `;
 
   return (
-    <div className={`${cormorant.variable} ${jost.variable} planes-root`}>
+    <div className={`${cormorant.variable} ${jost.variable} ${montserrat.variable} planes-root`}>
       <style suppressHydrationWarning>{css}</style>
 
       {/* ── Hero ── */}
@@ -695,6 +772,20 @@ export default function PlanesPage() {
               <Link href={`/plantillas/${key}`} className="plan-card-cta" target="_blank">
                 Ver demo
               </Link>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── What's included ── */}
+      <div className="includes-section">
+        <h2 className="includes-title">¿Qué incluye <em>tu invitación?</em></h2>
+        <p className="includes-subtitle">Cada sección de la invitación se puede personalizar con tu información. Esto es lo que tus invitados verán al abrirla.</p>
+        <div className="includes-grid">
+          {sections.map((section) => (
+            <div key={section.title} className="includes-card">
+              <p className="includes-card-label">{section.title}</p>
+              <p className="includes-card-desc">{section.description}</p>
             </div>
           ))}
         </div>
@@ -819,7 +910,7 @@ export default function PlanesPage() {
         </div>
 
         <p className="plans-note">
-          Tú editas la información · diseño personalizado incluido · <span>Hecho con amor en México</span>
+          Tú editas la información · diseño personalizado incluido
         </p>
       </div>
     </div>

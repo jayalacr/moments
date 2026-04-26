@@ -264,7 +264,7 @@ export async function searchProfiles(query: string): Promise<OrganizerProfile[]>
     .from('profiles')
     .select('id, full_name, email')
     .or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
-    .eq('role', 'organizador')
+    .in('role', ['organizador', 'wedding-planner'])
     .limit(8);
 
   return data ?? [];

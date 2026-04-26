@@ -11,7 +11,7 @@ const C = {
   sidebar: '#FFFFFF',
   border: '#EDE5D8',
   accent: '#1C1611',
-  logo: '#B28735',
+  logo: '#b28375',
   text: '#1C1611',
   muted: '#9C8E82',
   accentLight: 'rgba(201,168,124,0.10)',
@@ -24,7 +24,7 @@ interface Event {
 }
 
 interface AdminSidebarProps {
-  profile: { full_name: string | null; email: string | null } | null;
+  profile: { full_name: string | null; email: string | null; role?: string } | null;
   events: Event[];
   isOpen?: boolean;
   isHidden?: boolean;
@@ -36,6 +36,7 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
   const pathname = usePathname();
   const [isEventsExpanded, setIsEventsExpanded] = useState(true);
   const [expandedEventIds, setExpandedEventIds] = useState<string[]>([]);
+  const isWeddingPlanner = profile?.role === 'wedding-planner';
   
   // Detect active event from URL
   const eventMatch = pathname.match(/\/admin\/eventos\/([^\/]+)/);
@@ -191,10 +192,11 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
             <p
               style={{
                 fontFamily: 'var(--font-montserrat)',
-                fontSize: '24px',
-                fontWeight: 300,
+                fontSize: '30px',
+                fontWeight: 400,
+                fontStyle: 'normal',
                 color: C.logo,
-                letterSpacing: '0.05em',
+                letterSpacing: '0.08em',
                 lineHeight: 1,
               }}
             >
@@ -297,25 +299,29 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
                 {/* Event Sub-menu (Collapsible per event) */}
                 {expandedEventIds.includes(event.id) && (
                   <div style={{ marginLeft: '44px', borderLeft: `1px solid ${C.border}`, paddingLeft: '8px', marginTop: '4px', marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    <Link 
-                      href={`/admin/eventos/${event.id}`} 
-                      className={`nav-item ${isActive(`/admin/eventos/${event.id}`) ? 'active' : ''}`}
-                      style={{ padding: '6px 10px', fontSize: '12px', background: 'transparent' }}
-                    >
-                      <LayoutDashboard size={14} />
-                      Resumen
-                    </Link>
-                    <Link 
-                      href={`/admin/eventos/${event.id}/editar`} 
-                      className={`nav-item ${isParentActive(`/admin/eventos/${event.id}/editar`) ? 'active' : ''}`}
-                      style={{ padding: '6px 10px', fontSize: '12px', background: 'transparent' }}
-                    >
-                      <Edit3 size={14} />
-                      Configurar
-                    </Link>
-                    {(event.plan === 'plus' || event.plan === 'deluxe') && (
-                      <Link 
-                        href={`/admin/eventos/${event.id}/invitados`} 
+                    {!isWeddingPlanner && (
+                      <Link
+                        href={`/admin/eventos/${event.id}`}
+                        className={`nav-item ${isActive(`/admin/eventos/${event.id}`) ? 'active' : ''}`}
+                        style={{ padding: '6px 10px', fontSize: '12px', background: 'transparent' }}
+                      >
+                        <LayoutDashboard size={14} />
+                        Resumen
+                      </Link>
+                    )}
+                    {!isWeddingPlanner && (
+                      <Link
+                        href={`/admin/eventos/${event.id}/editar`}
+                        className={`nav-item ${isParentActive(`/admin/eventos/${event.id}/editar`) ? 'active' : ''}`}
+                        style={{ padding: '6px 10px', fontSize: '12px', background: 'transparent' }}
+                      >
+                        <Edit3 size={14} />
+                        Configurar
+                      </Link>
+                    )}
+                    {(isWeddingPlanner || event.plan === 'plus' || event.plan === 'deluxe') && (
+                      <Link
+                        href={`/admin/eventos/${event.id}/invitados`}
                         className={`nav-item ${isParentActive(`/admin/eventos/${event.id}/invitados`) ? 'active' : ''}`}
                         style={{ padding: '6px 10px', fontSize: '12px', background: 'transparent' }}
                       >
@@ -323,14 +329,16 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
                         Invitados
                       </Link>
                     )}
-                    <Link 
-                      href={`/admin/eventos/${event.id}/preview`} 
-                      className={`nav-item ${isParentActive(`/admin/eventos/${event.id}/preview`) ? 'active' : ''}`}
-                      style={{ padding: '6px 10px', fontSize: '12px', background: 'transparent' }}
-                    >
-                      <Eye size={14} />
-                      Vista previa
-                    </Link>
+                    {!isWeddingPlanner && (
+                      <Link
+                        href={`/admin/eventos/${event.id}/preview`}
+                        className={`nav-item ${isParentActive(`/admin/eventos/${event.id}/preview`) ? 'active' : ''}`}
+                        style={{ padding: '6px 10px', fontSize: '12px', background: 'transparent' }}
+                      >
+                        <Eye size={14} />
+                        Vista previa
+                      </Link>
+                    )}
                   </div>
                 )}
               </div>
@@ -355,6 +363,11 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
             <p style={{ fontSize: '11px', color: C.muted, marginTop: '2px', wordBreak: 'break-all' }}>
               {profile.email}
             </p>
+            {isWeddingPlanner && (
+              <p style={{ fontSize: '9.5px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#B8965A', marginTop: '5px', fontWeight: 600 }}>
+                Wedding Planner
+              </p>
+            )}
           </div>
         )}
         <LogoutButton

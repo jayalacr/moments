@@ -21,7 +21,7 @@ export default function NuevoOrganizadorPage() {
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '28px' }}>
         <Link href="/superadmin/organizadores" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted, textDecoration: 'none' }}>
-          /organizadores
+          /usuarios
         </Link>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted }}>/</span>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.accent }}>nuevo</span>
@@ -29,10 +29,10 @@ export default function NuevoOrganizadorPage() {
 
       <div style={{ marginBottom: '32px' }}>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '3px', color: C.muted, marginBottom: '8px' }}>
-          INVITAR ORGANIZADOR
+          INVITAR USUARIO
         </p>
         <h1 style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', fontWeight: 400, color: C.text }}>
-          Nuevo organizador
+          Nuevo usuario
         </h1>
         <p style={{ marginTop: '8px', fontSize: '13px', color: C.muted, lineHeight: 1.6 }}>
           Se enviará un email de invitación con un enlace para crear su contraseña.
@@ -52,6 +52,16 @@ export default function NuevoOrganizadorPage() {
             Correo electrónico
           </label>
           <input name="email" type="email" required style={inputStyle} placeholder="sofia@ejemplo.com" />
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <label style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '2px', color: C.muted, textTransform: 'uppercase' }}>
+            Rol
+          </label>
+          <select name="role" required style={{ ...inputStyle, cursor: 'pointer' }}>
+            <option value="organizador">Organizador — acceso completo al panel</option>
+            <option value="wedding-planner">Wedding Planner — solo panel de invitados</option>
+          </select>
         </div>
 
         <div style={{ display: 'flex', gap: '10px', paddingTop: '8px' }}>
