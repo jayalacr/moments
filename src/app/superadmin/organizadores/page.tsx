@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { EliminarOrganizadorBtn } from './_components/EliminarOrganizadorBtn';
+import { InvitarOrganizadorForm } from './_components/InvitarOrganizadorForm';
 
 const C = {
   bg: '#0D1117', border: '#222D3F', borderBright: '#2D3F57',
@@ -46,6 +47,9 @@ export default async function UsuariosPage() {
           {usuarios.length} registrado{usuarios.length !== 1 ? 's' : ''}
         </p>
       </div>
+
+      {/* Formulario de invitación */}
+      <InvitarOrganizadorForm />
 
       {/* Lista */}
       {usuarios.length === 0 ? (
