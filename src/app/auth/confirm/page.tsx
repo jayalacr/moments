@@ -9,25 +9,41 @@ export default function AuthConfirmPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const supabase = createClient();
+    async function handleConfirm() {
+      const supabase = createClient();
+      const hash = window.location.hash.substring(1); // quitar el #
 
-    // El cliente de Supabase detecta automáticamente los tokens en el hash de la URL
-    // y los intercambia por una sesión, disparando onAuthStateChange
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-        router.replace('/setup-password');
+      if (!hash) {
+        setError('El enlace ha expirado o es inválido. Solicita una nueva invitación.');
+        return;
       }
-    });
 
-    // Fallback: si después de 5 segundos no pasa nada, mostrar error
-    const timeout = setTimeout(() => {
-      setError('El enlace ha expirado o es inválido. Solicita una nueva invitación.');
-    }, 5000);
+      // Extraer access_token y refresh_token del hash de la URL
+      const params = new URLSearchParams(hash);
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
 
-    return () => {
-      subscription.unsubscribe();
-      clearTimeout(timeout);
-    };
+      if (!accessToken || !refreshToken) {
+        setError('El enlace ha expirado o es inválido. Solicita una nueva invitación.');
+        return;
+      }
+
+      // Establecer la sesión manualmente con los tokens
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+
+      if (sessionError) {
+        setError('Error al verificar la invitación. Solicita una nueva.');
+        return;
+      }
+
+      // Sesión establecida — redirigir a setup-password
+      router.replace('/setup-password');
+    }
+
+    handleConfirm();
   }, [router]);
 
   return (
