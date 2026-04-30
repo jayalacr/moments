@@ -13,14 +13,19 @@ const C = {
 export function InvitarOrganizadorForm() {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    const formData = new FormData(e.currentTarget);
+    setSuccess(false);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
     startTransition(async () => {
       try {
         await inviteOrganizador(formData);
+        setSuccess(true);
+        form.reset();
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al invitar');
       }
@@ -95,6 +100,12 @@ export function InvitarOrganizadorForm() {
         {error && (
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#F87171' }}>
             {error}
+          </p>
+        )}
+
+        {success && (
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#4ADE80' }}>
+            Invitación enviada correctamente.
           </p>
         )}
 

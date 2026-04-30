@@ -3,7 +3,6 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 
 export async function inviteOrganizador(formData: FormData) {
   const name  = (formData.get('name')  as string).trim();
@@ -20,13 +19,12 @@ export async function inviteOrganizador(formData: FormData) {
       full_name: name,
       role,
     },
-    redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback?type=invite`,
+    redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/confirm`,
   });
 
   if (error) throw new Error(error.message);
 
   revalidatePath('/superadmin/organizadores');
-  redirect('/superadmin/organizadores');
 }
 
 export async function deleteOrganizador(organizadorId: string) {

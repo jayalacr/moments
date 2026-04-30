@@ -6,59 +6,76 @@ import { createClient } from '@/lib/supabase/client';
 
 export default function AuthConfirmPage() {
   const router = useRouter();
-  const [status, setStatus] = useState<'loading' | 'error'>('loading');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
-
-    const accessToken  = params.get('access_token');
-    const refreshToken = params.get('refresh_token');
-    const type         = params.get('type');
-    const errorCode    = params.get('error');
-
-    if (errorCode) {
-      router.replace('/login?error=invalid_link');
-      return;
-    }
-
-    if (!accessToken || !refreshToken) {
-      setStatus('error');
-      return;
-    }
-
     const supabase = createClient();
 
-    supabase.auth
-      .setSession({ access_token: accessToken, refresh_token: refreshToken })
-      .then(({ error }) => {
-        if (error) {
-          router.replace('/login?error=invalid_link');
-          return;
-        }
+    // El cliente de Supabase detecta automáticamente los tokens en el hash de la URL
+    // y los intercambia por una sesión, disparando onAuthStateChange
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+        router.replace('/setup-password');
+      }
+    });
 
-        if (type === 'invite') {
-          router.replace('/setup-password');
-        } else if (type === 'recovery') {
-          router.replace('/reset-password');
-        } else {
-          router.replace('/admin');
-        }
-      });
+    // Fallback: si después de 5 segundos no pasa nada, mostrar error
+    const timeout = setTimeout(() => {
+      setError('El enlace ha expirado o es inválido. Solicita una nueva invitación.');
+    }, 5000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, [router]);
 
-  if (status === 'error') {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', fontFamily: 'sans-serif', color: '#9C8E82' }}>
-        Link inválido o expirado.{' '}
-        <a href="/login" style={{ color: '#C9A87C', marginLeft: '4px' }}>Ir al inicio</a>
-      </div>
-    );
-  }
-
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', fontFamily: 'sans-serif', color: '#9C8E82' }}>
-      Verificando…
+    <div style={{
+      minHeight: '100dvh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#0D1117',
+      padding: '24px',
+    }}>
+      <div style={{ textAlign: 'center', maxWidth: '380px' }}>
+        {error ? (
+          <>
+            <p style={{
+              fontFamily: 'var(--font-mono)', fontSize: '14px',
+              color: '#F87171', marginBottom: '16px',
+            }}>
+              {error}
+            </p>
+            <a
+              href="/login"
+              style={{
+                fontFamily: 'var(--font-mono)', fontSize: '12px',
+                color: '#2DD4BF', textDecoration: 'underline',
+              }}
+            >
+              Ir al login
+            </a>
+          </>
+        ) : (
+          <>
+            <p style={{
+              fontFamily: 'var(--font-mono)', fontSize: '9px',
+              letterSpacing: '3px', color: '#7A90A8',
+              textTransform: 'uppercase', marginBottom: '12px',
+            }}>
+              moments
+            </p>
+            <p style={{
+              fontFamily: 'var(--font-mono)', fontSize: '14px',
+              color: '#EAF0FB',
+            }}>
+              Verificando invitación...
+            </p>
+          </>
+        )}
+      </div>
     </div>
   );
 }
