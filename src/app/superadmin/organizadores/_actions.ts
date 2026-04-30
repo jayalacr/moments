@@ -3,7 +3,6 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 
 export async function deleteOrganizador(organizadorId: string) {
   const supabase = await createClient();
@@ -30,26 +29,3 @@ export async function deleteOrganizador(organizadorId: string) {
   revalidatePath('/superadmin/organizadores');
 }
 
-export async function inviteOrganizador(formData: FormData) {
-  const name  = (formData.get('name')  as string).trim();
-  const email = (formData.get('email') as string).trim();
-  const role  = (formData.get('role')  as string).trim() || 'organizador';
-
-  if (!name || !email) throw new Error('Nombre y email son requeridos.');
-  if (!['organizador', 'wedding-planner'].includes(role)) throw new Error('Rol inválido.');
-
-  const supabase = createAdminClient();
-
-  const { error } = await supabase.auth.admin.inviteUserByEmail(email, {
-    data: {
-      full_name: name,
-      role,
-    },
-    redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/confirm`,
-  });
-
-  if (error) throw new Error(error.message);
-
-  revalidatePath('/superadmin/organizadores');
-  redirect('/superadmin/organizadores');
-}

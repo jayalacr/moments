@@ -1,7 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import { EliminarOrganizadorBtn } from './_components/EliminarOrganizadorBtn';
 
 const C = {
@@ -36,30 +35,16 @@ export default async function UsuariosPage() {
   return (
     <div style={{ padding: '32px 40px', maxWidth: '680px' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '32px' }}>
-        <div>
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '3px', color: C.muted, marginBottom: '8px' }}>
-            SISTEMA
-          </p>
-          <h1 style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', fontWeight: 400, color: C.text }}>
-            Usuarios
-          </h1>
-          <p style={{ marginTop: '4px', fontFamily: 'var(--font-mono)', fontSize: '12px', color: C.muted }}>
-            {usuarios.length} registrado{usuarios.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <Link
-          href="/superadmin/organizadores/nuevo"
-          style={{
-            padding: '9px 18px', backgroundColor: C.accent,
-            color: '#0D1117', borderRadius: '6px',
-            fontFamily: 'var(--font-mono)', fontSize: '11px',
-            letterSpacing: '2px', textTransform: 'uppercase',
-            fontWeight: 700, textDecoration: 'none',
-          }}
-        >
-          + Invitar
-        </Link>
+      <div style={{ marginBottom: '32px' }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '3px', color: C.muted, marginBottom: '8px' }}>
+          SISTEMA
+        </p>
+        <h1 style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', fontWeight: 400, color: C.text }}>
+          Usuarios
+        </h1>
+        <p style={{ marginTop: '4px', fontFamily: 'var(--font-mono)', fontSize: '12px', color: C.muted }}>
+          {usuarios.length} registrado{usuarios.length !== 1 ? 's' : ''}
+        </p>
       </div>
 
       {/* Lista */}

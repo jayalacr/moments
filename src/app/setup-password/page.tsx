@@ -37,9 +37,6 @@ export default function SetupPasswordPage() {
       return;
     }
 
-    // Enviar email de bienvenida (sin bloquear el flujo si falla)
-    fetch('/api/welcome-email', { method: 'POST' }).catch(() => {});
-
     router.push('/admin');
   }
 
