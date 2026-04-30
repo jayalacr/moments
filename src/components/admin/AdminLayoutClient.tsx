@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { Menu } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
 interface AdminLayoutClientProps {
   children: React.ReactNode;
@@ -14,7 +15,13 @@ interface AdminLayoutClientProps {
 export default function AdminLayoutClient({ children, profile, events }: AdminLayoutClientProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarHidden, setIsSidebarHidden] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  React.useEffect(() => {
+    setIsNavigating(false);
+  }, [pathname, searchParams]);
 
   const isPreview = pathname?.includes('/preview');
 
@@ -72,8 +79,19 @@ export default function AdminLayoutClient({ children, profile, events }: AdminLa
           isHidden={isSidebarHidden}
           onToggleCollapse={() => setIsSidebarHidden(!isSidebarHidden)}
           onClose={() => setIsMobileMenuOpen(false)} 
+          onNavigate={(href) => {
+            if (pathname !== href) setIsNavigating(true);
+          }}
         />
-        <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', transition: 'margin-left 0.3s ease' }}>
+        <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', transition: 'margin-left 0.3s ease', position: 'relative' }}>
+          {isNavigating && (
+            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#F8F3EC]/80 backdrop-blur-sm animate-in fade-in duration-300">
+              <Loader2 className="w-10 h-10 animate-spin" style={{ color: '#C9A87C' }} />
+              <p className="mt-4 text-sm tracking-widest uppercase opacity-60" style={{ color: '#1C1611', fontFamily: 'var(--font-jost)' }}>
+                Cargando...
+              </p>
+            </div>
+          )}
           {children}
         </main>
       </div>

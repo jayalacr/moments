@@ -30,9 +30,10 @@ interface AdminSidebarProps {
   isHidden?: boolean;
   onToggleCollapse?: () => void;
   onClose?: () => void;
+  onNavigate?: (href: string) => void;
 }
 
-export default function AdminSidebar({ profile, events, isOpen, isHidden, onToggleCollapse, onClose }: AdminSidebarProps) {
+export default function AdminSidebar({ profile, events, isOpen, isHidden, onToggleCollapse, onClose, onNavigate }: AdminSidebarProps) {
   const pathname = usePathname();
   const [isEventsExpanded, setIsEventsExpanded] = useState(true);
   const [expandedEventIds, setExpandedEventIds] = useState<string[]>([]);
@@ -249,6 +250,14 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
         <Link 
           href="/admin" 
           className={`nav-item ${isActive('/admin') ? 'active' : ''}`}
+          onClick={(e) => {
+            // Only trigger loading if we are clicking the link itself, not the expand button
+            const target = e.target as HTMLElement;
+            if (!target.closest('.collapse-btn')) {
+              onNavigate?.('/admin');
+              onClose?.();
+            }
+          }}
         >
           <Calendar size={18} />
           <span>Mis eventos</span>
@@ -273,6 +282,13 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
                 <Link
                   href={`/admin/eventos/${event.id}`}
                   className={`nav-item sub ${activeEventId === event.id ? 'active' : ''}`}
+                  onClick={(e) => {
+                    const target = e.target as HTMLElement;
+                    if (!target.closest('.collapse-btn')) {
+                      onNavigate?.(`/admin/eventos/${event.id}`);
+                      onClose?.();
+                    }
+                  }}
                 >
                   <span className="dot" />
                   <span style={{ 
@@ -304,6 +320,7 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
                         href={`/admin/eventos/${event.id}`}
                         className={`nav-item ${isActive(`/admin/eventos/${event.id}`) ? 'active' : ''}`}
                         style={{ padding: '6px 10px', fontSize: '12px', background: 'transparent' }}
+                        onClick={() => { onNavigate?.(`/admin/eventos/${event.id}`); onClose?.(); }}
                       >
                         <LayoutDashboard size={14} />
                         Resumen
@@ -314,6 +331,7 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
                         href={`/admin/eventos/${event.id}/editar`}
                         className={`nav-item ${isParentActive(`/admin/eventos/${event.id}/editar`) ? 'active' : ''}`}
                         style={{ padding: '6px 10px', fontSize: '12px', background: 'transparent' }}
+                        onClick={() => { onNavigate?.(`/admin/eventos/${event.id}/editar`); onClose?.(); }}
                       >
                         <Edit3 size={14} />
                         Configurar
@@ -324,6 +342,7 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
                         href={`/admin/eventos/${event.id}/invitados`}
                         className={`nav-item ${isParentActive(`/admin/eventos/${event.id}/invitados`) ? 'active' : ''}`}
                         style={{ padding: '6px 10px', fontSize: '12px', background: 'transparent' }}
+                        onClick={() => { onNavigate?.(`/admin/eventos/${event.id}/invitados`); onClose?.(); }}
                       >
                         <Users size={14} />
                         Invitados
@@ -334,6 +353,7 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
                         href={`/admin/eventos/${event.id}/preview`}
                         className={`nav-item ${isParentActive(`/admin/eventos/${event.id}/preview`) ? 'active' : ''}`}
                         style={{ padding: '6px 10px', fontSize: '12px', background: 'transparent' }}
+                        onClick={() => { onNavigate?.(`/admin/eventos/${event.id}/preview`); onClose?.(); }}
                       >
                         <Eye size={14} />
                         Vista previa
