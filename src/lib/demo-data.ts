@@ -3,6 +3,7 @@
 import { EssentialConfig } from '@/components/templates/essential/EssentialTemplate';
 import { PlusConfig } from '@/components/templates/plus/PlusTemplate';
 import { DeluxeConfig } from '@/components/templates/deluxe/DeluxeTemplate';
+import { ClassicEleganceConfig } from '@/components/templates/classic-elegance/ClassicEleganceTemplate';
 
 export const ESSENTIAL_DEMO: EssentialConfig = {
   heroLabel: 'Nuestro gran día',
@@ -221,4 +222,79 @@ export const DELUXE_DEMO: DeluxeConfig = {
     dietaryOptions: ['Sin restricción', 'Vegetariano', 'Vegano', 'Sin gluten'],
   },
   sections: { quote: true, parents: true, itinerary: true, dressCode: true, destination: true, gifts: true }
+};
+
+export const CLASSIC_ELEGANCE_DEMO: ClassicEleganceConfig = {
+  heroLabel: 'Matrimonio',
+  couple: { person1: 'Xavier', person2: 'Nayely' },
+  fullNames: { person1: 'Xavier Muñoz', person2: 'Nayely Castillo Ramos' },
+  date: { day: '19', month: 'Septiembre', year: '2026' },
+  location: 'Porterville, California',
+  targetDate: '2026-09-19T13:30:00',
+  monogram: 'X & N',
+  music: {
+    url: 'https://drive.google.com/uc?export=download&id=1fPImssW-Q_GTZj9AdQB3oweUYzxSgWlp',
+    title: 'A Thousand Years',
+    artist: 'Christina Perri',
+  },
+  quote: {
+    text: '”La música es la mediación entre la vida sensorial y la espiritual.”',
+    reference: 'Ludwig van Beethoven',
+  },
+  photos: [
+    { role: 'hero', url: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1600&q=85', objectPosition: 'center 40%' },
+    { role: 'block', afterSection: 'parents', url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1400&q=80' },
+    { role: 'block', afterSection: 'itinerary', url: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1400&q=80' },
+  ],
+  parents: {
+    person1: 'Paul Castillo Landin & Bertha Ramos Espindola',
+    person2: 'Juan Muñoz & Bianca Muñoz',
+  },
+  itinerary: [
+    {
+      time: '1:30 PM',
+      name: 'Ceremonia Religiosa',
+      venue: 'Holy Cross Catholic Church',
+      address: '1765 N Newcomb St, Porterville, CA 93257',
+      mapsUrl: 'https://maps.google.com/?q=1765+N+Newcomb+St+Porterville+CA',
+    },
+    {
+      time: '3:20 PM',
+      name: 'Recepción',
+      venue: 'Loya Ranch',
+      address: '1121 Maple Ave, Lindsay, CA 93247',
+      mapsUrl: 'https://maps.google.com/?q=1121+Maple+Ave+Lindsay+CA',
+    },
+  ],
+  dressCode: {
+    label: 'Formal',
+    women: 'Vestido largo o midi en tonos tierra, salvia o champagne.',
+    men: 'Traje oscuro con corbata o smoking.',
+    swatches: [
+      { color: '#E8D5C4', name: 'Champagne' },
+      { color: '#8B9D77', name: 'Salvia' },
+      { color: '#B2AA89', name: 'Oro Viejo' },
+      { color: '#F8F4F1', name: 'Crema' },
+    ],
+  },
+  gifts: {
+    bank: 'Wells Fargo',
+    holder: 'Xavier Muñoz',
+    clabe: '062 000 00412345678 9',
+    giftListUrl: 'https://www.amazon.com/wedding',
+    giftListLabel: 'Mesa de Regalos Amazon',
+    envelopeMessage: 'Tu presencia es nuestro mejor regalo. Si deseas tener un detalle, agradecemos el sobre.',
+  },
+  rsvpDeadline: '1 de Agosto de 2026',
+  rsvp: {
+    maxPlusOnes: 2,
+    dietaryOptions: ['Sin restricción', 'Vegetariano', 'Vegano', 'Sin gluten'],
+  },
+  sections: {
+    quote: true,
+    parents: true,
+    itinerary: true,
+    dressCode: true,
+    gifts: true,
+  },
 };

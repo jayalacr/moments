@@ -31,6 +31,7 @@ export interface TemplateEntry {
 import EssentialTemplate from '@/components/templates/essential/EssentialTemplate';
 import PlusTemplate from '@/components/templates/plus/PlusTemplate';
 import DeluxeTemplate from '@/components/templates/deluxe/DeluxeTemplate';
+import ClassicEleganceTemplate from '@/components/templates/classic-elegance/ClassicEleganceTemplate';
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'essential-demo': {
@@ -49,7 +50,13 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
     component: DeluxeTemplate as TemplateComponent,
     label: 'Deluxe — Clásico',
     plan: 'deluxe',
-  }
+  },
+
+  'classic-elegance': {
+    component: ClassicEleganceTemplate as TemplateComponent,
+    label: 'Classic Elegance',
+    plan: 'deluxe',
+  },
 
   // Agrega nuevos templates aquí:
   // 'boda-rustica-2025': {
