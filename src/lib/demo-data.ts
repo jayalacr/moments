@@ -268,13 +268,12 @@ export const CLASSIC_ELEGANCE_DEMO: ClassicEleganceConfig = {
   ],
   dressCode: {
     label: 'Formal',
-    women: 'Vestido largo o midi en tonos tierra, salvia o champagne.',
+    women: 'Vestido largo o midi en negro o dorado.',
     men: 'Traje oscuro con corbata o smoking.',
     swatches: [
-      { color: '#E8D5C4', name: 'Champagne' },
-      { color: '#8B9D77', name: 'Salvia' },
-      { color: '#B2AA89', name: 'Oro Viejo' },
-      { color: '#F8F4F1', name: 'Crema' },
+      { color: '#000000', name: 'Negro' },
+      { color: '#D4AF37', name: 'Dorado' },
+      { color: '#1A1A1A', name: 'Ónix' },
     ],
   },
   gifts: {

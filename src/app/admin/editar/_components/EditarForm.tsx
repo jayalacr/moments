@@ -145,25 +145,31 @@ const DISPLAY_FONT_FAMILY: Record<string, string> = {
   cormorant:     "'Cormorant Garamond', Georgia, serif",
   playfair:      "'Playfair Display', Georgia, serif",
   'eb-garamond': "'EB Garamond', Georgia, serif",
+  cinzel:        "'Cinzel', Georgia, serif",
+  pinyon:        "'Pinyon Script', cursive",
 };
 const DISPLAY_FONT_LABEL: Record<string, string> = {
   cormorant:     'Cormorant Garamond',
   playfair:      'Playfair Display',
   'eb-garamond': 'EB Garamond',
+  cinzel:        'Cinzel',
+  pinyon:        'Pinyon Script',
 };
 const BODY_FONT_FAMILY: Record<string, string> = {
   jost:       "'Jost', system-ui, sans-serif",
   raleway:    "'Raleway', system-ui, sans-serif",
   montserrat: "'Montserrat', system-ui, sans-serif",
+  lora:       "'Lora', Georgia, serif",
 };
 const BODY_FONT_LABEL: Record<string, string> = {
   jost:       'Jost',
   raleway:    'Raleway',
   montserrat: 'Montserrat',
+  lora:       'Lora',
 };
 
 const GOOGLE_FONTS_URL =
-  'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Playfair+Display:ital,wght@0,400;1,400&family=EB+Garamond:ital,wght@0,400;1,400&family=Jost:wght@300&family=Raleway:wght@300&family=Montserrat:wght@300&display=swap';
+  'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Playfair+Display:ital,wght@0,400;1,400&family=EB+Garamond:ital,wght@0,400;1,400&family=Cinzel:wght@400&family=Pinyon+Script:wght@400&family=Jost:wght@300&family=Raleway:wght@300&family=Montserrat:wght@300&family=Lora:ital,wght@0,400;1,400&display=swap';
 
 // ---------------------------------------------------------------------------
 // Style factories (depend on colors)
@@ -1079,6 +1085,8 @@ export default function EditarForm({
                 <option value="cormorant">Cormorant Garamond</option>
                 <option value="playfair">Playfair Display</option>
                 <option value="eb-garamond">EB Garamond</option>
+                <option value="cinzel">Cinzel</option>
+                <option value="pinyon">Pinyon Script</option>
               </select>
               <p style={{
                 marginTop: '8px',
@@ -1101,6 +1109,7 @@ export default function EditarForm({
                 <option value="jost">Jost</option>
                 <option value="raleway">Raleway</option>
                 <option value="montserrat">Montserrat</option>
+                <option value="lora">Lora</option>
               </select>
               <p style={{
                 marginTop: '8px',

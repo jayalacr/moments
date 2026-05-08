@@ -99,18 +99,23 @@ interface Props {
 // ---------------------------------------------------------------------------
 const css = `
   :root {
-    --sage:     #E5EAE4;
-    --beige:    #F5F5F1;
-    --gold:     #A68D5B;
     --white:    #FFFFFF;
-    --dark:     #2C2C2C;
-    --muted:    #D1D1D1;
-    --ivory:    var(--beige);
-    --charcoal: var(--dark);
+    --black:    #000000;
+    --gold:     #D4AF37;
+    --gray:     #F5F5F5;
+    --beige:    #F8F4F1;
+    --charcoal: #1C1C1C;
+    --dark:     #1A1A1A;
+    --accent:   #C5A059;
+    --font-pinyon: 'Pinyon Script';
+    --font-cinzel: 'Cinzel';
+    --font-lora: 'Lora';
+    --font-jost: 'Jost';
+    --torn-paper: url('/templates/classic-elegance/torn-paper.svg');
   }
 
   .ce-root { 
-    background: var(--beige); 
+    background: var(--white); 
     color: var(--dark); 
     font-family: var(--font-lora), serif;
     overflow-x: hidden;
@@ -126,18 +131,25 @@ const css = `
   
   /* ── Torn Paper (inline SVG) ── */
   .torn-svg { display: block; width: 100%; pointer-events: none; position: relative; z-index: 10; }
-  .torn-svg--top  { margin-top: -139px; }
-  .torn-svg--bottom { margin-bottom: -139px; }
+  .torn-svg--top  { margin-top: -80px; }
+  .torn-svg--bottom { margin-bottom: -80px; }
+  @media (min-width: 768px) {
+    .torn-svg--top  { margin-top: -139px; }
+    .torn-svg--bottom { margin-bottom: -139px; }
+  }
 
   /* ── Sections ── */
-  .section-pad { padding: 14rem 2rem; }
+  .section-pad { padding: 5rem 1.5rem; }
+  @media (min-width: 768px) { .section-pad { padding: 8rem 4rem; } }
   /* Paper grain texture on white sections */
   .bg-white {
     background-color: var(--white);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='paper'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04' numOctaves='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.03'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paper)'/%3E%3C/svg%3E");
   }
-  .bg-beige { background: var(--beige); }
-  .bg-sage { background: var(--sage); }
+  .bg-black { background: var(--black); color: var(--white); }
+  .bg-black .label { color: var(--gold); }
+  .bg-black h2 { color: var(--white); }
+  .bg-gray  { background: var(--gray); color: var(--black); }
 
   /* ── Hero Deluxe Style ── */
   .ce-hero {
@@ -187,15 +199,24 @@ const css = `
   }
   .ce-cd-number { animation: pulse-gold 3s ease-in-out infinite; display: inline-block; }
   
+  .ce-cd-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; md:gap: 3.5rem; }
+  @media (max-width: 640px) {
+    .ce-cd-container { flex-wrap: nowrap; gap: 0.5rem; padding: 0 1rem; }
+  }
+
   .ce-cd-card {
     background: var(--white);
-    padding: 2rem 1rem;
+    padding: 1.5rem 0.75rem;
     border-radius: 12px;
-    min-width: 120px;
+    min-width: 80px;
     box-shadow: 0 15px 45px rgba(0,0,0,0.03);
     border: 1px solid rgba(166, 141, 91, 0.1);
     position: relative;
     overflow: hidden;
+    flex: 1;
+  }
+  @media (min-width: 768px) {
+    .ce-cd-card { min-width: 140px; padding: 2.5rem 1.5rem; }
   }
   .ce-cd-card::after {
     content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
@@ -207,20 +228,25 @@ const css = `
   /* ── Itinerary Arch (Preserved) ── */
   .ce-arch-container {
     background: var(--white); border-radius: 400px 400px 0 0; max-width: 550px; margin: 0 auto;
-    padding: 6rem 2.5rem 4rem; border: 1px solid var(--sage); position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.02);
+    padding: 4rem 1.25rem 2.5rem; border: 1px solid var(--gold); position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.02);
     overflow: hidden;
   }
-  .ce-arch-line { position: absolute; left: 50%; top: 10rem; bottom: 4rem; width: 1px; background: var(--sage); transform: translateX(-50%); }
-  .ce-itinerary-item { position: relative; z-index: 1; margin-bottom: 10rem; display: flex; flex-direction: column; align-items: center; background: var(--white); padding: 1rem 2.5rem; border-radius: 4px; }
+  @media (min-width: 768px) { .ce-arch-container { padding: 6rem 2.5rem 4rem; } }
+  .ce-arch-line { position: absolute; left: 50%; top: 8rem; bottom: 4rem; width: 1px; background: var(--gold); transform: translateX(-50%); opacity: 0.2; z-index: 1; }
+  .ce-itinerary-item { 
+    position: relative; z-index: 2; margin-bottom: 5rem; display: flex; flex-direction: column; align-items: center; 
+    padding: 1rem 1.5rem; background: var(--white);
+  }
+  @media (min-width: 768px) { .ce-itinerary-item { margin-bottom: 10rem; padding: 1rem 2.5rem; } }
 
   /* ── Photo Blocks ── */
-  .photo-block { width: 100%; aspect-ratio: 21 / 9; overflow: hidden; position: relative; }
+  .photo-block { width: 100%; aspect-ratio: 16 / 10; overflow: hidden; position: relative; }
   .photo-block-img { width: 100%; height: 100%; object-fit: cover; }
-  .duo-block { display: flex; width: 100%; aspect-ratio: 2 / 1; gap: 4px; overflow: hidden; }
-  .trio-block { display: flex; width: 100%; aspect-ratio: 12 / 5; gap: 4px; overflow: hidden; }
+  .duo-block { display: flex; width: 100%; aspect-ratio: 16 / 11; gap: 4px; overflow: hidden; }
+  .trio-block { display: flex; width: 100%; aspect-ratio: 16 / 8; gap: 4px; overflow: hidden; }
   
   /* ── RSVP Deluxe ── */
-  .rsvp-section { padding: 8rem 2rem; background: var(--white); text-align: center; }
+  .rsvp-section { padding: 4rem 2rem 8rem; background: var(--white); text-align: center; }
   .ce-btn-primary { 
     background: var(--gold); color: white; padding: 1.25rem 3.5rem; font-family: var(--font-cinzel), serif;
     letter-spacing: 0.25em; text-transform: uppercase; border: none; cursor: pointer; transition: all 0.4s ease;
@@ -241,8 +267,7 @@ const css = `
   }
   .gift-card-v2 { border-radius: 20px; overflow: hidden; position: relative; transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.35s ease; cursor: default; }
   .gift-card-v2:hover { transform: translateY(-5px); box-shadow: 0 20px 48px rgba(28,22,17,0.13); }
-  .gift-card-v2--transfer { background: color-mix(in srgb, var(--beige) 94%, var(--gold) 6%); border: 1px solid rgba(166,141,91,0.22); padding: 1.75rem; display: flex; flex-direction: column; gap: 1.25rem; }
-  .gift-card-v2--transfer::after { content: ''; position: absolute; top: -50px; right: -50px; width: 160px; height: 160px; border-radius: 50%; background: radial-gradient(circle, rgba(166,141,91,0.09) 0%, transparent 70%); pointer-events: none; }
+  .gift-card-v2--transfer { background: #FBF9F6; border: 1px solid rgba(166,141,91,0.15); padding: 1.75rem; display: flex; flex-direction: column; gap: 1.25rem; }
   .gct-header { display: flex; align-items: center; justify-content: space-between; }
   .gct-badge { font-family: var(--font-jost), sans-serif; font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); opacity: 0.7; }
   .gct-icon-wrap { width: 34px; height: 34px; border-radius: 10px; background: rgba(166,141,91,0.1); border: 1px solid rgba(166,141,91,0.25); display: flex; align-items: center; justify-content: center; }
@@ -252,12 +277,12 @@ const css = `
   .gct-row-value { font-family: var(--font-jost), sans-serif; font-size: 13px; font-weight: 400; color: var(--dark); letter-spacing: 0.01em; }
   .gct-row-value--mono { font-size: 12px; letter-spacing: 0.12em; opacity: 0.85; }
   .gct-divider { height: 1px; background: rgba(166,141,91,0.12); margin: 0; }
-  .gift-card-v2--list { background: var(--beige); border: 1px solid var(--muted); padding: 2rem 1.75rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center; }
-  .gcl-icon-ring { width: 52px; height: 52px; border-radius: 50%; background: color-mix(in srgb, var(--beige) 82%, var(--gold)); border: 1px solid rgba(166,141,91,0.3); display: flex; align-items: center; justify-content: center; margin-bottom: 0.25rem; }
+  .gift-card-v2--list { background: #FBF9F6; border: 1px solid rgba(166,141,91,0.15); padding: 2rem 1.75rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center; }
+  .gcl-icon-ring { width: 52px; height: 52px; border-radius: 50%; background: var(--white); border: 1px solid rgba(166,141,91,0.2); display: flex; align-items: center; justify-content: center; margin-bottom: 0.25rem; }
   .gcl-title { font-family: var(--font-lora), serif; font-size: 1.3rem; font-style: italic; font-weight: 400; color: var(--dark); margin: 0; }
   .gcl-subtitle { font-family: var(--font-jost), sans-serif; font-size: 12px; color: rgba(44,44,44,0.5); line-height: 1.7; max-width: 180px; margin: 0.1rem 0 0.75rem; }
-  .gift-card-v2--envelope { background: var(--beige); border: 1px solid var(--muted); padding: 2rem 1.75rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center; }
-  .gce-icon-ring { width: 52px; height: 52px; border-radius: 50%; background: rgba(166,141,91,0.1); border: 1px solid rgba(166,141,91,0.3); display: flex; align-items: center; justify-content: center; margin-bottom: 0.25rem; }
+  .gift-card-v2--envelope { background: #FBF9F6; border: 1px solid rgba(166,141,91,0.15); padding: 2rem 1.75rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center; }
+  .gce-icon-ring { width: 52px; height: 52px; border-radius: 50%; background: var(--white); border: 1px solid rgba(166,141,91,0.2); display: flex; align-items: center; justify-content: center; margin-bottom: 0.25rem; }
   .gce-note { font-family: var(--font-lora), serif; font-size: 1.05rem; font-style: italic; color: rgba(44,44,44,0.5); line-height: 1.65; max-width: 200px; margin: 0.1rem 0 0; }
   .ce-btn-outline { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem; border-radius: 100px; border: 1px solid var(--gold); color: var(--gold); font-family: var(--font-jost), sans-serif; font-size: 11px; letter-spacing: 0.1em; text-decoration: none; transition: background 0.2s, color 0.2s; }
   .ce-btn-outline:hover { background: var(--gold); color: white; }
@@ -343,6 +368,41 @@ const css = `
 `;
 
 // ---------------------------------------------------------------------------
+// Theme CSS Override
+// ---------------------------------------------------------------------------
+function buildThemeCSS(theme?: ClassicEleganceConfig['theme']): string {
+  if (!theme) return '';
+  const displayFontMap: Record<string, string> = {
+    pinyon:    'var(--font-pinyon), cursive',
+    cinzel:    'var(--font-cinzel), serif',
+    cormorant: 'var(--font-cormorant), serif',
+    playfair:  'var(--font-playfair), serif',
+  };
+  const bodyFontMap: Record<string, string> = {
+    lora:      'var(--font-lora), serif',
+    jost:      'var(--font-jost), sans-serif',
+    montserrat:'var(--font-montserrat), sans-serif',
+  };
+  const lines: string[] = [];
+  const rootVars: string[] = [];
+  if (theme.accentColor) rootVars.push(`--gold: ${theme.accentColor}; --accent: ${theme.accentColor};`);
+  if (rootVars.length) lines.push(`:root { ${rootVars.join(' ')} }`);
+  if (theme.displayFont && displayFontMap[theme.displayFont]) {
+    const ff = displayFontMap[theme.displayFont];
+    lines.push(`.font-display { font-family: ${ff}; }`);
+    lines.push(`.ce-hero-names { font-family: ${ff}; }`);
+    lines.push(`.ce-loader-initial { font-family: ${ff}; }`);
+    lines.push(`.ce-footer-monogram, .ce-footer-names { font-family: ${ff}; }`);
+  }
+  if (theme.bodyFont && bodyFontMap[theme.bodyFont]) {
+    const ff = bodyFontMap[theme.bodyFont];
+    lines.push(`.font-body { font-family: ${ff}; }`);
+    lines.push(`.ce-root { font-family: ${ff}; }`);
+  }
+  return lines.join('\n');
+}
+
+// ---------------------------------------------------------------------------
 // Torn Paper Path Generator
 // ---------------------------------------------------------------------------
 function buildTornPath(seed: number): string {
@@ -424,9 +484,9 @@ const TornEdge = ({ position, color = 'var(--white)' }: { position: 'top' | 'bot
 };
 
 const SectionHeading = ({ eyebrow, title, light = false }: { eyebrow?: string; title: string; light?: boolean }) => (
-  <div className="text-center mb-16 reveal">
+  <div className="text-center mb-12 md:mb-16 reveal">
     {eyebrow && <p className="label mb-4" style={{ color: light ? 'rgba(255,255,255,0.6)' : 'var(--gold)' }}>{eyebrow}</p>}
-    <h2 className="font-heading text-4xl" style={{ color: light ? 'var(--white)' : 'var(--dark)' }}>{title}</h2>
+    <h2 className="font-heading text-3xl md:text-4xl" style={{ color: light ? 'var(--white)' : 'var(--dark)' }}>{title}</h2>
   </div>
 );
 
@@ -582,8 +642,7 @@ export default function ClassicEleganceTemplate({
 
     // Agrupar por layout si es necesario (simplificado para Classic Elegance)
     return (
-      <div className="w-full relative overflow-hidden bg-beige">
-        <TornEdge position="top" color="var(--white)" />
+      <div className="w-full relative overflow-hidden bg-white">
         <div className="flex flex-col gap-1">
           {blocks.map((p, i) => {
             if (p.layout === 'duo' && i % 2 === 0 && blocks[i+1]?.layout === 'duo') {
@@ -608,17 +667,19 @@ export default function ClassicEleganceTemplate({
             );
           })}
         </div>
-        <TornEdge position="bottom" color="var(--white)" />
       </div>
     );
   }
 
+  const themeCSS = buildThemeCSS(config.theme);
+
   if (!isLoaded) {
     return (
       <div className="flex-1 flex flex-col">
-      <ContentProtection enabled={true}>
+      <ContentProtection enabled={false}>
         <div className="ce-root">
           <style dangerouslySetInnerHTML={{ __html: css }} />
+          {themeCSS && <style dangerouslySetInnerHTML={{ __html: themeCSS }} />}
           <div className={`ce-loader ${loaderOut ? 'ce-loader--out' : ''}`}>
             <div className="ce-loader-monogram">
               {config.monogram ? (
@@ -647,6 +708,7 @@ export default function ClassicEleganceTemplate({
     <ContentProtection enabled={true}>
       <div className="ce-root">
         <style dangerouslySetInnerHTML={{ __html: css }} />
+        {themeCSS && <style dangerouslySetInnerHTML={{ __html: themeCSS }} />}
         {audioSrc && (
           <audio 
             ref={audioRef} 
@@ -691,9 +753,9 @@ export default function ClassicEleganceTemplate({
             <h1 className="ce-hero-names">
               {config.couple?.person1} <span className="ce-hero-amp">&</span> {config.couple?.person2}
             </h1>
-            <div className="flex items-center gap-4 text-white opacity-80">
+            <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 text-white opacity-80">
               <span className="label" style={{ color: 'white' }}>{config.date?.day} · {config.date?.month} · {config.date?.year}</span>
-              <div className="w-1 h-1 rounded-full bg-gold" />
+              <div className="hidden md:block w-1 h-1 rounded-full bg-gold" />
               <span className="label" style={{ color: 'white' }}>{config.location}</span>
             </div>
           </div>
@@ -712,34 +774,31 @@ export default function ClassicEleganceTemplate({
       <section className="section-pad bg-white relative">
         <div className="max-w-5xl mx-auto text-center reveal">
           <SectionHeading eyebrow="Faltan muy pocos días" title="Cuenta Regresiva" />
-          <div className="flex flex-wrap justify-center gap-8 md:gap-14 mt-20">
+          <div className="ce-cd-container mt-12 md:mt-20">
             {[
               { v: timeLeft.days, l: 'DÍAS' },
               { v: timeLeft.hours, l: 'HORAS' },
-              { v: timeLeft.minutes, l: 'MINUTOS' },
-              { v: timeLeft.seconds, l: 'SEGUNDOS' }
+              { v: timeLeft.minutes, l: 'MIN' },
+              { v: timeLeft.seconds, l: 'SEG' }
             ].map((u, i) => (
               <div key={i} className="ce-cd-card reveal" style={{ transitionDelay: `${i * 150}ms` }}>
-                <span className="ce-cd-number font-heading text-5xl md:text-7xl text-gold mb-3">
+                <span className="ce-cd-number font-heading text-3xl md:text-7xl text-gold mb-1 md:mb-3">
                   {String(u.v).padStart(2, '0')}
                 </span>
-                <div className="w-10 h-[1px] bg-gold/20 mx-auto mb-4" />
-                <span className="label text-[9px] opacity-40 tracking-[0.5em]">{u.l}</span>
+                <div className="w-6 md:w-10 h-[1px] bg-gold/20 mx-auto mb-2 md:mb-4" />
+                <span className="label text-[8px] md:text-[9px] opacity-40 tracking-[0.2em] md:tracking-[0.5em]">{u.l}</span>
               </div>
             ))}
           </div>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0">
-          <TornEdge position="top" />
         </div>
       </section>
 
         {/* ── CITA ── */}
         {config.sections?.quote !== false && config.quote?.text && (
-          <section className="section-pad bg-beige text-center">
+          <section className="section-pad pt-0 bg-white text-center">
             <div className="max-w-2xl mx-auto reveal">
               <SectionHeading eyebrow="Nuestra Historia" title="Un Mensaje Especial" />
-              <p className="font-body italic text-2xl leading-relaxed text-dark/70">
+              <p className="font-body italic text-2xl leading-relaxed text-black/70">
                 "{config.quote.text}"
               </p>
               {config.quote.reference && <p className="label mt-8">— {config.quote.reference}</p>}
@@ -749,26 +808,26 @@ export default function ClassicEleganceTemplate({
 
         {/* ── PARENTS & GODPARENTS (Preserved) ── */}
         {config.sections?.parents !== false && (
-          <section className="section-pad bg-white">
-            <SectionHeading eyebrow="Nuestras Familias" title="Con la bendición de nuestros padres" />
+          <section className="section-pad pt-0 bg-black">
+            <SectionHeading eyebrow="Nuestras Familias" title="Con la bendición de nuestros padres" light={true} />
             <div className="grid md:grid-cols-2 gap-16 max-w-5xl mx-auto reveal">
               <div className="text-center">
                 <p className="font-display text-5xl text-gold mb-6">De la Novia</p>
-                <p className="font-heading text-lg tracking-wide">{config.parents?.person1 || "Sres. de la Novia"}</p>
+                <p className="font-heading text-lg tracking-wide text-white">{config.parents?.person1 || "Sres. de la Novia"}</p>
                 {config.godparents?.person1 && (
                   <div className="mt-8">
                     <p className="label text-[9px] mb-2">Padrinos</p>
-                    <p className="font-body text-md italic">{config.godparents.person1}</p>
+                    <p className="font-body text-md italic text-white/80">{config.godparents.person1}</p>
                   </div>
                 )}
               </div>
               <div className="text-center">
                 <p className="font-display text-5xl text-gold mb-6">Del Novio</p>
-                <p className="font-heading text-lg tracking-wide">{config.parents?.person2 || "Sres. del Novio"}</p>
+                <p className="font-heading text-lg tracking-wide text-white">{config.parents?.person2 || "Sres. del Novio"}</p>
                 {config.godparents?.person2 && (
                   <div className="mt-8">
                     <p className="label text-[9px] mb-2">Padrinos</p>
-                    <p className="font-body text-md italic">{config.godparents.person2}</p>
+                    <p className="font-body text-md italic text-white/80">{config.godparents.person2}</p>
                   </div>
                 )}
               </div>
@@ -780,8 +839,8 @@ export default function ClassicEleganceTemplate({
 
         {/* ── ITINERARIO (Preserved Arch) ── */}
         {config.sections?.itinerary !== false && config.itinerary?.length && (
-          <section className="section-pad bg-sage relative overflow-hidden">
-            <SectionHeading eyebrow="El Programa" title="Itinerario del Día" />
+          <section className="section-pad pt-0 bg-charcoal relative overflow-hidden">
+            <SectionHeading eyebrow="El Programa" title="Itinerario del Día" light={true} />
             <div className="ce-arch-container reveal">
               <div className="ce-arch-line" />
               {config.itinerary.map((item, idx) => (
@@ -806,20 +865,76 @@ export default function ClassicEleganceTemplate({
 
         {renderBlocks('itinerary')}
 
+        {/* ── BODA DESTINO ── */}
+        {config.sections?.destination !== false && config.destination && (config.destination.hotels?.length || config.destination.transport?.info) && (
+          <section className="section-pad bg-white">
+            <SectionHeading eyebrow="Viaje" title="Hospedaje y Transporte" />
+            <div className="max-w-3xl mx-auto flex flex-col gap-16">
+              {/* Hoteles */}
+              {!!config.destination.hotels?.length && (
+                <div className="reveal">
+                  <p className="label text-[9px] mb-10 text-center">Hoteles recomendados</p>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {config.destination.hotels.map((h, i) => (
+                      <div key={i} className="border border-gold/20 p-6 flex flex-col gap-2">
+                        <div className="flex items-start justify-between gap-4 mb-2">
+                          <div>
+                            <p className="font-heading text-base tracking-wide">{h.name}</p>
+                            {h.category && <p className="label text-[8px] opacity-50 mt-1">{h.category}</p>}
+                          </div>
+                          <Hotel size={18} className="text-gold opacity-40 flex-shrink-0 mt-1" />
+                        </div>
+                        {h.address && <p className="font-body text-xs opacity-60">{h.address}</p>}
+                        {h.note && <p className="font-body italic text-xs opacity-50 mt-1">{h.note}</p>}
+                        {h.phone && (
+                          <a href={`tel:${h.phone.replace(/\s/g, '')}`} className="label text-[9px] mt-2 hover:text-gold transition-colors">
+                            {h.phone}
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Transporte */}
+              {config.destination.transport?.info && (
+                <div className="reveal text-center">
+                  <div className="flex justify-center mb-6">
+                    <Car size={24} className="text-gold opacity-50" />
+                  </div>
+                  <p className="label text-[9px] mb-4">Transporte</p>
+                  <p className="font-body italic text-sm opacity-70 max-w-lg mx-auto leading-relaxed mb-8">{config.destination.transport.info}</p>
+                  {!!config.destination.transport.schedule?.length && (
+                    <div className="flex flex-col items-center gap-3">
+                      {config.destination.transport.schedule.map((s, i) => (
+                        <div key={i} className="flex items-center gap-4">
+                          <span className="label text-[9px] opacity-60 w-20 text-right">{s.time}</span>
+                          <div className="w-1 h-1 rounded-full bg-gold/40" />
+                          <span className="font-body text-sm opacity-70">{s.detail}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* ── DRESS CODE ── */}
         {config.sections?.dressCode !== false && config.dressCode && (
-          <section className="section-pad bg-white">
+          <section className="section-pad pt-0 bg-white">
             <SectionHeading eyebrow="Importante" title="Código de Vestimenta" />
             <div className="max-w-2xl mx-auto text-center reveal">
                <div className="inline-block border border-gold/30 px-10 py-5 mb-10">
                   <p className="font-heading text-2xl tracking-[0.2em]">{config.dressCode.label}</p>
                </div>
                <div className="grid md:grid-cols-2 gap-12 text-left mb-16">
-                  <div className="border-l border-sage pl-8">
+                  <div className="border-l border-gold pl-8">
                     <p className="label text-[9px] mb-3">Mujeres</p>
                     <p className="font-body text-sm leading-relaxed opacity-80">{config.dressCode.women}</p>
                   </div>
-                  <div className="border-l border-sage pl-8">
+                  <div className="border-l border-gold pl-8">
                     <p className="label text-[9px] mb-3">Hombres</p>
                     <p className="font-body text-sm leading-relaxed opacity-80">{config.dressCode.men}</p>
                   </div>
@@ -830,13 +945,27 @@ export default function ClassicEleganceTemplate({
                    <div className="flex flex-wrap justify-center gap-8">
                      {config.dressCode.swatches.map((s, i) => (
                        <div key={i} className="flex flex-col items-center gap-3">
-                         <div className="w-16 h-16 rounded-full border border-beige shadow-lg" style={{ backgroundColor: s.color }} />
+                         <div className="w-16 h-16 rounded-full border border-black/5 shadow-lg" style={{ backgroundColor: s.color }} />
                          <span className="label text-[8px] opacity-60">{s.name}</span>
                        </div>
                      ))}
                    </div>
                  </div>
                )}
+            </div>
+          </section>
+        )}
+
+        {/* ── NO NIÑOS ── */}
+        {config.noChildren && (
+          <section className="section-pad bg-black text-center">
+            <div className="max-w-xl mx-auto reveal flex flex-col items-center gap-6">
+              <UserX size={32} className="text-gold opacity-50" />
+              <p className="font-heading text-xl tracking-widest text-white">Evento para adultos</p>
+              <div className="w-10 h-[1px] bg-gold/30 mx-auto" />
+              <p className="font-body italic text-sm text-white/60 leading-relaxed max-w-md">
+                {config.noChildrenMessage || 'Con todo nuestro cariño, les pedimos que esta celebración sea exclusiva para adultos. Agradecemos su comprensión.'}
+              </p>
             </div>
           </section>
         )}
@@ -850,7 +979,7 @@ export default function ClassicEleganceTemplate({
           if (!config.gifts || (!showTransfer && !showList && !showEnvelope)) return null;
           const gifts = config.gifts;
           return (
-            <section className="section-pad bg-beige">
+            <section className="section-pad pt-0 bg-white">
               <SectionHeading eyebrow="Obsequios" title="Mesa de Regalos" />
               <div className="flex justify-center reveal">
                 <div className="gifts-grid-v2">
@@ -919,6 +1048,21 @@ export default function ClassicEleganceTemplate({
             </section>
           );
         })()}
+
+        {/* ── NOTAS ── */}
+        {config.sections?.notes !== false && !!config.notes?.filter(n => n?.trim()).length && (
+          <section className="section-pad bg-white">
+            <SectionHeading eyebrow="Importante" title="Notas adicionales" />
+            <ul className="max-w-xl mx-auto flex flex-col gap-6 reveal">
+              {config.notes.filter(n => n?.trim()).map((note, i) => (
+                <li key={i} className="flex items-start gap-6">
+                  <span className="label text-[8px] opacity-30 mt-1 flex-shrink-0">{String(i + 1).padStart(2, '0')}</span>
+                  <p className="font-body text-sm leading-relaxed opacity-75">{note}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* ── RSVP ── */}
         <section className="rsvp-section">
