@@ -170,10 +170,11 @@ export async function createEvent(formData: FormData) {
   const owner_id = formData.get('owner_id') as string;
 
   const template_type = (formData.get('template_type') as string) || null;
+  const subdomain = (formData.get('subdomain') as string) || slug || null;
 
   const { data: newEvent, error } = await supabase
     .from('events')
-    .insert({ title, slug, event_type, plan, owner_id, template_type, status: 'draft', config: {} })
+    .insert({ title, slug, event_type, plan, owner_id, template_type, status: 'draft', config: {}, subdomain })
     .select('id')
     .single();
 

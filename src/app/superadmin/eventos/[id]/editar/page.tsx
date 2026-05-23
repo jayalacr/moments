@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import EditarForm from '@/app/admin/editar/_components/EditarForm';
+import SubdomainForm from './_components/SubdomainForm';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -19,7 +20,7 @@ export default async function SuperadminEditarPage({ params }: Props) {
 
   const { data: event } = await supabase
     .from('events')
-    .select('id, title, slug, plan, config')
+    .select('id, title, slug, plan, config, subdomain')
     .eq('id', id)
     .single();
 
@@ -42,6 +43,13 @@ export default async function SuperadminEditarPage({ params }: Props) {
           {event.title}
         </h1>
       </div>
+
+      <SubdomainForm
+        eventId={event.id}
+        currentSubdomain={event.subdomain ?? event.slug}
+      />
+
+      <div style={{ margin: '40px 0', height: '1px', backgroundColor: '#222D3F' }} />
 
       <EditarForm
         eventId={event.id}

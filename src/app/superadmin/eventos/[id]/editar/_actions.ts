@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 async function assertSuperadmin() {
   const supabase = await createClient();
@@ -18,6 +19,32 @@ async function assertSuperadmin() {
   if (profile?.role !== 'superadmin') redirect('/admin');
 
   return supabase;
+}
+
+export async function updateSubdomain(eventId: string, subdomain: string): Promise<{ error?: string } | void> {
+  await assertSuperadmin();
+
+  if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(subdomain) && subdomain.length > 1) {
+    return { error: 'Formato inválido: solo minúsculas, números y guiones' };
+  }
+
+  // Use admin client to check uniqueness across all events
+  const admin = createAdminClient();
+  const { data: existing } = await admin
+    .from('events')
+    .select('id')
+    .eq('subdomain', subdomain)
+    .neq('id', eventId)
+    .maybeSingle();
+
+  if (existing) {
+    return { error: `El subdominio "${subdomain}" ya está en uso` };
+  }
+
+  const { error } = await admin.from('events').update({ subdomain }).eq('id', eventId);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/superadmin/eventos/${eventId}/editar`);
 }
 
 export async function updateEventConfig(eventId: string, config: Record<string, unknown>) {

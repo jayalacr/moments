@@ -1,7 +1,9 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useTransition, useState } from 'react';
 import { createEvent } from '@/app/superadmin/_actions';
+
+const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'moments-mx.com';
 
 interface Organizer {
   id: string;
@@ -73,14 +75,30 @@ const labelStyle: React.CSSProperties = {
 
 export default function NuevoEventoForm({ organizers, me }: { organizers: Organizer[]; me: Me | null }) {
   const [isPending, startTransition] = useTransition();
+  const [subdomain, setSubdomain] = useState('');
+  const [subdomainError, setSubdomainError] = useState('');
 
   function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const generated = generateSlug(e.target.value);
     const slugInput = document.getElementById('slug') as HTMLInputElement;
-    if (slugInput) slugInput.value = generateSlug(e.target.value);
+    if (slugInput) slugInput.value = generated;
+    // Auto-fill subdomain only if user hasn't typed one yet
+    if (!subdomain) setSubdomain(generated);
+  }
+
+  function handleSubdomainChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    setSubdomain(val);
+    if (val && !/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(val) && val.length > 1) {
+      setSubdomainError('Solo letras minúsculas, números y guiones (sin empezar/terminar en guión)');
+    } else {
+      setSubdomainError('');
+    }
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (subdomainError) return;
     const formData = new FormData(e.currentTarget);
     startTransition(() => createEvent(formData));
   }
@@ -127,6 +145,46 @@ export default function NuevoEventoForm({ organizers, me }: { organizers: Organi
         <p style={{ marginTop: '6px', fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted }}>
           Solo minúsculas, números y guiones
         </p>
+      </div>
+
+      {/* Subdominio */}
+      <div>
+        <label htmlFor="subdomain" style={labelStyle}>Subdominio</label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0' }}>
+          <input
+            id="subdomain"
+            name="subdomain"
+            type="text"
+            value={subdomain}
+            onChange={handleSubdomainChange}
+            placeholder="sofia-mateo"
+            pattern="[a-z0-9][a-z0-9-]*[a-z0-9]"
+            style={{ ...inputStyle, borderRadius: '6px 0 0 6px', borderRight: 'none' }}
+          />
+          <span style={{
+            padding: '10px 14px',
+            backgroundColor: C.bg,
+            border: `1px solid ${C.borderBright}`,
+            borderLeft: 'none',
+            borderRadius: '0 6px 6px 0',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '12px',
+            color: C.muted,
+            whiteSpace: 'nowrap',
+          }}>
+            .{ROOT_DOMAIN}
+          </span>
+        </div>
+        {subdomainError && (
+          <p style={{ marginTop: '6px', fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#F87171' }}>
+            {subdomainError}
+          </p>
+        )}
+        {!subdomainError && (
+          <p style={{ marginTop: '6px', fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted }}>
+            // Se auto-genera desde el slug. Disponible en planes Plus y Deluxe.
+          </p>
+        )}
       </div>
 
       {/* Tipo + Plan */}
