@@ -10,7 +10,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { eventId } = await params;
   const { event } = await getGuestsForEvent(eventId);
-  return { title: `Invitados | ${event?.title ?? 'Evento'}` };
+  return { title: `Invitados | ${event?.slug ?? 'Evento'}` };
 }
 
 export default async function InvitadosPage({ params }: Props) {
