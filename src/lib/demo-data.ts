@@ -137,8 +137,8 @@ export const PLUS_DEMO: PlusConfig = {
   },
   rsvp: {
     deadline: '15 de Mayo de 2026',
-    dietaryOptions: ['Sin restricción', 'Vegetariano', 'Vegano', 'Sin gluten'],
   },
+  dietary: { enabled: true, options: ['Vegetariano', 'Vegano', 'Sin gluten', 'Sin lácteos', 'Sin mariscos', 'Otro'] },
   sections: { quote: true, parents: true, itinerary: true, dressCode: true, destination: true, gifts: true }
 };
 
@@ -215,12 +215,16 @@ export const DELUXE_DEMO: DeluxeConfig = {
     giftListLabel: 'Luna de Miel en Japón',
     envelopeMessage: 'Su presencia es nuestro mayor regalo. Si desean hacernos un obsequio, pueden contribuir a nuestra luna de miel.',
   },
+  parents: {
+    person1: 'Marco Antonio Rossi &\nGiulia Ferrari de Rossi',
+    person2: 'William James Wright &\nEleanor Grace Wright',
+  },
   rsvpDeadline: '30 de Junio de 2026',
   rsvp: {
     maxPlusOnes: 2,
     deadline: '30 de Junio de 2026',
-    dietaryOptions: ['Sin restricción', 'Vegetariano', 'Vegano', 'Sin gluten'],
   },
+  dietary: { enabled: true, options: ['Vegetariano', 'Vegano', 'Sin gluten', 'Sin lácteos', 'Sin mariscos', 'Otro'] },
   sections: { quote: true, parents: true, itinerary: true, dressCode: true, destination: true, gifts: true }
 };
 
@@ -287,8 +291,8 @@ export const CLASSIC_ELEGANCE_DEMO: ClassicEleganceConfig = {
   rsvpDeadline: '1 de Agosto de 2026',
   rsvp: {
     maxPlusOnes: 2,
-    dietaryOptions: ['Sin restricción', 'Vegetariano', 'Vegano', 'Sin gluten'],
   },
+  dietary: { enabled: true, options: ['Vegetariano', 'Vegano', 'Sin gluten', 'Sin lácteos', 'Sin mariscos', 'Otro'] },
   sections: {
     quote: true,
     parents: true,

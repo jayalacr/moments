@@ -72,6 +72,7 @@ export interface ClassicEleganceConfig {
     deadline?: string;
     dietaryOptions?: string[];
   };
+  dietary?: { enabled?: boolean; options?: string[] };
   sections?: {
     quote?: boolean;
     parents?: boolean;
@@ -516,6 +517,7 @@ export default function ClassicEleganceTemplate({
   const [attendeeNames, setAttendeeNames] = useState<string[]>([]);
   const [attendeeChecked, setAttendeeChecked] = useState<boolean[]>([]);
   const [dietaryMap, setDietaryMap] = useState<Record<string, string[]>>({});
+  const dietary = config.dietary ?? { enabled: false, options: [] };
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
@@ -1206,7 +1208,7 @@ export default function ClassicEleganceTemplate({
                       </div>
 
                       {/* Dietary por persona */}
-                      {(config.rsvp?.dietaryOptions?.length ?? 0) > 0 && (() => {
+                      {(dietary.enabled && (dietary.options?.length ?? 0) > 0) && (() => {
                         const attendingPeople = [
                           displayName,
                           ...attendeeNames.filter((_, i) => attendeeChecked[i] ?? true),
@@ -1230,7 +1232,7 @@ export default function ClassicEleganceTemplate({
                                       <ChevronDown size={14} />
                                     </summary>
                                     <div className="dietary-options">
-                                      {config.rsvp!.dietaryOptions!.map((opt) => {
+                                      {dietary.options!.map((opt) => {
                                         const isSelected = dietaryMap[personName]?.includes(opt);
                                         return (
                                           <label key={opt} className="dietary-option-label">

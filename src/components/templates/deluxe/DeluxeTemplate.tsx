@@ -58,6 +58,7 @@ export interface DeluxeConfig {
     deadline?: string;
     dietaryOptions?: string[];
   };
+  dietary?: { enabled?: boolean; options?: string[] };
   sections?: {
     quote?: boolean;
     parents?: boolean;
@@ -691,7 +692,7 @@ const css = `
     position: relative;
     overflow: hidden;
     width: 100%;
-    height: clamp(280px, 56.25vw, 70vh);
+    height: clamp(280px, 46vw, 800px);
     background: var(--dark);
   }
   @media (max-width: 600px) { .dlx-carousel { height: clamp(260px, 75vw, 70vh); } }
@@ -704,12 +705,39 @@ const css = `
     flex: 0 0 100%;
     height: 100%;
     overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .dlx-carousel-img-blur-bg {
+    display: none;
   }
   .dlx-carousel-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+    z-index: 2;
+  }
+  @media (min-width: 601px) {
+    .dlx-carousel-slide--portrait .dlx-carousel-img-blur-bg {
+      display: block;
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      filter: blur(20px) brightness(0.5);
+      transform: scale(1.1);
+      z-index: 1;
+    }
+    .dlx-carousel-slide--portrait .dlx-carousel-img {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+    }
   }
   .dlx-carousel-counter {
     position: absolute;
@@ -812,21 +840,8 @@ const css = `
   }
 
   /* ── Parents ── */
-  .parents-grid { 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    gap: 3rem; 
-    width: 100%; 
-    max-width: 1000px;
-    margin: 0 auto;
-  }
-  .parents-grid > div:not(.parents-monogram) { flex: 1; }
-  
-  @media (max-width: 600px) { 
-    .parents-grid { flex-direction: column; gap: 2.5rem; } 
-    .parents-monogram { margin: 1rem 0; } 
-  }
+  .parents-wrap { display: flex; align-items: center; justify-content: center; gap: 3rem; width: 100%; }
+  .parents-group { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.45rem; }
   .parents-monogram {
     display: flex;
     flex-direction: row;
@@ -1630,19 +1645,58 @@ const css = `
 // DeluxeCarouselBlock — carrusel interactivo con navegación
 // ---------------------------------------------------------------------------
 function DeluxeCarouselBlock({ srcs, positions, scales, names }: { srcs: string[]; positions?: string[]; scales?: number[]; names?: string }) {
-  const [idx, setIdx] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const total = srcs.length;
+  // trackIdx: position in the extended track [clone-last, ...real, clone-first]
+  // Starts at 1 so the first real slide is visible
+  const [trackIdx, setTrackIdx] = useState(total > 1 ? 1 : 0);
+  const [noTransition, setNoTransition] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [portraits, setPortraits] = useState<boolean[]>(() => new Array(total).fill(false));
   const touchStartX = useRef<number | null>(null);
 
+  // Logical index for dots (0-based)
+  const realIdx = total > 1 ? (trackIdx - 1 + total) % total : 0;
+
+  // Extended slides: [last-clone, real-0, real-1, ..., real-n, first-clone]
+  const extSrcs      = total > 1 ? [srcs[total - 1], ...srcs, srcs[0]] : srcs;
+  const extPositions = total > 1
+    ? [positions?.[total - 1] ?? 'center center', ...(positions ?? srcs.map(() => 'center center')), positions?.[0] ?? 'center center']
+    : positions;
+  const extScales    = total > 1
+    ? [scales?.[total - 1] ?? 1, ...(scales ?? srcs.map(() => 1)), scales?.[0] ?? 1]
+    : scales;
+
+  // Map extended index → real portrait state
+  const getPortrait = (extI: number) => {
+    if (total <= 1) return portraits[extI] ?? false;
+    if (extI === 0) return portraits[total - 1];
+    if (extI === total + 1) return portraits[0];
+    return portraits[extI - 1];
+  };
+
+  // Auto-advance
   useEffect(() => {
     if (total <= 1 || isPaused) return;
-    const id = setInterval(() => setIdx(i => (i + 1) % total), 5000);
+    const id = setInterval(() => setTrackIdx(i => i + 1), 5000);
     return () => clearInterval(id);
   }, [total, isPaused]);
 
-  const prev = () => { setIsPaused(true); setIdx(i => (i - 1 + total) % total); };
-  const next = () => { setIsPaused(true); setIdx(i => (i + 1) % total); };
+  // Re-enable transition after instant snap
+  useEffect(() => {
+    if (!noTransition) return;
+    const id = requestAnimationFrame(() => requestAnimationFrame(() => setNoTransition(false)));
+    return () => cancelAnimationFrame(id);
+  }, [noTransition]);
+
+  const prev = () => { setIsPaused(true); setTrackIdx(i => i - 1); };
+  const next = () => { setIsPaused(true); setTrackIdx(i => i + 1); };
+
+  // After the CSS transition ends, snap back from clone to real slide without animation
+  const handleTransitionEnd = () => {
+    if (total <= 1) return;
+    if (trackIdx === 0)         { setNoTransition(true); setTrackIdx(total); }
+    else if (trackIdx === total + 1) { setNoTransition(true); setTrackIdx(1); }
+  };
 
   const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
   const handleTouchEnd = (e: React.TouchEvent) => {
@@ -1662,17 +1716,34 @@ function DeluxeCarouselBlock({ srcs, positions, scales, names }: { srcs: string[
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <div className="dlx-carousel-track" style={{ transform: `translateX(-${idx * 100}%)` }}>
-        {srcs.map((src, i) => (
-          <div key={i} className="dlx-carousel-slide">
+      <div
+        className="dlx-carousel-track"
+        style={{
+          transform: `translateX(-${trackIdx * 100}%)`,
+          transition: noTransition ? 'none' : undefined,
+        }}
+        onTransitionEnd={handleTransitionEnd}
+      >
+        {extSrcs.map((src, i) => (
+          <div key={i} className={`dlx-carousel-slide${getPortrait(i) ? ' dlx-carousel-slide--portrait' : ''}`}>
+            <div className="dlx-carousel-img-blur-bg" style={{ backgroundImage: `url(${src})` }} />
             <img
               src={src}
-              alt={names ? `Foto ${i + 1} de ${names}` : `Foto ${i + 1}`}
+              alt={names ? `Foto ${realIdx + 1} de ${names}` : `Foto ${realIdx + 1}`}
               className="dlx-carousel-img"
               style={{
-                objectPosition: positions?.[i] ?? 'center center',
-                transform: `scale(${scales?.[i] ?? 1})`,
-                transformOrigin: positions?.[i] ?? 'center center',
+                objectPosition: extPositions?.[i] ?? 'center center',
+                transform: `scale(${extScales?.[i] ?? 1})`,
+                transformOrigin: extPositions?.[i] ?? 'center center',
+              }}
+              onLoad={(e) => {
+                const img = e.currentTarget;
+                let realI = total > 1
+                  ? (i === 0 ? total - 1 : i === total + 1 ? 0 : i - 1)
+                  : i;
+                if (img.naturalHeight > img.naturalWidth) {
+                  setPortraits(prev => { const n = [...prev]; n[realI] = true; return n; });
+                }
               }}
             />
           </div>
@@ -1694,8 +1765,8 @@ function DeluxeCarouselBlock({ srcs, positions, scales, names }: { srcs: string[
             {srcs.map((_, i) => (
               <button
                 key={i}
-                className={`dlx-carousel-dot${i === idx ? ' dlx-carousel-dot--active' : ''}`}
-                onClick={() => setIdx(i)}
+                className={`dlx-carousel-dot${i === realIdx ? ' dlx-carousel-dot--active' : ''}`}
+                onClick={() => { setIsPaused(true); setTrackIdx(i + 1); }}
                 aria-label={`Foto ${i + 1}`}
               />
             ))}
@@ -1745,6 +1816,7 @@ export default function DeluxeTemplate({
 }: Props) {
   // ── Build data from config with defaults ────────────────────────────────
   const cfg = (config ?? {}) as DeluxeConfig;
+  const dietary = cfg.dietary ?? { enabled: false, options: [] };
 
   // ── Theme ────────────────────────────────────────────────────────────────
   const t = cfg.theme ?? {};
@@ -1782,9 +1854,18 @@ export default function DeluxeTemplate({
     text:      cfg.quote?.text      || '',
     reference: cfg.quote?.reference || '',
   };
+  const splitParent = (s: string) => {
+    const lines = s.split('\n').map(l => l.replace(/\s*&\s*$/, '').trim()).filter(Boolean);
+    if (lines.length < 2) return lines;
+    const out: string[] = [lines[0]];
+    for (let i = 1; i < lines.length; i++) { out.push('&'); out.push(lines[i]); }
+    return out;
+  };
   const parents = {
     person1: cfg.parents?.person1 || '',
     person2: cfg.parents?.person2 || '',
+    lines1: splitParent(cfg.parents?.person1 || ''),
+    lines2: splitParent(cfg.parents?.person2 || ''),
   };
   // Hero photo
   // Limit specific to Deluxe plan as per requirements
@@ -2154,29 +2235,25 @@ export default function DeluxeTemplate({
       {cfg.sections?.parents !== false && (
         <section className="section" id="parents">
           <p className="label muted reveal" style={{ marginBottom: '2.5rem' }}>Con la bendición de nuestras familias</p>
-          <div className="parents-grid">
-            <div className="slide-left delay-1 text-center">
-              <p className="display-name">{fullNames.person1}</p>
+          <div className="parents-wrap">
+            <div className="parents-group slide-left delay-1">
+              <p className="display-name" style={{ whiteSpace: 'nowrap' }}>{fullNames.person1}</p>
               <div className="name-sep"><span className="sep-line short" /></div>
-              {parents.person1 && (
-                <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
-                  {parents.person1}
-                </p>
-              )}
+              {parents.lines1.map((line, i) => (
+                <p key={i} className="label muted" style={{ whiteSpace: 'nowrap' }}>{line}</p>
+              ))}
             </div>
             <div className="parents-monogram reveal">
               <span>{initials.person1}</span>
               <span className="pm-amp">&</span>
               <span>{initials.person2}</span>
             </div>
-            <div className="slide-right delay-1 text-center">
-              <p className="display-name">{fullNames.person2}</p>
+            <div className="parents-group slide-right delay-1">
+              <p className="display-name" style={{ whiteSpace: 'nowrap' }}>{fullNames.person2}</p>
               <div className="name-sep"><span className="sep-line short" /></div>
-              {parents.person2 && (
-                <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
-                  {parents.person2}
-                </p>
-              )}
+              {parents.lines2.map((line, i) => (
+                <p key={i} className="label muted" style={{ whiteSpace: 'nowrap' }}>{line}</p>
+              ))}
             </div>
           </div>
         </section>
@@ -2715,7 +2792,7 @@ export default function DeluxeTemplate({
                     </div>
 
                     {/* Opciones Dietéticas por Persona */}
-                    {(cfg.rsvp?.dietaryOptions?.length ?? 0) > 0 && (() => {
+                    {(dietary.enabled && (dietary.options?.length ?? 0) > 0) && (() => {
                       // Personas que asistirán: titular + acompañantes marcados
                       const attendingNames = [
                         displayName,
@@ -2743,7 +2820,7 @@ export default function DeluxeTemplate({
                                     <ChevronDown size={14} />
                                   </summary>
                                   <div className="dietary-options">
-                                    {cfg.rsvp!.dietaryOptions!.map((opt) => {
+                                    {dietary.options!.map((opt) => {
                                       const isSelected = dietaryMap[personName]?.includes(opt);
                                       return (
                                         <label key={opt} className="dietary-option-label">

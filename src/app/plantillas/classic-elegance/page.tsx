@@ -2,7 +2,7 @@ import ClassicEleganceTemplate from '@/components/templates/classic-elegance/Cla
 import { CLASSIC_ELEGANCE_DEMO } from '@/lib/demo-data';
 
 export const metadata = {
-  title: 'Classic Elegance — Moments',
+  title: 'Vista Previa Classic Elegance',
   description: 'Vista previa de la plantilla Classic Elegance para invitaciones digitales de boda.',
 };
 

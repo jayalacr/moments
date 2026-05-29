@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Pick<Props, 'params'>) {
     .eq('slug', slug)
     .single();
 
-  if (!event) return { title: 'Invitación — Moments' };
+  if (!event) return { title: 'Invitación | Moments' };
 
   const config = event.config || {};
   // Extraer imagen para el preview (Open Graph)

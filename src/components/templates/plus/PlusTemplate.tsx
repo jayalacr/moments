@@ -67,6 +67,7 @@ export interface PlusConfig {
     deadline?: string;
     dietaryOptions?: string[];
   };
+  dietary?: { enabled?: boolean; options?: string[] };
   sections?: {
     quote?: boolean;
     parents?: boolean;
@@ -222,8 +223,8 @@ const EVENT = {
   rsvp: {
     maxPlusOnes: 2,
     deadline: '15 de mayo de 2026',
-    dietaryOptions: ['Sin restricción', 'Vegetariano', 'Vegano', 'Sin gluten', 'Sin mariscos', 'Alérgico a nueces'],
   },
+  dietary: { enabled: true, options: ['Vegetariano', 'Vegano', 'Sin gluten', 'Sin lácteos', 'Sin mariscos', 'Alérgico a nueces'] },
   whatsapp: {
     number: '573001234567',
     message: 'Hola, confirmo mi asistencia a la boda de Valentina & Sebastián el 14 de junio. 💛',
@@ -277,12 +278,43 @@ function TrioBlock({
 // CarouselBlock — carrusel inline para bloques de imageLayout
 // ---------------------------------------------------------------------------
 function CarouselBlock({ srcs, positions, scales }: { srcs: string[]; positions?: string[]; scales?: number[] }) {
-  const [idx, setIdx] = useState(0);
   const total = srcs.length;
+  const [trackIdx, setTrackIdx] = useState(total > 1 ? 1 : 0);
+  const [noTransition, setNoTransition] = useState(false);
+  const [portraits, setPortraits] = useState<boolean[]>(() => new Array(total).fill(false));
   const touchStartX = useRef<number | null>(null);
 
-  const prev = () => setIdx(i => (i - 1 + total) % total);
-  const next = () => setIdx(i => (i + 1) % total);
+  const realIdx = total > 1 ? (trackIdx - 1 + total) % total : 0;
+
+  const extSrcs      = total > 1 ? [srcs[total - 1], ...srcs, srcs[0]] : srcs;
+  const extPositions = total > 1
+    ? [positions?.[total - 1] ?? 'center center', ...(positions ?? srcs.map(() => 'center center')), positions?.[0] ?? 'center center']
+    : positions;
+  const extScales    = total > 1
+    ? [scales?.[total - 1] ?? 1, ...(scales ?? srcs.map(() => 1)), scales?.[0] ?? 1]
+    : scales;
+
+  const getPortrait = (extI: number) => {
+    if (total <= 1) return portraits[extI] ?? false;
+    if (extI === 0) return portraits[total - 1];
+    if (extI === total + 1) return portraits[0];
+    return portraits[extI - 1];
+  };
+
+  useEffect(() => {
+    if (!noTransition) return;
+    const id = requestAnimationFrame(() => requestAnimationFrame(() => setNoTransition(false)));
+    return () => cancelAnimationFrame(id);
+  }, [noTransition]);
+
+  const prev = () => setTrackIdx(i => i - 1);
+  const next = () => setTrackIdx(i => i + 1);
+
+  const handleTransitionEnd = () => {
+    if (total <= 1) return;
+    if (trackIdx === 0)              { setNoTransition(true); setTrackIdx(total); }
+    else if (trackIdx === total + 1) { setNoTransition(true); setTrackIdx(1); }
+  };
 
   const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
   const handleTouchEnd = (e: React.TouchEvent) => {
@@ -296,10 +328,32 @@ function CarouselBlock({ srcs, positions, scales }: { srcs: string[]; positions?
 
   return (
     <div className="carousel" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-      <div className="carousel-track" style={{ transform: `translateX(-${idx * 100}%)` }}>
-        {srcs.map((src, i) => (
-          <div key={i} className="carousel-slide">
-            <img src={src} alt={`Foto ${i + 1}`} className="carousel-img" style={{ objectPosition: positions?.[i] ?? 'center center', transform: `scale(${scales?.[i] ?? 1})`, transformOrigin: positions?.[i] ?? 'center center' }} />
+      <div
+        className="carousel-track"
+        style={{
+          transform: `translateX(-${trackIdx * 100}%)`,
+          transition: noTransition ? 'none' : undefined,
+        }}
+        onTransitionEnd={handleTransitionEnd}
+      >
+        {extSrcs.map((src, i) => (
+          <div key={i} className={`carousel-slide${getPortrait(i) ? ' carousel-slide--portrait' : ''}`}>
+            <div className="carousel-img-blur-bg" style={{ backgroundImage: `url(${src})` }} />
+            <img
+              src={src}
+              alt={`Foto ${i + 1}`}
+              className="carousel-img"
+              style={{ objectPosition: extPositions?.[i] ?? 'center center', transform: `scale(${extScales?.[i] ?? 1})`, transformOrigin: extPositions?.[i] ?? 'center center' }}
+              onLoad={(e) => {
+                const img = e.currentTarget;
+                const realI = total > 1
+                  ? (i === 0 ? total - 1 : i === total + 1 ? 0 : i - 1)
+                  : i;
+                if (img.naturalHeight > img.naturalWidth) {
+                  setPortraits(prev => { const n = [...prev]; n[realI] = true; return n; });
+                }
+              }}
+            />
           </div>
         ))}
       </div>
@@ -313,12 +367,12 @@ function CarouselBlock({ srcs, positions, scales }: { srcs: string[]; positions?
           </button>
           <div className="carousel-dots">
             {srcs.map((_, i) => (
-              <button key={i} className={`carousel-dot${i === idx ? ' carousel-dot--active' : ''}`}
-                onClick={() => setIdx(i)} aria-label={`Foto ${i + 1}`} />
+              <button key={i} className={`carousel-dot${i === realIdx ? ' carousel-dot--active' : ''}`}
+                onClick={() => setTrackIdx(i + 1)} aria-label={`Foto ${i + 1}`} />
             ))}
           </div>
           <div className="carousel-counter">
-            <span className="label gold">{idx + 1} / {total}</span>
+            <span className="label gold">{realIdx + 1} / {total}</span>
           </div>
         </>
       )}
@@ -395,6 +449,7 @@ export default function PlusTemplate({
     noChildren:    config.noChildren    ?? EVENT.noChildren,
     noChildrenMessage: config.noChildrenMessage,
     rsvp:          { ...EVENT.rsvp, ...config.rsvp },
+    dietary:       config.dietary ?? { enabled: false, options: EVENT.dietary.options },
     sections:      config.sections    ?? {},
     theme:         config.theme       ?? {},
     imageLayout:   config.imageLayout ?? [],
@@ -405,6 +460,16 @@ export default function PlusTemplate({
   const backgroundColor  = E.theme.backgroundColor  ?? '#F8F3EC';
   const textColor        = E.theme.textColor        ?? '#1C1611';
 
+  const splitParent = (s: string) => {
+    const lines = s.split('\n').map(l => l.replace(/\s*&\s*$/, '').trim()).filter(Boolean);
+    if (lines.length < 2) return lines;
+    const out: string[] = [lines[0]];
+    for (let i = 1; i < lines.length; i++) { out.push('&'); out.push(lines[i]); }
+    return out;
+  };
+  const parentLines1 = splitParent(E.parents.person1 || '');
+  const parentLines2 = splitParent(E.parents.person2 || '');
+
   // Priorizar siempre el valor que viene configurado (deluxe con token o plus con link inteligente)
   const effectiveMaxCompanions = maxCompanionsProp ?? 0;
 
@@ -412,7 +477,6 @@ export default function PlusTemplate({
   const [modalOpen, setModalOpen] = useState(false);
   const [rsvpName, setRsvpName] = useState(guestName ?? '');
   const [companionInputs, setCompanionInputs] = useState<string[]>([]);
-  const [dietary, setDietary] = useState(E.rsvp.dietaryOptions?.[0] ?? 'Sin restricción');
   const [dietaryMap, setDietaryMap] = useState<Record<string, string[]>>({});
   const [rsvpSent, setRsvpSent] = useState(false);
   const [rsvpStatus, setRsvpStatus] = useState<'confirmed' | 'declined' | null>(null);
@@ -631,21 +695,21 @@ export default function PlusTemplate({
       {E.sections.parents === true && (
         <section className="section">
           <p className="label muted reveal" style={{ marginBottom: '2.5rem' }}>Con la bendición de nuestras familias</p>
-          <div className="parents-grid">
-            <div className="reveal delay-1 text-center">
-              <p className="display-name">{E.fullNames.person1}</p>
+          <div className="parents-wrap">
+            <div className="parents-group reveal delay-1">
+              <p className="display-name" style={{ whiteSpace: 'nowrap' }}>{E.fullNames.person1}</p>
               <div className="name-sep"><span className="sep-line short" /></div>
-              <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
-                Hija de<br />{E.parents.person1}
-              </p>
+              {parentLines1.map((line, i) => (
+                <p key={i} className="label muted" style={{ whiteSpace: 'nowrap' }}>{line}</p>
+              ))}
             </div>
-            <div className="parents-divider" />
-            <div className="reveal delay-2 text-center">
-              <p className="display-name">{E.fullNames.person2}</p>
+            <div style={{ width: '1px', background: 'var(--muted)', alignSelf: 'stretch' }} />
+            <div className="parents-group reveal delay-2">
+              <p className="display-name" style={{ whiteSpace: 'nowrap' }}>{E.fullNames.person2}</p>
               <div className="name-sep"><span className="sep-line short" /></div>
-              <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
-                Hijo de<br />{E.parents.person2}
-              </p>
+              {parentLines2.map((line, i) => (
+                <p key={i} className="label muted" style={{ whiteSpace: 'nowrap' }}>{line}</p>
+              ))}
             </div>
           </div>
         </section>
@@ -1066,7 +1130,7 @@ export default function PlusTemplate({
                 )}
 
                 {/* Restricción alimentaria por Persona */}
-                {(E.rsvp.dietaryOptions?.length ?? 0) > 0 && (() => {
+                {(E.dietary?.enabled && (E.dietary.options?.length ?? 0) > 0) && (() => {
                   const allNames = [rsvpName || 'Tú', ...companionInputs.filter(n => n.trim() !== '')];
                   return (
                     <div className="dlx-dietary-wrap" style={{ marginTop: '1.5rem' }}>
@@ -1079,9 +1143,9 @@ export default function PlusTemplate({
                           <div className="dietary-details-container">
                             <details className="dietary-details">
                               <summary className="dietary-summary">
-                                <span style={{ 
-                                  whiteSpace: 'nowrap', 
-                                  overflow: 'hidden', 
+                                <span style={{
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
                                   textOverflow: 'ellipsis',
                                   maxWidth: '200px'
                                 }}>
@@ -1090,7 +1154,7 @@ export default function PlusTemplate({
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
                               </summary>
                               <div className="dietary-options">
-                                {E.rsvp.dietaryOptions!.map((opt) => {
+                                {E.dietary!.options!.map((opt) => {
                                   const isSelected = dietaryMap[person]?.includes(opt);
                                   return (
                                     <label key={opt} className="dietary-option-label">
@@ -1552,18 +1616,9 @@ const css = `
   .inline-sep { display: flex; align-items: center; gap: 1rem; }
 
   /* ── Parents ── */
-  .parents-grid {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 2rem;
-    width: 100%;
-    align-items: start;
-  }
-  @media (max-width: 600px) {
-    .parents-grid { grid-template-columns: 1fr; }
-    .parents-divider { display: none; }
-  }
-  .parents-divider { width: 1px; background: var(--muted); align-self: stretch; }
+  .parents-wrap { display: flex; align-items: center; justify-content: center; gap: 3rem; width: 100%; }
+  .parents-group { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.45rem; }
+  .parents-divider { display: none; }
   .display-name {
     font-family: var(--font-cormorant), Georgia, serif;
     font-size: 1.25rem;
@@ -1578,7 +1633,7 @@ const css = `
     position: relative;
     width: 100%;
     overflow: hidden;
-    height: 560px;
+    height: clamp(360px, 46vw, 800px);
     background: var(--charcoal);
   }
   @media (max-width: 600px) { .carousel { height: 360px; } }
@@ -1591,6 +1646,13 @@ const css = `
     min-width: 100%;
     height: 100%;
     overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .carousel-img-blur-bg {
+    display: none;
   }
   .carousel-img {
     width: 100%;
@@ -1598,6 +1660,26 @@ const css = `
     object-fit: cover;
     display: block;
     transition: transform 0.6s ease;
+    z-index: 2;
+  }
+  @media (min-width: 601px) {
+    .carousel-slide--portrait .carousel-img-blur-bg {
+      display: block;
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      filter: blur(20px) brightness(0.5);
+      transform: scale(1.1);
+      z-index: 1;
+    }
+    .carousel-slide--portrait .carousel-img {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+    }
   }
   .carousel-slide:hover .carousel-img { transform: scale(1.03); }
   .carousel-btn {

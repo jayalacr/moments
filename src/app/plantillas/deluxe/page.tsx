@@ -2,7 +2,7 @@ import DeluxeTemplate from '@/components/templates/deluxe/DeluxeTemplate';
 import { DELUXE_DEMO } from '@/lib/demo-data';
 
 export const metadata = {
-  title: 'Plan Deluxe — Moments',
+  title: 'Vista Previa Deluxe',
   description: 'Vista previa de la plantilla del plan Deluxe para invitaciones digitales.',
 };
 

@@ -2,7 +2,7 @@ import EssentialTemplate from '@/components/templates/essential/EssentialTemplat
 import { ESSENTIAL_DEMO } from '@/lib/demo-data';
 
 export const metadata = {
-  title: 'Plan Essential — Moments',
+  title: 'Vista Previa Essential',
   description: 'Vista previa de la plantilla del plan Essential para invitaciones digitales.',
 };
 
