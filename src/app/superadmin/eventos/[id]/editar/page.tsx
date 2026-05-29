@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import EditarForm from '@/app/admin/editar/_components/EditarForm';
@@ -5,6 +6,13 @@ import SubdomainForm from './_components/SubdomainForm';
 
 interface Props {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data } = await supabase.from('events').select('title').eq('id', id).single();
+  return { title: `Editar | ${data?.title ?? 'Evento'}` };
 }
 
 export default async function SuperadminEditarPage({ params }: Props) {

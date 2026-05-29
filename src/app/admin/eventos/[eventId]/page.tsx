@@ -1,9 +1,18 @@
+import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
 import Link from 'next/link';
+
 import { Users, CheckCircle2, Trophy, ExternalLink, Settings, Sparkles } from 'lucide-react';
+
+export async function generateMetadata({ params }: { params: Promise<{ eventId: string }> }): Promise<Metadata> {
+  const { eventId } = await params;
+  const supabase = await createClient();
+  const { data } = await supabase.from('events').select('title').eq('id', eventId).single();
+  return { title: data?.title ?? 'Evento' };
+}
 import PlusLinkGenerator from './_components/PlusLinkGenerator';
+import { getInvitationUrl } from '@/lib/invitation';
 
 const C = {
   bg: '#F8F3EC',
@@ -171,7 +180,7 @@ export default async function EventoPage({ params }: Props) {
 
         <div className="event-header-actions" style={{ display: 'flex', gap: '12px' }}>
           <Link
-            href={event.status === 'published' ? `/${event.event_type}/${event.slug}` : `/admin/eventos/${event.id}/preview`}
+            href={event.status === 'published' ? getInvitationUrl(event) : `/admin/eventos/${event.id}/preview`}
             target="_blank"
             className="admin-cta-sec"
           >
@@ -228,7 +237,7 @@ export default async function EventoPage({ params }: Props) {
           
           <div className="event-info-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             {[
-              { label: 'URL pública', value: `/${event.event_type}/${event.slug}` },
+              { label: 'URL pública', value: getInvitationUrl(event) },
               { label: 'Plan contratado', value: `${PLAN_LABELS[event.plan]}` },
               { label: 'Fecha de creación', value: new Date(event.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) },
               { label: 'ID del evento', value: event.id.slice(0, 8) + '...' },
@@ -264,7 +273,7 @@ export default async function EventoPage({ params }: Props) {
                     ¿Lista la invitación? Comparte el link con tus invitados y recibe sus confirmaciones por WhatsApp.
                   </p>
                   <Link
-                    href={event.status === 'published' ? `/${event.event_type}/${event.slug}` : `/admin/eventos/${event.id}/preview`}
+                    href={event.status === 'published' ? getInvitationUrl(event) : `/admin/eventos/${event.id}/preview`}
                     target="_blank"
                     style={{ display: 'block', padding: '12px', background: C.accent, color: 'white', borderRadius: '10px', textAlign: 'center', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}
                   >
@@ -291,9 +300,7 @@ export default async function EventoPage({ params }: Props) {
            </div>
 
            {event.plan === 'plus' && (
-             <PlusLinkGenerator 
-               baseUrl={`${(await headers()).get('x-forwarded-proto') || 'https'}://${(await headers()).get('host')}/${event.event_type}/${event.slug}`} 
-             />
+             <PlusLinkGenerator baseUrl={getInvitationUrl(event)} />
            )}
         </div>
       </div>

@@ -8,7 +8,7 @@ import type { GuestRow, RsvpRow, GuestWithRsvp, RsvpStats } from '@/app/admin/in
 async function getAuthorizedEvent(supabase: Awaited<ReturnType<typeof createClient>>, eventId: string) {
   const { data: event } = await supabase
     .from('events')
-    .select('id, slug, event_type, plan, config')
+    .select('id, slug, event_type, plan, config, subdomain')
     .eq('id', eventId)
     .single();
 
@@ -17,7 +17,7 @@ async function getAuthorizedEvent(supabase: Awaited<ReturnType<typeof createClie
 
 export async function getGuestsForEvent(eventId: string): Promise<{
   guests: GuestRow[];
-  event: { id: string; slug: string; event_type: string; plan: string; owner_id: string } | null;
+  event: { id: string; slug: string; event_type: string; plan: string; owner_id: string; subdomain?: string | null } | null;
   whatsappTemplate: string;
   rsvps: RsvpRow[];
   guestsWithRsvp: GuestWithRsvp[];

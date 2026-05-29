@@ -1,9 +1,16 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getGuestsForEvent } from './_actions';
 import InvitadosClient from './_components/InvitadosClient';
 
 interface Props {
   params: Promise<{ eventId: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { eventId } = await params;
+  const { event } = await getGuestsForEvent(eventId);
+  return { title: `Invitados | ${event?.title ?? 'Evento'}` };
 }
 
 export default async function InvitadosPage({ params }: Props) {

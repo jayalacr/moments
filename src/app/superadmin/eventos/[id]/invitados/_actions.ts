@@ -32,7 +32,7 @@ export async function getGuestsForEvent(eventId: string): Promise<{
 
   const { data: event } = await supabase
     .from('events')
-    .select('id, slug, event_type, plan, config, owner_id')
+    .select('id, slug, event_type, plan, config, owner_id, subdomain')
     .eq('id', eventId)
     .single();
 

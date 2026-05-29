@@ -1,6 +1,9 @@
+import type { Metadata } from 'next';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+
+export const metadata: Metadata = { title: 'Organizadores' };
 import { EliminarOrganizadorBtn } from './_components/EliminarOrganizadorBtn';
 import { InvitarOrganizadorForm } from './_components/InvitarOrganizadorForm';
 

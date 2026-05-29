@@ -33,7 +33,7 @@ async function getOwnEvent(supabase: Awaited<ReturnType<typeof createClient>>) {
 
   const { data: event } = await supabase
     .from('events')
-    .select('id, slug, event_type, plan, config')
+    .select('id, slug, event_type, plan, config, subdomain')
     .eq('id', orgEntry.event_id)
     .single();
 

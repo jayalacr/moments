@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Cormorant_Garamond, Jost } from 'next/font/google';
 import { createClient } from '@/lib/supabase/server';
 import AdminLayoutClient from '../../components/admin/AdminLayoutClient';
@@ -14,6 +15,13 @@ const jost = Jost({
   weight: ['300', '400', '500'],
   variable: '--font-jost',
 });
+
+export const metadata: Metadata = {
+  title: {
+    default: "Panel de Organizador",
+    template: "%s — Moments",
+  },
+};
 
 const C = {
   bg: '#F8F3EC',

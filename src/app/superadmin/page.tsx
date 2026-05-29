@@ -1,7 +1,10 @@
+import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { toggleEventStatus } from './_actions';
+
+export const metadata: Metadata = { title: 'Superadmin | Eventos' };
 
 const C = {
   bg: '#0D1117',
@@ -214,7 +217,7 @@ export default async function SuperadminPage() {
             {!events?.length && (
               <tr>
                 <td colSpan={7} style={{ padding: '48px 16px', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '12px', color: C.muted }}>
-                  // no events yet — create one
+                  // no events yet | create one
                 </td>
               </tr>
             )}

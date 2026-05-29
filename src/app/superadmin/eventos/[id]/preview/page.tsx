@@ -1,9 +1,17 @@
+import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { redirect, notFound } from 'next/navigation';
 import { TEMPLATES } from '@/lib/templates';
 
 interface Props {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data } = await supabase.from('events').select('title').eq('id', id).single();
+  return { title: `Vista Previa | ${data?.title ?? 'Evento'}` };
 }
 
 export default async function SuperadminPreviewPage({ params }: Props) {

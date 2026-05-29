@@ -1,7 +1,10 @@
+import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import NuevoEventoForm from './_components/NuevoEventoForm';
+
+export const metadata: Metadata = { title: 'Nuevo Evento' };
 
 const C = {
   muted: '#7A90A8',

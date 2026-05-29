@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import type { RsvpRow, RsvpStats, GuestWithRsvp } from '@/app/admin/invitados/types';
 import { saveMaxCapacity, updateGuestCompanions } from '../_actions';
+import { getInvitationUrl } from '@/lib/invitation';
 
 const C = {
   bg: '#F8F3EC',
@@ -331,26 +332,23 @@ function DeluxeGuestTable({
   guests,
   eventSlug,
   eventType,
+  subdomain,
 }: {
   guests: GuestWithRsvp[];
   eventSlug: string;
   eventType: string;
+  subdomain?: string | null;
 }) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  function buildLink(token: string): string {
-    if (typeof window === 'undefined') return '';
-    return `${window.location.origin}/${eventType}/${eventSlug}?id=${token}`;
-  }
-
   function buildWhatsAppUrl(guest: GuestWithRsvp): string {
-    const link = buildLink(guest.token);
+    const link = getInvitationUrl({ subdomain, event_type: eventType, slug: eventSlug }, guest.token);
     const msg = `Hola ${guest.name} 👋 Te compartimos tu link personalizado de confirmación para nuestra boda:\n\n${link}\n\nEsperamos contar con tu presencia 🌸`;
-    return `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    return `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
   }
 
   async function copyLink(guest: GuestWithRsvp) {
-    const link = buildLink(guest.token);
+    const link = getInvitationUrl({ subdomain, event_type: eventType, slug: eventSlug }, guest.token);
     await navigator.clipboard.writeText(link);
     setCopiedId(guest.id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -455,6 +453,7 @@ export default function ConfirmacionesClient({
   maxCapacity,
   eventSlug,
   eventType,
+  subdomain,
 }: {
   rsvps: RsvpRow[];
   guestsWithRsvp: GuestWithRsvp[];
@@ -463,6 +462,7 @@ export default function ConfirmacionesClient({
   maxCapacity: number | null;
   eventSlug: string;
   eventType: string;
+  subdomain?: string | null;
 }) {
   const [filter, setFilter] = useState<Filter>('all');
 
@@ -514,7 +514,7 @@ export default function ConfirmacionesClient({
           <p style={{ fontSize: '10px', letterSpacing: '2.5px', textTransform: 'uppercase', color: C.mutedLight, marginBottom: '16px' }}>
             Invitados individuales
           </p>
-          <DeluxeGuestTable guests={guestsWithRsvp} eventSlug={eventSlug} eventType={eventType} />
+          <DeluxeGuestTable guests={guestsWithRsvp} eventSlug={eventSlug} eventType={eventType} subdomain={subdomain} />
         </div>
       )}
 

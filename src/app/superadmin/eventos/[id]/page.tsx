@@ -1,7 +1,15 @@
+import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { toggleEventStatus, setEventDraft } from '@/app/superadmin/_actions';
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data } = await supabase.from('events').select('title').eq('id', id).single();
+  return { title: data?.title ?? 'Evento' };
+}
 import TemplateSelector from './_components/TemplateSelector';
 import PlanChanger from './_components/PlanChanger';
 import PricingEditor from './_components/PricingEditor';

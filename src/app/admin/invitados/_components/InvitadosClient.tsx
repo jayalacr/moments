@@ -25,6 +25,7 @@ import {
   updateGuestCompanions
 } from '../_actions';
 import type { GuestRow, RsvpRow, GuestWithRsvp, RsvpStats } from '../types';
+import { getInvitationUrl } from '@/lib/invitation';
 
 const C = {
   bg: '#F8F3EC',
@@ -45,7 +46,7 @@ const C = {
 
 interface Props {
   initialGuests: GuestRow[];
-  event: { id: string; slug: string; event_type: string; plan: string };
+  event: { id: string; slug: string; event_type: string; plan: string; subdomain?: string | null };
   initialWhatsappTemplate: string;
   initialRsvps: RsvpRow[];
   initialGuestsWithRsvp: GuestWithRsvp[];
@@ -62,10 +63,6 @@ interface FormState {
 
 const EMPTY_FORM: FormState = { name: '', phone: '', max_companions: 0, companion_names: [] };
 
-function buildInviteUrl(event: Props['event'], token: string): string {
-  if (typeof window === 'undefined') return '';
-  return `${window.location.origin}/${event.event_type}/${event.slug}?id=${token}`;
-}
 
 const DEFAULT_TEMPLATE = '¡Hola {nombre}! 👋 Te compartimos nuestra invitación digital. Nos encantaría que nos acompañaras. Por favor confirma tu asistencia aquí: {link}';
 
@@ -92,7 +89,11 @@ export default function InvitadosClient({
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'confirmed' | 'declined' | 'pending'>('all');
   const [isPending, startTransition] = useTransition();
-  const [waTemplate, setWaTemplate] = useState(initialWhatsappTemplate || DEFAULT_TEMPLATE);
+  const [waTemplate, setWaTemplate] = useState(
+    initialWhatsappTemplate && !initialWhatsappTemplate.includes('�')
+      ? initialWhatsappTemplate
+      : DEFAULT_TEMPLATE
+  );
   const [showTemplateEditor, setShowTemplateEditor] = useState(false);
   const [templateSaved, setTemplateSaved] = useState(false);
   const [isSavingTemplate, startSaveTransition] = useTransition();
@@ -223,23 +224,23 @@ export default function InvitadosClient({
   }
 
   async function copyUrl(token: string) {
-    const url = buildInviteUrl(event, token);
+    const url = getInvitationUrl(event, token);
     await navigator.clipboard.writeText(url);
     setCopiedToken(token);
     setTimeout(() => setCopiedToken(null), 2000);
   }
 
   function openWhatsApp(guest: GuestRow) {
-    const url = buildInviteUrl(event, guest.token);
+    const url = getInvitationUrl(event, guest.token);
     const message = waTemplate
       .replace(/\{nombre\}/gi, guest.name || 'Invitado')
       .replace(/\{link\}/gi, url);
     const encoded = encodeURIComponent(message);
     if (guest.phone) {
       const digits = guest.phone.replace(/[^\d+]/g, '');
-      window.open(`https://wa.me/${digits}?text=${encoded}`, '_blank');
+      window.open(`https://api.whatsapp.com/send?phone=${digits}&text=${encoded}`, '_blank');
     } else {
-      window.open(`https://wa.me/?text=${encoded}`, '_blank');
+      window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
     }
   }
 

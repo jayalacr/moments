@@ -1,8 +1,16 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getGuestsForEvent } from './_actions';
 import InvitadosClient from './_components/InvitadosClient';
 import Link from 'next/link';
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data } = await supabase.from('events').select('title').eq('id', id).single();
+  return { title: `Invitados | ${data?.title ?? 'Evento'}` };
+}
 
 const C = {
   bg: '#0D1117',
