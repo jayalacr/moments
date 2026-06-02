@@ -2242,7 +2242,7 @@ export default function DeluxeTemplate({
         <section className="section" id="parents">
           <p className="label muted reveal" style={{ marginBottom: '2.5rem' }}>Con la bendición de nuestras familias</p>
           <div className="parents-wrap">
-            <div className="parents-group slide-left delay-1">
+            <div className="parents-group slide-left delay-1" style={{ alignSelf: 'start' }}>
               <p className="display-name">{fullNames.person1}</p>
               <div className="name-sep"><span className="sep-line short" /></div>
               {parents.lines1.map((line, i) => (
@@ -2254,7 +2254,7 @@ export default function DeluxeTemplate({
               <span className="pm-amp">&</span>
               <span>{initials.person2}</span>
             </div>
-            <div className="parents-group slide-right delay-1">
+            <div className="parents-group slide-right delay-1" style={{ alignSelf: 'start' }}>
               <p className="display-name">{fullNames.person2}</p>
               <div className="name-sep"><span className="sep-line short" /></div>
               {parents.lines2.map((line, i) => (
