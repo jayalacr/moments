@@ -114,6 +114,16 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
   const textColor        = t.textColor        ?? '#1C1611';
   const displayFontVar   = DISPLAY_FONT_VAR[t.displayFont ?? 'cormorant'] ?? 'var(--font-cormorant)';
 
+  const splitParent = (s: string) => {
+    const lines = s.split('\n').map(l => l.replace(/\s*&\s*$/, '').trim()).filter(Boolean);
+    if (lines.length < 2) return lines;
+    const out: string[] = [lines[0]];
+    for (let i = 1; i < lines.length; i++) { out.push('&'); out.push(lines[i]); }
+    return out;
+  };
+  const parentLines1 = splitParent(c.parents?.person1 || '');
+  const parentLines2 = splitParent(c.parents?.person2 || '');
+
   // Visibility flags — combine sections toggle with data presence
   const sec           = c.sections ?? {};
   const hasQuote      = sec.quote    === true && !!(c.quote?.text);
@@ -226,17 +236,27 @@ export default function EssentialTemplate({ config = {} }: { config?: EssentialC
             <div className="reveal delay-1 text-center">
               <p className="display-name">{c.fullNames?.person1}</p>
               <div className="name-sep"><span className="sep-line short" /></div>
-              <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
-                Hija de<br />{c.parents?.person1}
-              </p>
+              {parentLines1.length > 0 && (
+                <>
+                  <p className="label muted" style={{ lineHeight: '1.8' }}>Hija de</p>
+                  {parentLines1.map((line, i) => (
+                    <p key={i} className="label muted" style={{ lineHeight: '1.8' }}>{line}</p>
+                  ))}
+                </>
+              )}
             </div>
             <div className="parents-symbol reveal delay-2">✦</div>
             <div className="reveal delay-2 text-center">
               <p className="display-name">{c.fullNames?.person2}</p>
               <div className="name-sep"><span className="sep-line short" /></div>
-              <p className="label muted" style={{ whiteSpace: 'pre-line', lineHeight: '1.8' }}>
-                Hijo de<br />{c.parents?.person2}
-              </p>
+              {parentLines2.length > 0 && (
+                <>
+                  <p className="label muted" style={{ lineHeight: '1.8' }}>Hijo de</p>
+                  {parentLines2.map((line, i) => (
+                    <p key={i} className="label muted" style={{ lineHeight: '1.8' }}>{line}</p>
+                  ))}
+                </>
+              )}
             </div>
           </div>
         </section>

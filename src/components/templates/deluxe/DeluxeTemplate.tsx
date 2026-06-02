@@ -840,13 +840,15 @@ const css = `
   }
 
   /* ── Parents ── */
-  .parents-wrap { display: flex; align-items: center; justify-content: center; gap: 3rem; width: 100%; }
-  .parents-group { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.45rem; }
+  .parents-wrap { display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; gap: 2rem; width: 100%; }
+  .parents-group { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.45rem; min-width: 0; max-width: 220px; justify-self: center; }
   .parents-monogram {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
+    align-self: start;
+    padding-top: 2.2rem;
     gap: 1rem;
     font-family: var(--font-cormorant), Georgia, serif;
     font-size: 2.4rem;
@@ -854,10 +856,14 @@ const css = `
     font-weight: 300;
     color: var(--gold);
     opacity: 0.6;
-    flex: 0 0 auto;
-    padding-bottom: 1rem; /* Visual compensation for the names weight */
+    flex-shrink: 0;
   }
   .pm-amp { font-size: 1.3rem; opacity: 0.8; font-family: var(--font-jost), sans-serif; font-style: normal; }
+  @media (max-width: 640px) {
+    .parents-wrap { grid-template-columns: 1fr; gap: 1.5rem; }
+    .parents-group { max-width: 100%; width: 100%; }
+    .parents-monogram { align-self: auto; padding-top: 0.5rem; padding-bottom: 0.5rem; font-size: 2rem; }
+  }
   .display-name { font-family: var(--font-cormorant), Georgia, serif; font-size: 1.25rem; font-weight: 400; color: var(--charcoal); margin: 0; }
   .name-sep { display: flex; justify-content: center; margin: 0.75rem 0; }
 
@@ -2237,10 +2243,10 @@ export default function DeluxeTemplate({
           <p className="label muted reveal" style={{ marginBottom: '2.5rem' }}>Con la bendición de nuestras familias</p>
           <div className="parents-wrap">
             <div className="parents-group slide-left delay-1">
-              <p className="display-name" style={{ whiteSpace: 'nowrap' }}>{fullNames.person1}</p>
+              <p className="display-name">{fullNames.person1}</p>
               <div className="name-sep"><span className="sep-line short" /></div>
               {parents.lines1.map((line, i) => (
-                <p key={i} className="label muted" style={{ whiteSpace: 'nowrap' }}>{line}</p>
+                <p key={i} className="label muted">{line}</p>
               ))}
             </div>
             <div className="parents-monogram reveal">
@@ -2249,10 +2255,10 @@ export default function DeluxeTemplate({
               <span>{initials.person2}</span>
             </div>
             <div className="parents-group slide-right delay-1">
-              <p className="display-name" style={{ whiteSpace: 'nowrap' }}>{fullNames.person2}</p>
+              <p className="display-name">{fullNames.person2}</p>
               <div className="name-sep"><span className="sep-line short" /></div>
               {parents.lines2.map((line, i) => (
-                <p key={i} className="label muted" style={{ whiteSpace: 'nowrap' }}>{line}</p>
+                <p key={i} className="label muted">{line}</p>
               ))}
             </div>
           </div>

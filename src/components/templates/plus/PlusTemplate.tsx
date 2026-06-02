@@ -697,18 +697,18 @@ export default function PlusTemplate({
           <p className="label muted reveal" style={{ marginBottom: '2.5rem' }}>Con la bendición de nuestras familias</p>
           <div className="parents-wrap">
             <div className="parents-group reveal delay-1">
-              <p className="display-name" style={{ whiteSpace: 'nowrap' }}>{E.fullNames.person1}</p>
+              <p className="display-name">{E.fullNames.person1}</p>
               <div className="name-sep"><span className="sep-line short" /></div>
               {parentLines1.map((line, i) => (
-                <p key={i} className="label muted" style={{ whiteSpace: 'nowrap' }}>{line}</p>
+                <p key={i} className="label muted">{line}</p>
               ))}
             </div>
-            <div style={{ width: '1px', background: 'var(--muted)', alignSelf: 'stretch' }} />
+            <div style={{ width: '1px', background: 'var(--muted)', alignSelf: 'stretch', flexShrink: 0 }} />
             <div className="parents-group reveal delay-2">
-              <p className="display-name" style={{ whiteSpace: 'nowrap' }}>{E.fullNames.person2}</p>
+              <p className="display-name">{E.fullNames.person2}</p>
               <div className="name-sep"><span className="sep-line short" /></div>
               {parentLines2.map((line, i) => (
-                <p key={i} className="label muted" style={{ whiteSpace: 'nowrap' }}>{line}</p>
+                <p key={i} className="label muted">{line}</p>
               ))}
             </div>
           </div>
@@ -1616,8 +1616,8 @@ const css = `
   .inline-sep { display: flex; align-items: center; gap: 1rem; }
 
   /* ── Parents ── */
-  .parents-wrap { display: flex; align-items: center; justify-content: center; gap: 3rem; width: 100%; }
-  .parents-group { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.45rem; }
+  .parents-wrap { display: flex; align-items: flex-start; justify-content: center; gap: 2rem; width: 100%; }
+  .parents-group { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.45rem; flex: 1; min-width: 0; max-width: 220px; }
   .parents-divider { display: none; }
   .display-name {
     font-family: var(--font-cormorant), Georgia, serif;

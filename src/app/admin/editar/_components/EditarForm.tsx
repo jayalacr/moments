@@ -919,11 +919,11 @@ export default function EditarForm({
           {/* ── 4. Padres ── */}
           {(() => {
             const splitParts = (s: string) => {
-              const parts = s.split('\n').map(l => l.replace(/\s*&\s*$/, '').trim()).filter(Boolean);
+              const parts = s.split('\n').map(l => l.replace(/\s*&\s*$/, ''));
               return { dad: parts[0] ?? '', mom: parts[1] ?? '' };
             };
             const joinParts = (dad: string, mom: string) =>
-              mom.trim() ? `${dad.trim()}\n${mom.trim()}` : dad.trim();
+              mom.trim() ? `${dad}\n${mom}` : dad;
             const p1 = splitParts(cfg.parents.person1);
             const p2 = splitParts(cfg.parents.person2);
             return (
