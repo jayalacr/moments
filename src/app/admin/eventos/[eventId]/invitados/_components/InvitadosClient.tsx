@@ -192,6 +192,16 @@ export default function InvitadosClient({
   const [isSavingTemplate, startSaveTransition] = useTransition();
 
   const isDeluxe = event.plan === 'deluxe';
+  const [expandedGuests, setExpandedGuests] = useState<Set<string>>(new Set());
+
+  function toggleExpanded(guestId: string) {
+    setExpandedGuests(prev => {
+      const next = new Set(prev);
+      if (next.has(guestId)) next.delete(guestId);
+      else next.add(guestId);
+      return next;
+    });
+  }
 
   // ── CSV Import State ──────────────────────────────────────────────────────
   const [showCsvModal, setShowCsvModal] = useState(false);
@@ -1067,11 +1077,11 @@ export default function InvitadosClient({
         {/* Header — solo desktop */}
         <div className="conf-table-header" style={{
           display: 'grid',
-          gridTemplateColumns: 'minmax(180px, 1.5fr) 120px 70px 2fr 110px',
+          gridTemplateColumns: '35% 15% 9% 26% 15%',
           padding: '16px 24px', backgroundColor: C.bg, borderBottom: `1px solid ${C.border}`
         }}>
-          {['Familia / Titular', 'Estado', 'Asist.', isDeluxe ? 'Acompañantes / Dieta' : 'Dieta', 'Fecha'].map(h => (
-            <span key={h} style={labelStats}>{h}</span>
+          {['Titular', 'Estado', 'Acomp.', 'Dieta', 'Fecha'].map(h => (
+            <span key={h} style={{ ...labelStats, whiteSpace: 'nowrap' }}>{h}</span>
           ))}
         </div>
 
@@ -1099,30 +1109,43 @@ export default function InvitadosClient({
                   : confirmedSet.has(name) ? 'confirmed' as const : 'declined' as const,
             }));
 
-            const COLS = 'minmax(180px, 1.5fr) 120px 70px 2fr 110px';
+            const COLS = '35% 15% 9% 26% 15%';
             const hasCompanions = companionRows.length > 0;
 
             return (
               <div key={guest.id}>
                 {/* ─ Desktop: fila titular ─ */}
-                <div className="conf-desktop-row" style={{
-                  display: 'grid', gridTemplateColumns: COLS,
-                  padding: '18px 24px',
-                  borderBottom: (!isLastGuest || hasCompanions) ? `1px solid ${C.border}` : undefined,
-                  alignItems: 'start',
-                }}>
+                <div
+                  className="conf-desktop-row"
+                  onClick={hasCompanions ? () => toggleExpanded(guest.id) : undefined}
+                  style={{
+                    display: 'grid', gridTemplateColumns: COLS,
+                    padding: '18px 24px',
+                    borderBottom: (!isLastGuest || (hasCompanions && !expandedGuests.has(guest.id))) ? `1px solid ${C.border}` : undefined,
+                    alignItems: 'start',
+                    cursor: hasCompanions ? 'pointer' : 'default',
+                  }}
+                >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {hasCompanions && <span style={{ fontSize: '9px', color: C.accent, lineHeight: 1 }}>●</span>}
+                    {hasCompanions && (
+                      expandedGuests.has(guest.id)
+                        ? <ChevronUp size={14} color={C.accent} />
+                        : <ChevronDown size={14} color={C.accent} />
+                    )}
                     <p style={{ fontWeight: 600, margin: 0, fontSize: '14px' }}>{guest.name}</p>
                   </div>
                   <span style={{
-                    display: 'inline-flex', alignSelf: 'flex-start',
+                    display: 'inline-flex', alignSelf: 'flex-start', width: 'fit-content',
                     padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 600,
                     backgroundColor: titularMeta.bg, color: titularMeta.color, textTransform: 'uppercase',
                   }}>
                     {titularMeta.label}
                   </span>
-                  <p style={{ margin: 0, fontSize: '14px' }}>{rsvp?.seats ?? '—'}</p>
+                  <p style={{ margin: 0, fontSize: '14px' }}>
+                    {isDeluxe && hasCompanions
+                      ? `${(rsvp?.status === 'confirmed' ? 1 : 0) + confirmedSet.size}/${1 + allCompanions.length}`
+                      : (rsvp?.seats ?? 'N/A')}
+                  </p>
                   <div style={{ fontSize: '13px', lineHeight: 1.5 }}>
                     {hasDetailedDietary ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -1139,38 +1162,45 @@ export default function InvitadosClient({
                     ) : rsvp?.dietary ? (
                       <p style={{ margin: 0, color: C.accent }}>{rsvp.dietary}</p>
                     ) : (
-                      <span style={{ color: C.mutedLight }}>—</span>
+                      <span style={{ color: C.mutedLight }}>N/A</span>
                     )}
                   </div>
                   <p style={{ margin: 0, fontSize: '12px', color: C.mutedLight }}>
-                    {rsvp ? new Date(rsvp.created_at).toLocaleDateString() : '—'}
+                    {rsvp ? new Date(rsvp.created_at).toLocaleDateString() : 'N/A'}
                   </p>
                 </div>
 
                 {/* ─ Desktop: filas acompañantes (Deluxe) ─ */}
-                {companionRows.map((comp, ci) => {
+                {expandedGuests.has(guest.id) && companionRows.map((comp, ci) => {
                   const cm = statusMetaConf[comp.status];
-                  const isLastComp = ci === companionRows.length - 1;
+                  const isLastRow = ci === companionRows.length - 1;
+                  const compDietary = rsvp?.dietary_per_person?.[comp.name] ?? [];
                   return (
-                    <div key={`${guest.id}-comp-${ci}`} className="conf-desktop-row" style={{
+                    <div key={`${guest.id}-sub-${ci}`} className="conf-desktop-row" style={{
                       display: 'grid', gridTemplateColumns: COLS,
-                      padding: '10px 24px 10px 40px',
+                      padding: '10px 24px',
                       backgroundColor: 'rgba(201,168,124,0.025)',
-                      borderBottom: (!isLastGuest || !isLastComp) ? `1px solid ${C.border}` : undefined,
+                      borderBottom: (!isLastGuest || !isLastRow) ? `1px solid ${C.border}` : undefined,
                       alignItems: 'center',
                     }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ paddingLeft: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ color: C.mutedLight, fontSize: '12px', fontFamily: 'monospace' }}>└─</span>
                         <p style={{ margin: 0, fontSize: '13px', color: C.muted }}>{comp.name}</p>
                       </div>
                       <span style={{
-                        display: 'inline-flex',
+                        display: 'inline-flex', width: 'fit-content',
                         padding: '3px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 600,
                         backgroundColor: cm.bg, color: cm.color, textTransform: 'uppercase',
                       }}>
                         {cm.label}
                       </span>
-                      <span /><span /><span />
+                      <span />
+                      <div style={{ fontSize: '12px' }}>
+                        {compDietary.length > 0
+                          ? <span style={{ color: C.accent }}>{compDietary.join(', ')}</span>
+                          : <span style={{ color: C.mutedLight }}>N/A</span>}
+                      </div>
+                      <span />
                     </div>
                   );
                 })}
@@ -1181,11 +1211,24 @@ export default function InvitadosClient({
                   padding: '16px',
                   borderBottom: !isLastGuest ? `1px solid ${C.border}` : undefined,
                 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: hasCompanions ? '12px' : 0 }}>
-                    <div>
-                      <p style={{ fontWeight: 600, margin: '0 0 4px', fontSize: '14px' }}>{guest.name}</p>
+                  {/* Header de la card — clickeable si tiene acompañantes */}
+                  <div
+                    onClick={hasCompanions ? () => toggleExpanded(guest.id) : undefined}
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', cursor: hasCompanions ? 'pointer' : 'default' }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                        {hasCompanions && (
+                          expandedGuests.has(guest.id)
+                            ? <ChevronUp size={13} color={C.accent} />
+                            : <ChevronDown size={13} color={C.accent} />
+                        )}
+                        <p style={{ fontWeight: 600, margin: 0, fontSize: '14px' }}>{guest.name}</p>
+                      </div>
                       <p style={{ margin: 0, fontSize: '12px', color: C.mutedLight }}>
-                        {rsvp?.seats ? `${rsvp.seats} ${rsvp.seats === 1 ? 'persona' : 'personas'}` : 'Sin confirmar'}
+                        {isDeluxe && hasCompanions
+                          ? `${(rsvp?.status === 'confirmed' ? 1 : 0) + confirmedSet.size}/${1 + allCompanions.length} total`
+                          : rsvp?.seats ? `${rsvp.seats} ${rsvp.seats === 1 ? 'persona' : 'personas'}` : 'Sin confirmar'}
                         {rsvp ? ` · ${new Date(rsvp.created_at).toLocaleDateString()}` : ''}
                       </p>
                     </div>
@@ -1198,40 +1241,37 @@ export default function InvitadosClient({
                     </span>
                   </div>
 
-                  {companionRows.length > 0 && (
-                    <div style={{ paddingLeft: '12px', borderLeft: `2px solid ${C.border}`, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {/* Acompañantes — solo cuando expandido */}
+                  {hasCompanions && expandedGuests.has(guest.id) && (
+                    <div style={{ marginTop: '12px', paddingLeft: '12px', borderLeft: `2px solid ${C.border}`, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {companionRows.map((comp, ci) => {
                         const cm = statusMetaConf[comp.status];
+                        const compDietary = rsvp?.dietary_per_person?.[comp.name] ?? [];
                         return (
-                          <div key={`mob-${guest.id}-${ci}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <p style={{ margin: 0, fontSize: '13px', color: C.muted }}>{comp.name}</p>
-                            <span style={{
-                              padding: '2px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 600,
-                              backgroundColor: cm.bg, color: cm.color, textTransform: 'uppercase',
-                            }}>
-                              {cm.label}
-                            </span>
+                          <div key={`mob-${guest.id}-${ci}`}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <p style={{ margin: 0, fontSize: '13px', color: C.muted }}>{comp.name}</p>
+                              <span style={{
+                                padding: '2px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 600,
+                                backgroundColor: cm.bg, color: cm.color, textTransform: 'uppercase',
+                              }}>
+                                {cm.label}
+                              </span>
+                            </div>
+                            {compDietary.length > 0 && (
+                              <p style={{ margin: '2px 0 0', fontSize: '11px', color: C.accent }}>{compDietary.join(', ')}</p>
+                            )}
                           </div>
                         );
                       })}
                     </div>
                   )}
 
-                  {(hasDetailedDietary || rsvp?.dietary) && (
+                  {/* Dieta general (no per-person) */}
+                  {!hasDetailedDietary && rsvp?.dietary && (
                     <div style={{ marginTop: '10px', padding: '8px 12px', backgroundColor: C.bg, borderRadius: '8px' }}>
-                      <p style={{ margin: '0 0 4px', fontSize: '10px', fontWeight: 600, color: C.accent, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Dieta</p>
-                      {hasDetailedDietary ? (
-                        Object.entries(dMap).map(([person, pref]) =>
-                          pref && pref.length > 0 && (
-                            <div key={person} style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between' }}>
-                              <span style={{ color: C.muted }}>{person}:</span>
-                              <span>{pref.join(', ')}</span>
-                            </div>
-                          )
-                        )
-                      ) : (
-                        <p style={{ margin: 0, fontSize: '12px' }}>{rsvp!.dietary}</p>
-                      )}
+                      <p style={{ margin: '0 0 2px', fontSize: '10px', fontWeight: 600, color: C.accent, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Dieta</p>
+                      <p style={{ margin: 0, fontSize: '12px' }}>{rsvp.dietary}</p>
                     </div>
                   )}
                 </div>
