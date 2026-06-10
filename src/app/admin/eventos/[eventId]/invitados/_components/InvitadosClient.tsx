@@ -137,9 +137,12 @@ const responsiveStyles = `
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
     }
-    .grid-row {
-      min-width: 800px;
-    }
+    .conf-table-header { display: none !important; }
+    .conf-desktop-row { display: none !important; }
+    .conf-mobile-card { display: block !important; }
+  }
+  @media (min-width: 769px) {
+    .conf-mobile-card { display: none !important; }
   }
   @media (max-width: 480px) {
     .stats-grid {
@@ -462,6 +465,12 @@ export default function InvitadosClient({
     link.click();
     document.body.removeChild(link);
   }
+
+  const statusMetaConf = {
+    confirmed: { label: 'Confirmó',  color: C.success, bg: C.successLight },
+    declined:  { label: 'Declinó',   color: C.danger,  bg: C.dangerLight },
+    pending:   { label: 'Pendiente', color: C.warning,  bg: C.warningLight },
+  } as const;
 
   return (
     <div className="admin-page-container" style={{ display: 'flex', flexDirection: 'column', gap: '32px', width: '100%' }}>
@@ -1053,81 +1062,179 @@ export default function InvitadosClient({
         )}
       </div>
 
-      {/* ── Tabla de Confirmaciones Detalladas ── */}
+      {/* ── Tabla de Familias / Confirmaciones ── */}
       <div className="table-container" style={{ backgroundColor: C.white, border: `1px solid ${C.border}`, borderRadius: '20px', overflow: 'hidden' }}>
-        <div className="grid-row" style={{ 
-          display: 'grid', gridTemplateColumns: 'minmax(200px, 1.5fr) 120px 100px 2fr 120px', 
+        {/* Header — solo desktop */}
+        <div className="conf-table-header" style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(180px, 1.5fr) 120px 70px 2fr 110px',
           padding: '16px 24px', backgroundColor: C.bg, borderBottom: `1px solid ${C.border}`
         }}>
-          {['Nombre', 'Estado', 'Asientos', 'Acompañantes / Dieta', 'Fecha'].map(h => (
+          {['Familia / Titular', 'Estado', 'Asist.', isDeluxe ? 'Acompañantes / Dieta' : 'Dieta', 'Fecha'].map(h => (
             <span key={h} style={labelStats}>{h}</span>
           ))}
         </div>
 
-        {rsvps.length === 0 ? (
+        {guestsWithRsvp.length === 0 ? (
           <div style={{ padding: '60px', textAlign: 'center', color: C.mutedLight }}>
-            Aún no hay confirmaciones registradas.
+            Aún no hay invitados registrados.
           </div>
         ) : (
-          rsvps.map((r, i) => {
-            const statusMeta = {
-              confirmed: { label: 'Confirmó', color: C.success, bg: C.successLight },
-              declined: { label: 'Declinó', color: C.danger, bg: C.dangerLight },
-              pending: { label: 'Pendiente', color: C.warning, bg: C.warningLight },
-            };
-            const meta = statusMeta[r.status];
-            
-            // Parse per-person dietary
-            const dMap = r.dietary_per_person;
-            const hasDetailedDietary = dMap && Object.keys(dMap).length > 0;
+          guestsWithRsvp.map((guest, gi) => {
+            const rsvp = guest.rsvp;
+            const titularStatus = rsvp?.status ?? 'pending';
+            const confirmedSet = new Set<string>(rsvp?.companion_names ?? []);
+            const allCompanions = isDeluxe ? (guest.companion_names ?? []) : [];
+            const titularMeta = statusMetaConf[titularStatus];
+            const dMap = rsvp?.dietary_per_person ?? {};
+            const hasDetailedDietary = Object.keys(dMap).length > 0;
+            const isLastGuest = gi === guestsWithRsvp.length - 1;
+
+            const companionRows = allCompanions.map(name => ({
+              name,
+              status: !rsvp
+                ? 'pending' as const
+                : rsvp.status === 'declined'
+                  ? 'declined' as const
+                  : confirmedSet.has(name) ? 'confirmed' as const : 'declined' as const,
+            }));
+
+            const COLS = 'minmax(180px, 1.5fr) 120px 70px 2fr 110px';
+            const hasCompanions = companionRows.length > 0;
 
             return (
-              <div key={r.id} className="grid-row" style={{ 
-                display: 'grid', gridTemplateColumns: 'minmax(200px, 1.5fr) 120px 100px 2fr 120px', 
-                padding: '20px 24px', borderBottom: i === rsvps.length - 1 ? 'none' : `1px solid ${C.border}`,
-                alignItems: 'start'
-              }}>
-                <div>
-                  <p style={{ fontWeight: 500, margin: 0 }}>{r.name}</p>
-                  {r.guests?.name && r.guests.name !== r.name && (
-                    <p style={{ fontSize: '11px', color: C.muted, marginTop: '2px' }}>Invitado: {r.guests.name}</p>
-                  )}
-                </div>
-                <div>
-                  <span style={{ 
+              <div key={guest.id}>
+                {/* ─ Desktop: fila titular ─ */}
+                <div className="conf-desktop-row" style={{
+                  display: 'grid', gridTemplateColumns: COLS,
+                  padding: '18px 24px',
+                  borderBottom: (!isLastGuest || hasCompanions) ? `1px solid ${C.border}` : undefined,
+                  alignItems: 'start',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {hasCompanions && <span style={{ fontSize: '9px', color: C.accent, lineHeight: 1 }}>●</span>}
+                    <p style={{ fontWeight: 600, margin: 0, fontSize: '14px' }}>{guest.name}</p>
+                  </div>
+                  <span style={{
+                    display: 'inline-flex', alignSelf: 'flex-start',
                     padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 600,
-                    backgroundColor: meta.bg, color: meta.color, textTransform: 'uppercase'
+                    backgroundColor: titularMeta.bg, color: titularMeta.color, textTransform: 'uppercase',
                   }}>
-                    {meta.label}
+                    {titularMeta.label}
                   </span>
+                  <p style={{ margin: 0, fontSize: '14px' }}>{rsvp?.seats ?? '—'}</p>
+                  <div style={{ fontSize: '13px', lineHeight: 1.5 }}>
+                    {hasDetailedDietary ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <p style={{ margin: '0 0 4px', fontSize: '11px', fontWeight: 600, color: C.accent, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Preferencias:</p>
+                        {Object.entries(dMap).map(([person, pref]) =>
+                          pref && pref.length > 0 && (
+                            <div key={person} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${C.accentLight}`, paddingBottom: '2px' }}>
+                              <span style={{ color: C.muted }}>{person}:</span>
+                              <span style={{ fontWeight: 500 }}>{pref.join(', ')}</span>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    ) : rsvp?.dietary ? (
+                      <p style={{ margin: 0, color: C.accent }}>{rsvp.dietary}</p>
+                    ) : (
+                      <span style={{ color: C.mutedLight }}>—</span>
+                    )}
+                  </div>
+                  <p style={{ margin: 0, fontSize: '12px', color: C.mutedLight }}>
+                    {rsvp ? new Date(rsvp.created_at).toLocaleDateString() : '—'}
+                  </p>
                 </div>
-                <p style={{ margin: 0, fontSize: '14px' }}>{r.seats}</p>
-                <div style={{ fontSize: '13px', lineHeight: 1.5 }}>
-                  {r.companion_names?.length > 0 && (
-                    <p style={{ margin: '0 0 8px 0', color: C.text }}>
-                      <span style={{ color: C.mutedLight }}>Acompañantes:</span> {r.companion_names.join(', ')}
-                    </p>
-                  )}
-                  
-                  {hasDetailedDietary ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <p style={{ margin: 0, fontSize: '11px', fontWeight: 600, color: C.accent, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Preferencias:</p>
-                      {Object.entries(dMap).map(([person, preference]) => (
-                        preference && preference.length > 0 && (
-                          <div key={person} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${C.accentLight}`, paddingBottom: '2px' }}>
-                            <span style={{ color: C.muted }}>{person}:</span>
-                            <span style={{ fontWeight: 500 }}>{preference.join(', ')}</span>
-                          </div>
-                        )
-                      ))}
+
+                {/* ─ Desktop: filas acompañantes (Deluxe) ─ */}
+                {companionRows.map((comp, ci) => {
+                  const cm = statusMetaConf[comp.status];
+                  const isLastComp = ci === companionRows.length - 1;
+                  return (
+                    <div key={`${guest.id}-comp-${ci}`} className="conf-desktop-row" style={{
+                      display: 'grid', gridTemplateColumns: COLS,
+                      padding: '10px 24px 10px 40px',
+                      backgroundColor: 'rgba(201,168,124,0.025)',
+                      borderBottom: (!isLastGuest || !isLastComp) ? `1px solid ${C.border}` : undefined,
+                      alignItems: 'center',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ color: C.mutedLight, fontSize: '12px', fontFamily: 'monospace' }}>└─</span>
+                        <p style={{ margin: 0, fontSize: '13px', color: C.muted }}>{comp.name}</p>
+                      </div>
+                      <span style={{
+                        display: 'inline-flex',
+                        padding: '3px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 600,
+                        backgroundColor: cm.bg, color: cm.color, textTransform: 'uppercase',
+                      }}>
+                        {cm.label}
+                      </span>
+                      <span /><span /><span />
                     </div>
-                  ) : (
-                    r.dietary && <p style={{ margin: 0, color: C.accent }}>{r.dietary}</p>
+                  );
+                })}
+
+                {/* ─ Mobile: card por familia ─ */}
+                <div className="conf-mobile-card" style={{
+                  display: 'none',
+                  padding: '16px',
+                  borderBottom: !isLastGuest ? `1px solid ${C.border}` : undefined,
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: hasCompanions ? '12px' : 0 }}>
+                    <div>
+                      <p style={{ fontWeight: 600, margin: '0 0 4px', fontSize: '14px' }}>{guest.name}</p>
+                      <p style={{ margin: 0, fontSize: '12px', color: C.mutedLight }}>
+                        {rsvp?.seats ? `${rsvp.seats} ${rsvp.seats === 1 ? 'persona' : 'personas'}` : 'Sin confirmar'}
+                        {rsvp ? ` · ${new Date(rsvp.created_at).toLocaleDateString()}` : ''}
+                      </p>
+                    </div>
+                    <span style={{
+                      padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 600,
+                      backgroundColor: titularMeta.bg, color: titularMeta.color, textTransform: 'uppercase',
+                      whiteSpace: 'nowrap', marginLeft: '8px', flexShrink: 0,
+                    }}>
+                      {titularMeta.label}
+                    </span>
+                  </div>
+
+                  {companionRows.length > 0 && (
+                    <div style={{ paddingLeft: '12px', borderLeft: `2px solid ${C.border}`, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {companionRows.map((comp, ci) => {
+                        const cm = statusMetaConf[comp.status];
+                        return (
+                          <div key={`mob-${guest.id}-${ci}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <p style={{ margin: 0, fontSize: '13px', color: C.muted }}>{comp.name}</p>
+                            <span style={{
+                              padding: '2px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 600,
+                              backgroundColor: cm.bg, color: cm.color, textTransform: 'uppercase',
+                            }}>
+                              {cm.label}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {(hasDetailedDietary || rsvp?.dietary) && (
+                    <div style={{ marginTop: '10px', padding: '8px 12px', backgroundColor: C.bg, borderRadius: '8px' }}>
+                      <p style={{ margin: '0 0 4px', fontSize: '10px', fontWeight: 600, color: C.accent, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Dieta</p>
+                      {hasDetailedDietary ? (
+                        Object.entries(dMap).map(([person, pref]) =>
+                          pref && pref.length > 0 && (
+                            <div key={person} style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ color: C.muted }}>{person}:</span>
+                              <span>{pref.join(', ')}</span>
+                            </div>
+                          )
+                        )
+                      ) : (
+                        <p style={{ margin: 0, fontSize: '12px' }}>{rsvp!.dietary}</p>
+                      )}
+                    </div>
                   )}
                 </div>
-                <p style={{ margin: 0, fontSize: '12px', color: C.mutedLight }}>
-                  {new Date(r.created_at).toLocaleDateString()}
-                </p>
               </div>
             );
           })
