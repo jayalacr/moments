@@ -1248,8 +1248,8 @@ export default function InvitadosClient({
                         const cm = statusMetaConf[comp.status];
                         const compDietary = rsvp?.dietary_per_person?.[comp.name] ?? [];
                         return (
-                          <div key={`mob-${guest.id}-${ci}`}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div key={`mob-${guest.id}-${ci}`} style={{ paddingBottom: ci < companionRows.length - 1 ? '8px' : 0, borderBottom: ci < companionRows.length - 1 ? `1px solid ${C.border}` : undefined }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
                               <p style={{ margin: 0, fontSize: '13px', color: C.muted }}>{comp.name}</p>
                               <span style={{
                                 padding: '2px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 600,
@@ -1258,9 +1258,18 @@ export default function InvitadosClient({
                                 {cm.label}
                               </span>
                             </div>
-                            {compDietary.length > 0 && (
-                              <p style={{ margin: '2px 0 0', fontSize: '11px', color: C.accent }}>{compDietary.join(', ')}</p>
-                            )}
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                              {compDietary.length > 0
+                                ? compDietary.map((d, di) => (
+                                    <span key={di} style={{
+                                      fontSize: '10px', padding: '2px 8px',
+                                      backgroundColor: C.accentLight, color: C.accent,
+                                      borderRadius: '20px', fontWeight: 500,
+                                    }}>{d}</span>
+                                  ))
+                                : <span style={{ fontSize: '10px', color: C.mutedLight, fontStyle: 'italic' }}>sin restricción</span>
+                              }
+                            </div>
                           </div>
                         );
                       })}
