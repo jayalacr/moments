@@ -109,7 +109,18 @@ export default async function SuperadminPage() {
             flex-direction: column;
           }
           .sa-stats-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(3, 1fr);
+          }
+          .sa-table-wrapper {
+            display: none;
+          }
+          .sa-cards-list {
+            display: flex !important;
+          }
+        }
+        @media (min-width: 769px) {
+          .sa-cards-list {
+            display: none !important;
           }
         }
         @keyframes pulse-dot { 0%,100% { opacity:1; box-shadow: 0 0 6px ${C.green}; } 50% { opacity:0.5; box-shadow: 0 0 2px ${C.green}; } }
@@ -324,6 +335,89 @@ export default async function SuperadminPage() {
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* Card list — visible only on mobile */}
+      <div className="sa-cards-list" style={{ display: 'none', flexDirection: 'column', gap: '8px' }}>
+        {!events?.length && (
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: C.muted, textAlign: 'center', padding: '32px 0' }}>
+            // no events yet
+          </p>
+        )}
+        {events?.map(event => {
+          const status = STATUS_MAP[event.status] ?? STATUS_MAP.draft;
+          const plan = PLAN_MAP[event.plan] ?? PLAN_MAP.essential;
+          const payment = PAYMENT_MAP[event.payment_status ?? 'pending'] ?? PAYMENT_MAP.pending;
+          const org = profileMap[event.owner_id] as { full_name?: string; email?: string } | undefined;
+          const createdAt = new Date(event.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: '2-digit' });
+          return (
+            <div
+              key={event.id}
+              style={{
+                border: `1px solid ${C.border}`,
+                borderRadius: '8px',
+                padding: '16px',
+                backgroundColor: 'rgba(255,255,255,0.02)',
+              }}
+            >
+              {/* Fila superior: título + slug */}
+              <div style={{ marginBottom: '10px' }}>
+                <p style={{ fontSize: '14px', color: C.text, fontWeight: 400, margin: '0 0 2px' }}>
+                  {event.title}
+                </p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted, margin: 0 }}>
+                  /{event.slug} · {TYPE_MAP[event.event_type] ?? event.event_type} · {createdAt}
+                </p>
+              </div>
+
+              {/* Badges */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 8px', borderRadius: '4px', backgroundColor: status.bg }}>
+                  <span
+                    className={event.status === 'published' ? 'live-dot' : ''}
+                    style={{ display: 'inline-block', width: '5px', height: '5px', borderRadius: '50%', backgroundColor: status.color, flexShrink: 0 }}
+                  />
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: status.color }}>{status.label}</span>
+                </span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 8px', borderRadius: '4px', backgroundColor: payment.bg }}>
+                  <span style={{ display: 'inline-block', width: '5px', height: '5px', borderRadius: '50%', backgroundColor: payment.color, flexShrink: 0 }} />
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: payment.color }}>{payment.label}</span>
+                </span>
+                <span style={{ padding: '3px 8px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.04)' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: plan.color, letterSpacing: '1px' }}>{plan.label}</span>
+                </span>
+              </div>
+
+              {/* Organizador */}
+              {org && (
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted, marginBottom: '12px' }}>
+                  {org.full_name || org.email}
+                </p>
+              )}
+
+              {/* Acciones */}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Link
+                  href={`/superadmin/eventos/${event.id}`}
+                  style={{ flex: 1, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.accent, textDecoration: 'none', padding: '8px 10px', border: `1px solid ${C.borderBright}`, borderRadius: '4px' }}
+                >
+                  editar
+                </Link>
+                {(event.status === 'published' || event.status === 'paused' || event.status === 'draft' || event.status === 'setup') && (
+                  <form action={toggleEventStatus.bind(null, event.id, event.status)} style={{ flex: 1 }}>
+                    <button
+                      type="submit"
+                      className={`toggle-btn${event.status === 'published' ? ' pause' : ''}`}
+                      style={{ width: '100%' }}
+                    >
+                      {event.status === 'published' ? 'pause' : 'publish'}
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Footer */}

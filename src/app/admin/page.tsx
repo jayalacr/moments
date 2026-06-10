@@ -91,6 +91,9 @@ export default async function AdminPage() {
           .admin-dashboard-container {
             padding: 24px 20px;
           }
+          .event-card-title {
+            font-size: 18px !important;
+          }
         }
         .event-card {
           display: block;
@@ -190,6 +193,7 @@ export default async function AdminPage() {
                     </div>
 
                     <p
+                      className="event-card-title"
                       style={{
                         fontFamily: 'var(--font-cormorant)',
                         fontSize: '22px',

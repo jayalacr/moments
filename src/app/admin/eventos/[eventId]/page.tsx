@@ -97,10 +97,12 @@ export default async function EventoPage({ params }: Props) {
         @media (max-width: 768px) {
           .event-page { padding: 20px 20px !important; }
           .event-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
-          .event-header-actions { flex-wrap: wrap; }
+          .event-header-actions { flex-wrap: wrap; width: 100%; }
+          .event-header-actions a { flex: 1; justify-content: center; }
           .event-info-grid { grid-template-columns: 1fr !important; }
           .event-main-grid { grid-template-columns: 1fr !important; }
           .event-title { font-size: clamp(2rem, 9vw, 3rem) !important; }
+          .event-info-url { word-break: break-all !important; }
         }
 
         .admin-cta {
@@ -237,7 +239,7 @@ export default async function EventoPage({ params }: Props) {
           
           <div className="event-info-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             {[
-              { label: 'URL pública', value: getInvitationUrl(event) },
+              { label: 'URL pública', value: getInvitationUrl(event), isUrl: true },
               { label: 'Plan contratado', value: `${PLAN_LABELS[event.plan]}` },
               { label: 'Fecha de creación', value: new Date(event.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) },
               { label: 'ID del evento', value: event.id.slice(0, 8) + '...' },
@@ -246,7 +248,7 @@ export default async function EventoPage({ params }: Props) {
                 <p style={{ fontSize: '10px', letterSpacing: '1px', textTransform: 'uppercase', color: C.mutedLight, fontWeight: 600, marginBottom: '6px' }}>
                   {item.label}
                 </p>
-                <p style={{ fontSize: '14px', color: C.text, margin: 0 }}>
+                <p className={item.isUrl ? 'event-info-url' : ''} style={{ fontSize: '14px', color: C.text, margin: 0 }}>
                   {item.value}
                 </p>
               </div>

@@ -112,6 +112,16 @@ export default async function EventoDetailPage({ params }: Props) {
           .sa-header-flex {
             flex-direction: column;
           }
+          .sa-header-actions {
+            flex-wrap: wrap;
+            width: 100%;
+          }
+          .sa-header-actions form {
+            flex: 1;
+          }
+          .sa-header-actions form button {
+            width: 100%;
+          }
           .sa-info-grid {
             grid-template-columns: 1fr;
           }
@@ -165,7 +175,7 @@ export default async function EventoDetailPage({ params }: Props) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="sa-header-actions" style={{ display: 'flex', gap: '8px' }}>
           {(event.status === 'published' || event.status === 'paused' || event.status === 'draft' || event.status === 'setup') && (
             <form action={toggleEventStatus.bind(null, event.id, event.status)}>
               <button type="submit" className="toggle-btn">
