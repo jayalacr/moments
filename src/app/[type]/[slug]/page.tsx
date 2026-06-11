@@ -27,12 +27,15 @@ export async function generateMetadata({ params }: Pick<Props, 'params'>) {
   if (!event) return { title: 'Invitación | Moments' };
 
   const config = event.config || {};
-  // Extraer imagen para el preview (Open Graph)
-  // Intentar con el nuevo modelo de photos primero, luego con images[]
   const photos = config.photos as any[];
-  const heroUrl = photos?.find(p => p.role === 'hero')?.url 
-               || config.images?.[0] 
-               || 'https://moments.events/og-default.jpg'; // Fallback a una imagen de marca
+  const rawHeroUrl: string | undefined =
+    photos?.find((p: any) => p.role === 'hero')?.url ??
+    (Array.isArray(config.images) ? config.images[0] : undefined);
+
+  // Convertir a imagen OG: 1200×630, JPEG, calidad auto (WhatsApp y scrapers la requieren)
+  const heroUrl = rawHeroUrl?.includes('res.cloudinary.com')
+    ? rawHeroUrl.replace('/upload/', '/upload/f_jpg,q_auto,w_1200,h_630,c_fill/')
+    : rawHeroUrl ?? 'https://moments.events/og-default.jpg';
 
   const title = event.title;
   const description = `Estás invitado a celebrar con nosotros. Mira los detalles de: ${title}`;
