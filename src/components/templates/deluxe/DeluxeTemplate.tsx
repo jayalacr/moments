@@ -1694,8 +1694,8 @@ function DeluxeCarouselBlock({ srcs, positions, scales, names }: { srcs: string[
     return () => cancelAnimationFrame(id);
   }, [noTransition]);
 
-  const prev = () => { setIsPaused(true); setTrackIdx(i => i - 1); };
-  const next = () => { setIsPaused(true); setTrackIdx(i => i + 1); };
+  const prev = () => { setIsPaused(true); setTrackIdx(i => { if (i < 1) return i; return i - 1; }); };
+  const next = () => { setIsPaused(true); setTrackIdx(i => { if (i > total) return i; return i + 1; }); };
 
   // After the CSS transition ends, snap back from clone to real slide without animation
   const handleTransitionEnd = () => {
