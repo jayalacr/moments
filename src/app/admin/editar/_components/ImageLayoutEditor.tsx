@@ -115,6 +115,42 @@ function photosAvailableForForm(
 
 
 // ---------------------------------------------------------------------------
+// PhotoThumb — miniatura con hover para reposicionar
+// ---------------------------------------------------------------------------
+function PhotoThumb({ url, C, onPress }: { url: string; C: Colors; onPress: () => void }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      type="button"
+      title="Ajustar posición y zoom"
+      onClick={onPress}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: 'relative', padding: 0, flexShrink: 0,
+        border: `2px solid ${hovered ? C.accent : C.border}`,
+        borderRadius: '6px', cursor: 'pointer', background: 'none',
+        transition: 'border-color 0.15s',
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={cld(url, T.thumb)} alt=""
+        style={{ width: '52px', height: '52px', objectFit: 'cover', borderRadius: '4px', display: 'block' }} />
+      {/* Overlay con ícono al hacer hover */}
+      <span style={{
+        position: 'absolute', inset: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        backgroundColor: hovered ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.22)',
+        color: '#fff', fontSize: hovered ? '18px' : '12px',
+        borderRadius: '4px',
+        transition: 'background 0.15s, font-size 0.15s',
+        pointerEvents: 'none',
+      }}>✥</span>
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Componente principal
 // ---------------------------------------------------------------------------
 export default function ImageLayoutEditor({ photos, onChange, activeSections, C }: Props) {
@@ -418,8 +454,8 @@ export default function ImageLayoutEditor({ photos, onChange, activeSections, C 
           ratioMobile  = '4/3';   
           ratioDesktop = '4/5';   
         } else if (photo?.layout === 'carousel') {
-          ratioMobile  = '2/3';   
-          ratioDesktop = '16/9';
+          ratioMobile  = '4/3';   // carrusel en móvil: contenedor landscape (ancho > alto)
+          ratioDesktop = '21/9';
         }
 
         return (
@@ -538,51 +574,39 @@ export default function ImageLayoutEditor({ photos, onChange, activeSections, C 
                 ) : (
                   <div key={blk.blockGroup}
                     style={{
-                      border: `1px solid ${C.border}`, borderRadius: '8px',
-                      backgroundColor: C.card, marginBottom: '6px', overflow: 'hidden',
+                      border: `1px solid ${C.border}`, borderRadius: '10px',
+                      backgroundColor: C.card, marginBottom: '8px', overflow: 'hidden',
                     }}
                   >
-                    {/* Controls row */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px' }}>
-                      {/* Thumbs with ✥ trigger */}
-                      <div style={{ display: 'flex', gap: '4px', flex: 1 }}>
-                        {blk.urls.slice(0, 4).map(url => url ? (
-                          <button key={url} type="button"
-                            title="Reposicionar"
-                            onClick={() => setRepositioningUrl(url)}
-                            style={{
-                              position: 'relative', padding: 0, border: '2px solid transparent',
-                              borderRadius: '4px', cursor: 'pointer', background: 'none', flexShrink: 0,
-                            }}
-                          >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={cld(url, T.thumb)} alt=""
-                              style={{ ...thumbStyle, width: '36px', height: '36px', display: 'block' }} />
-                            <span style={{
-                              position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              backgroundColor: 'rgba(0,0,0,0)', color: '#fff', fontSize: '11px', borderRadius: '2px',
-                            }}>✥</span>
-                          </button>
-                        ) : null)}
-                        {blk.urls.length > 4 && (
-                          <div style={{ ...thumbStyle, width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', color: C.muted, backgroundColor: C.accentLight }}>
-                            +{blk.urls.length - 4}
-                          </div>
-                        )}
-                      </div>
-                      {/* Badge */}
-                      <span style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: C.accent, fontFamily: C.font, whiteSpace: 'nowrap' }}>
+                    {/* Header: tipo + acciones */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderBottom: `1px solid ${C.border}` }}>
+                      <span style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: C.accent, fontFamily: C.font, fontWeight: 600 }}>
                         {LAYOUT_LIMITS[blk.layout]?.label ?? blk.layout}
+                        <span style={{ marginLeft: '6px', fontSize: '10px', color: C.muted, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>
+                          · {blk.urls.length} foto{blk.urls.length !== 1 ? 's' : ''}
+                        </span>
                       </span>
-                      <button type="button"
-                        onClick={() => openEdit(slot.id, blk.blockGroup, blk.layout, blk.urls)}
-                        style={{ padding: '4px 10px', border: `1px solid ${C.border}`, borderRadius: '6px', backgroundColor: 'transparent', color: C.muted, fontSize: '11px', cursor: 'pointer', fontFamily: C.font, flexShrink: 0 }}
-                      >Editar</button>
-                      <button type="button"
-                        onClick={() => removeBlock(slot.id, blk.blockGroup)}
-                        style={{ width: '24px', height: '24px', borderRadius: '50%', border: `1px solid ${C.border}`, backgroundColor: 'transparent', color: C.mutedLight, fontSize: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-                      >×</button>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <button type="button"
+                          onClick={() => openEdit(slot.id, blk.blockGroup, blk.layout, blk.urls)}
+                          style={{ padding: '4px 12px', border: `1px solid ${C.border}`, borderRadius: '6px', backgroundColor: 'transparent', color: C.text, fontSize: '11px', cursor: 'pointer', fontFamily: C.font, fontWeight: 500 }}
+                        >Editar</button>
+                        <button type="button"
+                          onClick={() => removeBlock(slot.id, blk.blockGroup)}
+                          style={{ width: '26px', height: '26px', borderRadius: '50%', border: `1px solid ${C.border}`, backgroundColor: 'transparent', color: C.mutedLight, fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                        >×</button>
+                      </div>
                     </div>
+
+                    {/* Grid de fotos — todas visibles, con wrap para carrusel */}
+                    <div style={{ padding: '10px 12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {blk.urls.map(url => url ? (
+                        <PhotoThumb key={url} url={url} C={C} onPress={() => setRepositioningUrl(url)} />
+                      ) : null)}
+                    </div>
+                    <p style={{ margin: '0 12px 10px', fontSize: '10px', color: C.muted, fontFamily: C.font }}>
+                      Toca una foto para ajustar posición y zoom
+                    </p>
                   </div>
                 );
               })}
