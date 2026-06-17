@@ -7,5 +7,5 @@ export const metadata = {
 };
 
 export default function DeluxePreviewPage() {
-  return <DeluxeTemplate config={DELUXE_DEMO} />;
+  return <DeluxeTemplate config={DELUXE_DEMO} plan="deluxe" />;
 }

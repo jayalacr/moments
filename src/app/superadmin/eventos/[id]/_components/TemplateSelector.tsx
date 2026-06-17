@@ -17,12 +17,6 @@ const C = {
   sidebar: '#161B26',
 };
 
-const PLAN_COLOR: Record<string, string> = {
-  essential: '#9DB2C8',
-  plus: '#2DD4BF',
-  deluxe: '#A78BFA',
-};
-
 interface Props {
   eventId: string;
   currentType: string | null;
@@ -106,17 +100,6 @@ export default function TemplateSelector({ eventId, currentType, eventSlug, even
                     {entry.label}
                   </span>
                 </div>
-                <span style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '9px',
-                  letterSpacing: '1px',
-                  color: PLAN_COLOR[entry.plan] ?? C.muted,
-                  border: `1px solid currentColor`,
-                  padding: '2px 7px',
-                  borderRadius: '3px',
-                }}>
-                  {entry.plan.toUpperCase()}
-                </span>
               </button>
             );
           })}

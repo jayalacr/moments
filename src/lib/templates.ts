@@ -9,10 +9,12 @@
  */
 
 import type { ComponentType } from 'react';
+import type { EventPlan } from './plans';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TemplateComponent = ComponentType<{
   config: any;
+  plan?: EventPlan;
   eventId?: string;
   guestToken?: string;
   maxCompanions?: number;
@@ -25,7 +27,6 @@ export type TemplateComponent = ComponentType<{
 export interface TemplateEntry {
   component: TemplateComponent;
   label: string;
-  plan: 'essential' | 'plus' | 'deluxe';
 }
 
 import EssentialTemplate from '@/components/templates/essential/EssentialTemplate';
@@ -37,25 +38,21 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'essential-demo': {
     component: EssentialTemplate as TemplateComponent,
     label: 'Essential — Demo clásico',
-    plan: 'essential',
   },
 
   'plus-classic': {
     component: PlusTemplate as TemplateComponent,
     label: 'Plus — Clásico',
-    plan: 'plus',
   },
 
   'deluxe-classic': {
     component: DeluxeTemplate as TemplateComponent,
     label: 'Deluxe — Clásico',
-    plan: 'deluxe',
   },
 
   'classic-elegance': {
     component: ClassicEleganceTemplate as TemplateComponent,
     label: 'Classic Elegance',
-    plan: 'deluxe',
   },
 
   // Agrega nuevos templates aquí:

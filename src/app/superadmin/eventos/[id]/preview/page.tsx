@@ -27,7 +27,7 @@ export default async function SuperadminPreviewPage({ params }: Props) {
 
   const { data: event } = await supabase
     .from('events')
-    .select('template_type, config')
+    .select('template_type, config, plan')
     .eq('id', id)
     .single();
 
@@ -38,5 +38,5 @@ export default async function SuperadminPreviewPage({ params }: Props) {
 
   const Template = entry.component;
 
-  return <Template config={event.config ?? {}} />;
+  return <Template config={event.config ?? {}} plan={event.plan ?? 'deluxe'} />;
 }

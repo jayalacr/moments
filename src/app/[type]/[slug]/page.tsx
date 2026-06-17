@@ -65,7 +65,7 @@ export default async function InvitacionPage({ params, searchParams }: Props) {
 
   const { data: event } = await supabase
     .from('events')
-    .select('id, title, template_type, config, status, payment_status, expires_at')
+    .select('id, title, template_type, config, plan, status, payment_status, expires_at')
     .eq('event_type', type)
     .eq('slug', slug)
     .single();
@@ -208,6 +208,7 @@ export default async function InvitacionPage({ params, searchParams }: Props) {
   return (
     <Template
       config={event.config ?? {}}
+      plan={event.plan ?? 'deluxe'}
       eventId={event.id}
       guestToken={guestToken}
       maxCompanions={maxCompanions}

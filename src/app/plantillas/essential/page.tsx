@@ -7,5 +7,5 @@ export const metadata = {
 };
 
 export default function EssentialPreviewPage() {
-  return <EssentialTemplate config={ESSENTIAL_DEMO} />;
+  return <EssentialTemplate config={ESSENTIAL_DEMO} plan="essential" />;
 }

@@ -34,7 +34,7 @@ export default async function PreviewPage({ params }: Props) {
 
   const { data: event } = await supabase
     .from('events')
-    .select('template_type, config')
+    .select('template_type, config, plan')
     .eq('id', eventId)
     .single();
 
@@ -47,7 +47,7 @@ export default async function PreviewPage({ params }: Props) {
 
   return (
     <PreviewClient eventId={eventId}>
-      <Template config={event.config ?? {}} />
+      <Template config={event.config ?? {}} plan={event.plan ?? 'deluxe'} />
     </PreviewClient>
   );
 }

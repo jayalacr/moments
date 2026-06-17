@@ -415,6 +415,7 @@ export default function PlusTemplate({
   hasExistingRsvp = false,
 }: {
   config?: PlusConfig;
+  plan?: import('@/lib/plans').EventPlan;
   eventId?: string;
   guestToken?: string;
   maxCompanions?: number;

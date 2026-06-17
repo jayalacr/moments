@@ -5,6 +5,7 @@ import { Cormorant_Garamond, Jost, Playfair_Display, EB_Garamond, Raleway, Monts
 import { MapPin, Play, Pause, CalendarDays, Hotel, Car, Mail, Gift, Flower2, Shirt, UserX, ChevronDown, Check, X, Camera, Music2 } from 'lucide-react';
 import type { PhotoEntry } from '@/lib/imageLayout';
 import ContentProtection from '@/components/templates/shared/ContentProtection';
+import { getCapabilities } from '@/lib/plans';
 
 // ---------------------------------------------------------------------------
 // Fonts
@@ -86,6 +87,7 @@ export interface ClassicEleganceConfig {
 
 interface Props {
   config: ClassicEleganceConfig;
+  plan?: import('@/lib/plans').EventPlan;
   eventId?: string;
   guestToken?: string;
   maxCompanions?: number;
@@ -494,17 +496,19 @@ const SectionHeading = ({ eyebrow, title, light = false }: { eyebrow?: string; t
 // ---------------------------------------------------------------------------
 // Main Component
 // ---------------------------------------------------------------------------
-export default function ClassicEleganceTemplate({ 
-  config, 
-  eventId, 
-  guestToken, 
-  maxCompanions = 0, 
-  companionNames: initialCompanionNames = [], 
-  guestName: initialGuestName = '', 
-  hasExistingRsvp = false, 
-  invalidToken = false 
+export default function ClassicEleganceTemplate({
+  config,
+  plan: planProp,
+  eventId,
+  guestToken,
+  maxCompanions = 0,
+  companionNames: initialCompanionNames = [],
+  guestName: initialGuestName = '',
+  hasExistingRsvp = false,
+  invalidToken = false
 }: Props) {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const caps = getCapabilities(planProp);
+  const [isLoaded, setIsLoaded] = useState(!caps.loader);
   const [loaderOut, setLoaderOut] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [musicMinimized, setMusicMinimized] = useState(false);
@@ -675,7 +679,7 @@ export default function ClassicEleganceTemplate({
 
   const themeCSS = buildThemeCSS(config.theme);
 
-  if (!isLoaded) {
+  if (!isLoaded && caps.loader) {
     return (
       <div className="flex-1 flex flex-col">
       <ContentProtection enabled={false}>
@@ -711,12 +715,12 @@ export default function ClassicEleganceTemplate({
       <div className="ce-root">
         <style dangerouslySetInnerHTML={{ __html: css }} />
         {themeCSS && <style dangerouslySetInnerHTML={{ __html: themeCSS }} />}
-        {audioSrc && (
-          <audio 
-            ref={audioRef} 
-            src={audioSrc} 
-            loop 
-            preload="auto" 
+        {caps.music && audioSrc && (
+          <audio
+            ref={audioRef}
+            src={audioSrc}
+            loop
+            preload="auto"
             crossOrigin="anonymous"
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
@@ -724,7 +728,7 @@ export default function ClassicEleganceTemplate({
         )}
 
         {/* ── MUSIC PILL ── */}
-        {config.music?.url && (
+        {caps.music && config.music?.url && (
           <button
             className={`music-pill ${isPlaying ? 'music-pill--playing' : ''} ${musicMinimized ? 'music-pill--minimized' : ''}`}
             onClick={toggleMusic}
@@ -773,27 +777,29 @@ export default function ClassicEleganceTemplate({
         </section>
 
       {/* ── COUNTDOWN SECTION ── */}
-      <section className="section-pad bg-white relative">
-        <div className="max-w-5xl mx-auto text-center reveal">
-          <SectionHeading eyebrow="Faltan muy pocos días" title="Cuenta Regresiva" />
-          <div className="ce-cd-container mt-12 md:mt-20">
-            {[
-              { v: timeLeft.days, l: 'DÍAS' },
-              { v: timeLeft.hours, l: 'HORAS' },
-              { v: timeLeft.minutes, l: 'MIN' },
-              { v: timeLeft.seconds, l: 'SEG' }
-            ].map((u, i) => (
-              <div key={i} className="ce-cd-card reveal" style={{ transitionDelay: `${i * 150}ms` }}>
-                <span className="ce-cd-number font-heading text-3xl md:text-7xl text-gold mb-1 md:mb-3">
-                  {String(u.v).padStart(2, '0')}
-                </span>
-                <div className="w-6 md:w-10 h-[1px] bg-gold/20 mx-auto mb-2 md:mb-4" />
-                <span className="label text-[8px] md:text-[9px] opacity-40 tracking-[0.2em] md:tracking-[0.5em]">{u.l}</span>
-              </div>
-            ))}
+      {caps.countdown && (
+        <section className="section-pad bg-white relative">
+          <div className="max-w-5xl mx-auto text-center reveal">
+            <SectionHeading eyebrow="Faltan muy pocos días" title="Cuenta Regresiva" />
+            <div className="ce-cd-container mt-12 md:mt-20">
+              {[
+                { v: timeLeft.days, l: 'DÍAS' },
+                { v: timeLeft.hours, l: 'HORAS' },
+                { v: timeLeft.minutes, l: 'MIN' },
+                { v: timeLeft.seconds, l: 'SEG' }
+              ].map((u, i) => (
+                <div key={i} className="ce-cd-card reveal" style={{ transitionDelay: `${i * 150}ms` }}>
+                  <span className="ce-cd-number font-heading text-3xl md:text-7xl text-gold mb-1 md:mb-3">
+                    {String(u.v).padStart(2, '0')}
+                  </span>
+                  <div className="w-6 md:w-10 h-[1px] bg-gold/20 mx-auto mb-2 md:mb-4" />
+                  <span className="label text-[8px] md:text-[9px] opacity-40 tracking-[0.2em] md:tracking-[0.5em]">{u.l}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
         {/* ── CITA ── */}
         {config.sections?.quote !== false && config.quote?.text && (
@@ -1073,9 +1079,20 @@ export default function ClassicEleganceTemplate({
             Será un verdadero honor celebrar este inicio con todos ustedes. Por favor confirma tu asistencia.
           </p>
           {!rsvpDone ? (
-            <button className="ce-btn-primary reveal" onClick={() => setIsRsvpOpen(true)}>
-              Confirmar Asistencia
-            </button>
+            caps.rsvpMode === 'whatsapp' && config.whatsapp?.number ? (
+              <a
+                href={`https://wa.me/${config.whatsapp.number}?text=${encodeURIComponent(config.whatsapp.message ?? '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ce-btn-primary reveal"
+              >
+                Confirmar por WhatsApp
+              </a>
+            ) : (
+              <button className="ce-btn-primary reveal" onClick={() => setIsRsvpOpen(true)}>
+                Confirmar Asistencia
+              </button>
+            )
           ) : (
             <div className="reveal">
               <div className="inline-flex items-center gap-3 bg-sage px-10 py-4 rounded-full mb-6 border border-gold/20">
@@ -1107,7 +1124,7 @@ export default function ClassicEleganceTemplate({
         </footer>
 
         {/* ── MODAL RSVP ── */}
-        {isRsvpOpen && (hasToken || isDemo) && (
+        {isRsvpOpen && (caps.rsvpMode === 'modalManual' || hasToken || isDemo) && (
           <div className="ce-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setIsRsvpOpen(false); }}>
             <div className="ce-modal" ref={modalRef}>
               <button className="ce-modal-close" onClick={() => setIsRsvpOpen(false)} aria-label="Cerrar">×</button>

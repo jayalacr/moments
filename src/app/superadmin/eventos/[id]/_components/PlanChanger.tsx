@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { updateEventPlan } from '@/app/superadmin/_actions';
-import { TEMPLATES } from '@/lib/templates';
 
 const C = {
   bg: '#0D1117',
@@ -41,18 +40,15 @@ interface Props {
   currentTemplateType: string | null;
 }
 
-export default function PlanChanger({ eventId, currentPlan, currentTemplateType }: Props) {
+export default function PlanChanger({ eventId, currentPlan }: Props) {
   const [selectedPlan, setSelectedPlan] = useState<EventPlan>(currentPlan);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isPending, setIsPending] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; templateCleared: boolean } | null>(null);
+  const [result, setResult] = useState<{ success: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const isUpgrade = PLAN_ORDER[selectedPlan] > PLAN_ORDER[currentPlan];
-  const willClearTemplate =
-    currentTemplateType != null &&
-    TEMPLATES[currentTemplateType]?.plan !== selectedPlan;
 
   function openModal() {
     setIsConfirmed(false);
@@ -207,14 +203,9 @@ export default function PlanChanger({ eventId, currentPlan, currentTemplateType 
             Cambiar plan
           </button>
 
-          {result?.success && !result.templateCleared && (
+          {result?.success && (
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.green }}>
               ✓ Plan actualizado correctamente
-            </span>
-          )}
-          {result?.success && result.templateCleared && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.amber }}>
-              ⚠ Plan actualizado. Template desasignado por incompatibilidad.
             </span>
           )}
           {error && (
@@ -349,44 +340,12 @@ export default function PlanChanger({ eventId, currentPlan, currentTemplateType 
                   <>
                     El evento pasará al plan{' '}
                     <span style={{ color: PLAN_COLOR[selectedPlan] }}>{selectedPlan.toUpperCase()}</span>.
-                    El organizador perderá acceso a templates y funcionalidades del plan superior.
-                    El contenido se conserva, pero si el template actual no es compatible,
-                    se desasignará automáticamente.
+                    El organizador perderá acceso a funcionalidades del plan superior.
+                    El contenido y el template asignado se conservan íntegramente.
                   </>
                 )}
               </p>
             </div>
-
-            {/* Aviso de template incompatible */}
-            {willClearTemplate && (
-              <div
-                style={{
-                  padding: '12px 14px',
-                  border: `1px solid ${C.amber}`,
-                  borderRadius: '8px',
-                  backgroundColor: C.amberDim,
-                  display: 'flex',
-                  gap: '10px',
-                  alignItems: 'flex-start',
-                }}
-              >
-                <span style={{ color: C.amber, fontSize: '14px', lineHeight: 1.2 }}>⚠</span>
-                <p
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '10px',
-                    color: C.amber,
-                    lineHeight: 1.7,
-                  }}
-                >
-                  El template{' '}
-                  <span style={{ fontWeight: 600 }}>«{currentTemplateType}»</span> no es
-                  compatible con el plan {selectedPlan.toUpperCase()} y será desasignado.
-                  La invitación dejará de ser visible hasta que se asigne un template
-                  compatible.
-                </p>
-              </div>
-            )}
 
             {/* Checkbox de confirmación */}
             <label

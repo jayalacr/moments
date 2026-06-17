@@ -5,6 +5,7 @@ import { Cormorant_Garamond, Jost, Playfair_Display, EB_Garamond, Raleway, Monts
 import { MapPin, Play, Pause, CalendarDays, Hotel, Car, Mail, Gift, Flower2, Shirt, UserX, ChevronDown } from 'lucide-react';
 import type { PhotoEntry } from '@/lib/imageLayout';
 import ContentProtection from '@/components/templates/shared/ContentProtection';
+import { getCapabilities } from '@/lib/plans';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -72,6 +73,7 @@ export interface DeluxeConfig {
 
 interface Props {
   config: DeluxeConfig;
+  plan?: import('@/lib/plans').EventPlan;
   eventId?: string;
   guestToken?: string;
   maxCompanions?: number;
@@ -1812,6 +1814,7 @@ function useCountdown(targetDate: string) {
 // ---------------------------------------------------------------------------
 export default function DeluxeTemplate({
   config,
+  plan: planProp,
   eventId,
   guestToken,
   maxCompanions = 0,
@@ -1820,6 +1823,7 @@ export default function DeluxeTemplate({
   hasExistingRsvp = false,
   invalidToken = false,
 }: Props) {
+  const caps = getCapabilities(planProp);
   // ── Build data from config with defaults ────────────────────────────────
   const cfg = (config ?? {}) as DeluxeConfig;
   const dietary = cfg.dietary ?? { enabled: false, options: [] };
@@ -1938,7 +1942,8 @@ export default function DeluxeTemplate({
             </div>
           );
         }
-        // carousel
+        // carousel (solo disponible en plan deluxe)
+        if (caps.carousel !== 'auto') return null;
         return <DeluxeCarouselBlock key={g} srcs={srcs} positions={positions} scales={scales} names={`${couple.person1} y ${couple.person2}`} />;
       });
   }
@@ -1961,7 +1966,7 @@ export default function DeluxeTemplate({
   const destination = cfg.destination ?? {};
   const noChildren  = cfg.noChildren ?? false;
   const rsvpDeadline = cfg.rsvpDeadline || '';
-  const showDestination = cfg.sections?.destination !== false && (
+  const showDestination = caps.recommendations && cfg.sections?.destination !== false && (
     (destination.hotels && destination.hotels.length > 0) ||
     destination.transport?.info
   );
@@ -1977,7 +1982,7 @@ export default function DeluxeTemplate({
 
   // ── State ────────────────────────────────────────────────────────────────
   const countdown = useCountdown(targetDate);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(caps.loader);
   const [loaderOut, setLoaderOut] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [rsvpDone, setRsvpDone] = useState(false);
@@ -2119,7 +2124,7 @@ export default function DeluxeTemplate({
   }
 
 
-  if (loading) {
+  if (loading && caps.loader) {
     return (
       <ContentProtection>
       <div className={`${allFontVars} dlx-root`} style={rootStyle}>
@@ -2154,10 +2159,10 @@ export default function DeluxeTemplate({
       <style suppressHydrationWarning>{dynamicCss}</style>
 
       {/* Audio */}
-      {music.url && <audio ref={audioRef} src={music.url} loop preload="none" />}
+      {caps.music && music.url && <audio ref={audioRef} src={music.url} loop preload="none" />}
 
       {/* ── MUSIC PLAYER ── */}
-      {music.url && (
+      {caps.music && music.url && (
         <button 
           className={`music-pill ${playing ? 'music-pill--playing' : ''} ${musicMinimized ? 'music-pill--minimized' : ''}`} 
           onClick={toggleMusic}
@@ -2195,7 +2200,7 @@ export default function DeluxeTemplate({
             <span className="label muted">{location}</span>
           </div>
           {/* Countdown */}
-          {countdown.isOver ? (
+          {caps.countdown && (countdown.isOver ? (
             <div className="dlx-countdown reveal">
               <span className="label gold">¡Gracias por celebrar con nosotros!</span>
             </div>
@@ -2216,7 +2221,7 @@ export default function DeluxeTemplate({
                 </React.Fragment>
               ))}
             </div>
-          )}
+          ))}
         </div>
         <div className="hero-scroll-indicator">
           <span className="label muted" style={{ fontSize: '10px' }}>Desliza</span>
@@ -2621,7 +2626,22 @@ export default function DeluxeTemplate({
           </p>
         )}
         <div className="dlx-rsvp-actions reveal">
-          {invalidToken ? (
+          {caps.rsvpMode === 'whatsapp' ? (
+            cfg.whatsapp?.number ? (
+              <a
+                href={`https://wa.me/${cfg.whatsapp.number}?text=${encodeURIComponent(cfg.whatsapp.message ?? '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-rsvp"
+              >
+                Confirmar por WhatsApp
+              </a>
+            ) : null
+          ) : caps.rsvpMode === 'modalManual' ? (
+            <button className="btn-rsvp" onClick={() => setModalOpen(true)}>
+              {hasExistingRsvp ? 'Actualizar mi respuesta' : 'Confirmar mi asistencia'}
+            </button>
+          ) : invalidToken ? (
             <div style={{ textAlign: 'center' }}>
               <p style={{
                 fontFamily: 'var(--font-jost)',
@@ -2658,10 +2678,12 @@ export default function DeluxeTemplate({
               </p>
             </div>
           )}
-          <a href={calendarUrl} target="_blank" rel="noopener noreferrer" className="btn-calendar">
-            <CalendarIcon />
-            Agendar en Google Calendar
-          </a>
+          {caps.calendarButton && (
+            <a href={calendarUrl} target="_blank" rel="noopener noreferrer" className="btn-calendar">
+              <CalendarIcon />
+              Agendar en Google Calendar
+            </a>
+          )}
         </div>
       </section>
 
@@ -2678,7 +2700,7 @@ export default function DeluxeTemplate({
       </footer>
 
       {/* ── MODAL RSVP (pre-cargado) ── */}
-      {modalOpen && (hasToken || isDemo) && (
+      {modalOpen && (caps.rsvpMode === 'modalManual' || hasToken || isDemo) && (
         <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}>
           <div className="modal" ref={modalRef}>
             <button className="modal-close" onClick={() => setModalOpen(false)} aria-label="Cerrar">×</button>

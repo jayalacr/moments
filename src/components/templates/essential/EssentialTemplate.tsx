@@ -105,7 +105,7 @@ export interface EssentialConfig {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export default function EssentialTemplate({ config = {} }: { config?: EssentialConfig }) {
+export default function EssentialTemplate({ config = {} }: { config?: EssentialConfig; plan?: import('@/lib/plans').EventPlan }) {
   const c = config;
   const t = c.theme ?? {};
 

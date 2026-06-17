@@ -3,7 +3,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { TEMPLATES } from '@/lib/templates';
 import type { DesignType, ExtensionKey } from '@/lib/pricing';
 
 export async function updateTemplateType(eventId: string, templateType: string) {
@@ -61,24 +60,15 @@ export async function updateEventPlan(
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (profile?.role !== 'superadmin') throw new Error('Sin permisos');
 
-  // Leer evento actual para evaluar compatibilidad de template
   const { data: event } = await supabase
     .from('events')
-    .select('template_type, slug, event_type')
+    .select('slug, event_type')
     .eq('id', eventId)
     .single();
 
-  let templateTypeToSet: string | null = event?.template_type ?? null;
-  let templateCleared = false;
-
-  if (templateTypeToSet && TEMPLATES[templateTypeToSet]?.plan !== newPlan) {
-    templateTypeToSet = null;
-    templateCleared = true;
-  }
-
   const { error } = await supabase
     .from('events')
-    .update({ plan: newPlan, template_type: templateTypeToSet })
+    .update({ plan: newPlan })
     .eq('id', eventId);
 
   if (error) throw new Error(error.message);
@@ -87,7 +77,7 @@ export async function updateEventPlan(
   revalidatePath(`/superadmin/eventos/${eventId}`);
   if (event) revalidatePath(`/${event.event_type}/${event.slug}`, 'page');
 
-  return { success: true, templateCleared };
+  return { success: true, templateCleared: false };
 }
 
 interface PricingPayload {

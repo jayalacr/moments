@@ -7,5 +7,5 @@ export const metadata = {
 };
 
 export default function ClassicElegancePreviewPage() {
-  return <ClassicEleganceTemplate config={CLASSIC_ELEGANCE_DEMO} />;
+  return <ClassicEleganceTemplate config={CLASSIC_ELEGANCE_DEMO} plan="deluxe" />;
 }

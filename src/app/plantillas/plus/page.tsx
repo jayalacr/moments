@@ -7,5 +7,5 @@ export const metadata = {
 };
 
 export default function PlusPreviewPage() {
-  return <PlusTemplate config={PLUS_DEMO} />;
+  return <PlusTemplate config={PLUS_DEMO} plan="plus" />;
 }

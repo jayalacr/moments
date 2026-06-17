@@ -15,7 +15,7 @@ export default async function EmbedPage({ params }: Props) {
 
   const { data: event } = await supabase
     .from('events')
-    .select('template_type, config')
+    .select('template_type, config, plan')
     .eq('id', eventId)
     .single();
   if (!event) notFound();
@@ -28,7 +28,7 @@ export default async function EmbedPage({ params }: Props) {
   return (
     <>
       <style>{`html,body{scrollbar-width:none;}html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}`}</style>
-      <Template config={event.config ?? {}} />
+      <Template config={event.config ?? {}} plan={event.plan ?? 'deluxe'} />
     </>
   );
 }
