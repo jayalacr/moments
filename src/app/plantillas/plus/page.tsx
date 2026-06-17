@@ -1,11 +1,5 @@
-import PlusTemplate from '@/components/templates/plus/PlusTemplate';
-import { PLUS_DEMO } from '@/lib/demo-data';
+import { redirect } from 'next/navigation';
 
-export const metadata = {
-  title: 'Vista Previa Plus',
-  description: 'Vista previa de la plantilla del plan Plus para invitaciones digitales.',
-};
-
-export default function PlusPreviewPage() {
-  return <PlusTemplate config={PLUS_DEMO} plan="plus" />;
+export default function Page() {
+  redirect('/plantillas/deluxe?plan=plus');
 }

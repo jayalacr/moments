@@ -512,6 +512,81 @@ export default function PlanesPage() {
     }
     .btn-example:hover { border-bottom-color: var(--gold); }
 
+    /* ── Templates gallery ── */
+    .templates-section {
+      max-width: 1020px; margin: 0 auto 48px; padding: 0 20px;
+    }
+    .templates-header {
+      margin-bottom: 24px;
+    }
+    .templates-eyebrow {
+      font-size: 9px; font-weight: 500; letter-spacing: 0.22em;
+      text-transform: uppercase; color: var(--gold);
+      font-family: var(--font-jost); margin-bottom: 8px;
+      display: block;
+    }
+    .templates-title {
+      font-family: var(--font-cormorant), Georgia, serif;
+      font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 300;
+      color: var(--charcoal); margin-bottom: 8px; line-height: 1.2;
+    }
+    .templates-title em { font-style: italic; color: var(--gold); }
+    .templates-subtitle {
+      font-size: 13px; font-weight: 300; color: var(--muted-fg);
+      font-family: var(--font-jost); line-height: 1.6; max-width: 520px;
+    }
+    .templates-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .template-card {
+      background: white; border: 1px solid var(--muted);
+      border-radius: 16px; padding: 24px 22px 20px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .template-card-name {
+      font-family: var(--font-cormorant), Georgia, serif;
+      font-size: 22px; font-weight: 400; color: var(--charcoal); margin-bottom: 4px;
+    }
+    .template-card-traits {
+      list-style: none; padding: 0; margin: 0;
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    .template-card-trait {
+      font-size: 12px; font-weight: 300; color: #5C5248;
+      font-family: var(--font-jost); display: flex; align-items: center; gap: 6px;
+    }
+    .template-card-trait::before {
+      content: ''; display: inline-block;
+      width: 4px; height: 4px; border-radius: 50%;
+      background: var(--gold); flex-shrink: 0;
+    }
+    .template-card-bottom {
+      border-top: 1px solid var(--muted); padding-top: 14px;
+    }
+    .template-pill-label {
+      font-size: 9px; font-weight: 500; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--muted-fg);
+      font-family: var(--font-jost); margin-bottom: 10px; display: block;
+    }
+    .template-pills {
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .template-pill {
+      font-family: var(--font-jost); font-size: 10.5px; font-weight: 500;
+      letter-spacing: 0.06em; padding: 6px 14px; border-radius: 100px;
+      text-decoration: none; transition: opacity 0.18s, transform 0.15s;
+      display: inline-block;
+    }
+    .template-pill:hover { opacity: 0.8; transform: translateY(-1px); }
+    .template-pill-e { background: #EAE4DB; color: #5C5248; }
+    .template-pill-p { background: rgba(184,150,90,0.15); color: #8B6030; border: 1px solid rgba(184,150,90,0.35); }
+    .template-pill-d { background: var(--charcoal); color: rgba(184,150,90,0.9); }
+    @media (max-width: 720px) {
+      .templates-grid { grid-template-columns: 1fr; gap: 12px; }
+    }
+
     /* ── What's included ── */
     .includes-section {
       max-width: 1020px; margin: 0 auto 40px; padding: 0 20px;
@@ -769,11 +844,61 @@ export default function PlanesPage() {
                   </li>
                 ))}
               </ul>
-              <Link href={`/plantillas/${key}`} className="plan-card-cta" target="_blank">
+              <Link href={`/plantillas/deluxe?plan=${key}`} className="plan-card-cta" target="_blank">
                 Ver demo
               </Link>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* ── Templates gallery ── */}
+      <div className="templates-section">
+        <div className="templates-header">
+          <span className="templates-eyebrow">Diseños disponibles</span>
+          <h2 className="templates-title">El mismo diseño, <em>capacidades que crecen</em></h2>
+          <p className="templates-subtitle">
+            Elige el diseño que te enamore. El plan determina qué secciones y funciones se activan — no el diseño en sí.
+          </p>
+        </div>
+        <div className="templates-grid">
+          <div className="template-card">
+            <div>
+              <p className="template-card-name">Deluxe Clásico</p>
+              <ul className="template-card-traits">
+                <li className="template-card-trait">Carrusel automático distribuido en la invitación</li>
+                <li className="template-card-trait">Loader animado y música de fondo</li>
+                <li className="template-card-trait">Paleta cálida, tipografía Cormorant Garamond</li>
+              </ul>
+            </div>
+            <div className="template-card-bottom">
+              <span className="template-pill-label">Ver con plan</span>
+              <div className="template-pills">
+                <Link href="/plantillas/deluxe?plan=essential" className="template-pill template-pill-e" target="_blank">Essential</Link>
+                <Link href="/plantillas/deluxe?plan=plus" className="template-pill template-pill-p" target="_blank">Plus</Link>
+                <Link href="/plantillas/deluxe?plan=deluxe" className="template-pill template-pill-d" target="_blank">Deluxe</Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="template-card">
+            <div>
+              <p className="template-card-name">Classic Elegance</p>
+              <ul className="template-card-traits">
+                <li className="template-card-trait">Estética oscura, elegante y minimalista</li>
+                <li className="template-card-trait">Loader cinematográfico y música ambient</li>
+                <li className="template-card-trait">Formulario RSVP integrado en modal</li>
+              </ul>
+            </div>
+            <div className="template-card-bottom">
+              <span className="template-pill-label">Ver con plan</span>
+              <div className="template-pills">
+                <Link href="/plantillas/classic-elegance?plan=essential" className="template-pill template-pill-e" target="_blank">Essential</Link>
+                <Link href="/plantillas/classic-elegance?plan=plus" className="template-pill template-pill-p" target="_blank">Plus</Link>
+                <Link href="/plantillas/classic-elegance?plan=deluxe" className="template-pill template-pill-d" target="_blank">Deluxe</Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -848,20 +973,20 @@ export default function PlanesPage() {
               <div className="ph-icon-wrap e"><Sparkles size={16} color="#9B8B78" strokeWidth={1.5} /></div>
               <p className="ph-name">Essential</p>
               <p className="ph-desc">Sencillo y elegante</p>
-              <a href="/plantillas/essential" target="_blank" className="btn-example">Ver demo</a>
+              <a href="/plantillas/deluxe?plan=essential" target="_blank" className="btn-example">Ver demo</a>
             </div>
             <div className="ph-plan p">
               <div className="ph-badge">Más popular</div>
               <div className="ph-icon-wrap p"><Star size={16} color="#B8965A" strokeWidth={1.5} /></div>
               <p className="ph-name">Plus</p>
               <p className="ph-desc">Experiencia completa</p>
-              <a href="/plantillas/plus" target="_blank" className="btn-example">Ver demo</a>
+              <a href="/plantillas/deluxe?plan=plus" target="_blank" className="btn-example">Ver demo</a>
             </div>
             <div className="ph-plan d">
               <div className="ph-icon-wrap d"><Crown size={16} color="#8B6030" strokeWidth={1.5} /></div>
               <p className="ph-name">Deluxe</p>
               <p className="ph-desc">Premium e inmersivo</p>
-              <a href="/plantillas/deluxe" target="_blank" className="btn-example">Ver demo</a>
+              <a href="/plantillas/deluxe?plan=deluxe" target="_blank" className="btn-example">Ver demo</a>
             </div>
           </div>
 

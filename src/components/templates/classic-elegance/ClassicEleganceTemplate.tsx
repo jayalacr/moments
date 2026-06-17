@@ -508,6 +508,7 @@ export default function ClassicEleganceTemplate({
   invalidToken = false
 }: Props) {
   const caps = getCapabilities(planProp);
+  const isPlus = planProp === 'plus';
   const [isLoaded, setIsLoaded] = useState(!caps.loader);
   const [loaderOut, setLoaderOut] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -640,10 +641,11 @@ export default function ClassicEleganceTemplate({
     : rawMusicUrl;
 
   const heroPhoto = config.photos?.find(p => p.role === 'hero')?.url || 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1600&q=85';
+  const allowedBlockPhotos = (config.photos?.filter(p => p.role === 'block') || []).slice(0, caps.maxPhotos - 1);
 
   /** Renderiza los bloques de imagen con estilo Deluxe */
   function renderBlocks(afterSection: string) {
-    const blocks = config.photos?.filter(p => p.role === 'block' && p.afterSection === afterSection) || [];
+    const blocks = allowedBlockPhotos.filter(p => p.afterSection === afterSection);
     if (!blocks.length) return null;
 
     // Agrupar por layout si es necesario (simplificado para Classic Elegance)
@@ -1176,13 +1178,18 @@ export default function ClassicEleganceTemplate({
                     <div className="ce-rsvp-choice">
                       <button className="ce-rsvp-yes" onClick={() => {
                         setGuestConfirmed(true);
-                        const names = isDemo
-                          ? ['Acompañante 1', 'Acompañante 2']
-                          : (initialCompanionNames.length > 0
-                            ? initialCompanionNames
-                            : Array.from({ length: maxCompanions }, (_, i) => `Acompañante ${i + 1}`));
-                        setAttendeeNames(names);
-                        setAttendeeChecked(Array(names.length).fill(true));
+                        if (isPlus) {
+                          setAttendeeNames([]);
+                          setAttendeeChecked([]);
+                        } else {
+                          const names = isDemo
+                            ? ['Acompañante 1', 'Acompañante 2']
+                            : (initialCompanionNames.length > 0
+                              ? initialCompanionNames
+                              : Array.from({ length: maxCompanions }, (_, i) => `Acompañante ${i + 1}`));
+                          setAttendeeNames(names);
+                          setAttendeeChecked(Array(names.length).fill(true));
+                        }
                       }}>
                         Sí, asistiré
                       </button>
@@ -1205,7 +1212,53 @@ export default function ClassicEleganceTemplate({
                           <span className="attendee-name">{displayName}</span>
                           <span className="label" style={{ fontSize: '9px', color: 'rgba(44,44,44,0.4)' }}>Titular</span>
                         </div>
-                        {attendeeNames.map((name, i) => {
+                        {isPlus ? (
+                          effectiveMaxCompanions > 0 && (
+                            <div style={{ marginTop: '0.5rem' }}>
+                              <p className="label" style={{ fontSize: '9px', color: 'rgba(44,44,44,0.4)', textAlign: 'center', marginBottom: '0.5rem' }}>
+                                Acompañantes <span style={{ color: 'var(--gold)' }}>(máx. {effectiveMaxCompanions})</span>
+                              </p>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', margin: '0.5rem 0 1rem' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setAttendeeNames(p => p.slice(0, p.length - 1));
+                                    setAttendeeChecked(p => p.slice(0, p.length - 1));
+                                  }}
+                                  disabled={attendeeNames.length === 0}
+                                  style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--gold)', background: 'transparent', color: 'var(--gold)', fontSize: '18px', lineHeight: 1, cursor: attendeeNames.length === 0 ? 'not-allowed' : 'pointer', opacity: attendeeNames.length === 0 ? 0.4 : 1 }}
+                                >−</button>
+                                <span style={{ fontFamily: 'var(--font-jost)', fontSize: '16px', minWidth: '24px', textAlign: 'center' }}>{attendeeNames.length}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setAttendeeNames(p => [...p, '']);
+                                    setAttendeeChecked(p => [...p, true]);
+                                  }}
+                                  disabled={attendeeNames.length >= effectiveMaxCompanions}
+                                  style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--gold)', background: 'transparent', color: 'var(--gold)', fontSize: '18px', lineHeight: 1, cursor: attendeeNames.length >= effectiveMaxCompanions ? 'not-allowed' : 'pointer', opacity: attendeeNames.length >= effectiveMaxCompanions ? 0.4 : 1 }}
+                                >+</button>
+                              </div>
+                              {attendeeNames.map((name, i) => (
+                                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                                  <span style={{ fontFamily: 'var(--font-jost)', fontSize: '12px', color: 'var(--gold)', minWidth: '18px', textAlign: 'center' }}>{i + 1}</span>
+                                  <input
+                                    type="text"
+                                    value={name}
+                                    placeholder={`Nombre del acompañante ${i + 1}`}
+                                    onChange={(e) => {
+                                      const next = [...attendeeNames];
+                                      next[i] = e.target.value;
+                                      setAttendeeNames(next);
+                                    }}
+                                    style={{ flex: 1, padding: '8px 12px', border: '1px solid rgba(166,141,91,0.4)', borderRadius: '4px', background: 'transparent', fontFamily: 'var(--font-jost)', fontSize: '13px', color: 'var(--dark)', outline: 'none' }}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          )
+                        ) : (
+                          attendeeNames.map((name, i) => {
                           const attending = attendeeChecked[i] ?? true;
                           return (
                             <div key={i} className="attendee-row">
@@ -1221,7 +1274,8 @@ export default function ClassicEleganceTemplate({
                               </span>
                             </div>
                           );
-                        })}
+                        })
+                        )}
                       </div>
 
                       {/* Dietary por persona */}
@@ -1235,8 +1289,8 @@ export default function ClassicEleganceTemplate({
                             <p className="label" style={{ fontSize: '9px', color: 'rgba(44,44,44,0.4)', marginBottom: '0.75rem', textAlign: 'center' }}>
                               Restricción alimentaria
                             </p>
-                            {attendingPeople.map((personName) => (
-                              <div key={personName} style={{ marginBottom: '1rem' }}>
+                            {attendingPeople.map((personName, pi) => (
+                              <div key={pi} style={{ marginBottom: '1rem' }}>
                                 <p style={{ fontSize: '0.72rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '0.4rem', textAlign: 'center' }}>
                                   {personName}
                                 </p>

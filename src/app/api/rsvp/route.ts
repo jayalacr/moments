@@ -23,8 +23,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Faltan campos requeridos: name, status.' }, { status: 400 });
   }
 
-  if (!token && !eventId) {
-    return NextResponse.json({ error: 'Se requiere token o eventId.' }, { status: 400 });
+  if (!token) {
+    return NextResponse.json({ error: 'Se requiere un token de invitado válido.' }, { status: 401 });
   }
 
   if (status !== 'confirmed' && status !== 'declined') {
@@ -83,35 +83,4 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true });
   }
-
-  // ── Modo sin token (Plus: invitado anónimo ingresa su nombre en el modal) ───
-  const { data: event } = await supabase
-    .from('events')
-    .select('id')
-    .eq('id', eventId)
-    .eq('status', 'published')
-    .maybeSingle();
-
-  if (!event) {
-    return NextResponse.json({ error: 'Evento no encontrado.' }, { status: 404 });
-  }
-
-  const totalSeats = typeof seats === 'number' ? seats : 1;
-
-  const { error } = await supabase.from('rsvps').insert({
-    event_id: event.id,
-    guest_id: null,
-    name: name.trim(),
-    seats: status === 'declined' ? 0 : totalSeats,
-    dietary: dietary ?? null,
-    dietary_per_person: status === 'declined' ? {} : (dietaryPerPerson ?? {}),
-    status,
-  });
-
-  if (error) {
-    console.error('[RSVP] Error al guardar (sin token):', error);
-    return NextResponse.json({ error: 'No se pudo guardar la confirmación.' }, { status: 500 });
-  }
-
-  return NextResponse.json({ ok: true });
 }

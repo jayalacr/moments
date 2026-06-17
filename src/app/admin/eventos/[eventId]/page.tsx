@@ -11,7 +11,6 @@ export async function generateMetadata({ params }: { params: Promise<{ eventId: 
   const { data } = await supabase.from('events').select('title').eq('id', eventId).single();
   return { title: data?.title ?? 'Evento' };
 }
-import PlusLinkGenerator from './_components/PlusLinkGenerator';
 import { getInvitationUrl } from '@/lib/invitation';
 
 const C = {
@@ -301,9 +300,6 @@ export default async function EventoPage({ params }: Props) {
               </p>
            </div>
 
-           {event.plan === 'plus' && (
-             <PlusLinkGenerator baseUrl={getInvitationUrl(event)} />
-           )}
         </div>
       </div>
     </div>

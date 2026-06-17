@@ -1824,6 +1824,7 @@ export default function DeluxeTemplate({
   invalidToken = false,
 }: Props) {
   const caps = getCapabilities(planProp);
+  const isPlus = planProp === 'plus';
   // ── Build data from config with defaults ────────────────────────────────
   const cfg = (config ?? {}) as DeluxeConfig;
   const dietary = cfg.dietary ?? { enabled: false, options: [] };
@@ -1879,7 +1880,7 @@ export default function DeluxeTemplate({
   };
   // Hero photo
   // Limit specific to Deluxe plan as per requirements
-  const allPhotos = (cfg.photos ?? []).slice(0, 15);
+  const allPhotos = (cfg.photos ?? []).slice(0, caps.maxPhotos);
   const heroEntry = allPhotos.find(p => p.role === 'hero');
   const heroUrl   = heroEntry?.url || DEFAULT_PHOTOS.hero;
 
@@ -1943,7 +1944,6 @@ export default function DeluxeTemplate({
           );
         }
         // carousel (solo disponible en plan deluxe)
-        if (caps.carousel !== 'auto') return null;
         return <DeluxeCarouselBlock key={g} srcs={srcs} positions={positions} scales={scales} names={`${couple.person1} y ${couple.person2}`} />;
       });
   }
@@ -2106,8 +2106,12 @@ export default function DeluxeTemplate({
           token: guestToken,
           eventId,
           name: displayName,
-          seats: guestConfirmed ? 1 + attendeeNames.filter((_, i) => attendeeChecked[i]).length : 0,
-          companionNames: guestConfirmed ? attendeeNames.filter((_, i) => attendeeChecked[i]) : [],
+          seats: guestConfirmed ? 1 + (isPlus
+            ? attendeeNames.filter(n => n.trim() !== '').length
+            : attendeeNames.filter((_, i) => attendeeChecked[i]).length) : 0,
+          companionNames: guestConfirmed ? (isPlus
+            ? attendeeNames.filter(n => n.trim() !== '')
+            : attendeeNames.filter((_, i) => attendeeChecked[i])) : [],
           dietary: guestConfirmed ? (dietaryMap[displayName]?.join(', ') || '') : undefined,
           dietaryPerPerson: guestConfirmed ? dietaryMap : undefined,
           status: guestConfirmed ? 'confirmed' : 'declined',
@@ -2764,13 +2768,18 @@ export default function DeluxeTemplate({
                       className="rsvp-yes"
                       onClick={() => {
                         setGuestConfirmed(true);
-                        const names = isDemo
-                          ? ['Acompañante 1', 'Acompañante 2']
-                          : (initialCompanionNames.length > 0
-                          ? initialCompanionNames
-                          : Array.from({ length: maxCompanions }, (_, i) => `Acompañante ${i + 1}`));
-                        setAttendeeNames(names);
-                        setAttendeeChecked(Array(names.length).fill(true));
+                        if (isPlus) {
+                          setAttendeeNames([]);
+                          setAttendeeChecked([]);
+                        } else {
+                          const names = isDemo
+                            ? ['Acompañante 1', 'Acompañante 2']
+                            : (initialCompanionNames.length > 0
+                            ? initialCompanionNames
+                            : Array.from({ length: maxCompanions }, (_, i) => `Acompañante ${i + 1}`));
+                          setAttendeeNames(names);
+                          setAttendeeChecked(Array(names.length).fill(true));
+                        }
                       }}
                     >
                       Sí, asistiré
@@ -2791,32 +2800,79 @@ export default function DeluxeTemplate({
                         <span className="attendee-name">{displayName}</span>
                         <span className="label muted">Titular</span>
                       </div>
-                      {/* Acompañantes con checkbox */}
-                      {attendeeNames.map((name, i) => {
-                        const attending = attendeeChecked[i] ?? true;
-                        return (
-                          <div key={i} className="attendee-row">
-                            <label className="attendee-check-label">
-                              <input
-                                type="checkbox"
-                                checked={attending}
-                                onChange={() => {
-                                  const updated = [...attendeeChecked];
-                                  updated[i] = !updated[i];
-                                  setAttendeeChecked(updated);
+                      {/* Acompañantes */}
+                      {isPlus ? (
+                        effectiveMaxCompanions > 0 && (
+                          <div style={{ marginTop: '0.5rem' }}>
+                            <p className="label muted" style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+                              Acompañantes <span style={{ color: 'var(--gold)' }}>(máx. {effectiveMaxCompanions})</span>
+                            </p>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', margin: '0.5rem 0 1rem' }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAttendeeNames(p => p.slice(0, p.length - 1));
+                                  setAttendeeChecked(p => p.slice(0, p.length - 1));
                                 }}
-                              />
-                              <span className="attendee-check-box" />
-                            </label>
-                            <span className={`attendee-name${!attending ? ' attendee-name--muted' : ''}`}>
-                              {name}
-                            </span>
-                            <span className={`attendee-badge ${attending ? 'attendee-badge--yes' : 'attendee-badge--no'}`}>
-                              {attending ? 'Asistirá' : 'No asistirá'}
-                            </span>
+                                disabled={attendeeNames.length === 0}
+                                style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--gold)', background: 'transparent', color: 'var(--gold)', fontSize: '18px', lineHeight: 1, cursor: attendeeNames.length === 0 ? 'not-allowed' : 'pointer', opacity: attendeeNames.length === 0 ? 0.4 : 1 }}
+                              >−</button>
+                              <span style={{ fontFamily: 'var(--font-jost)', fontSize: '16px', minWidth: '24px', textAlign: 'center' }}>{attendeeNames.length}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAttendeeNames(p => [...p, '']);
+                                  setAttendeeChecked(p => [...p, true]);
+                                }}
+                                disabled={attendeeNames.length >= effectiveMaxCompanions}
+                                style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--gold)', background: 'transparent', color: 'var(--gold)', fontSize: '18px', lineHeight: 1, cursor: attendeeNames.length >= effectiveMaxCompanions ? 'not-allowed' : 'pointer', opacity: attendeeNames.length >= effectiveMaxCompanions ? 0.4 : 1 }}
+                              >+</button>
+                            </div>
+                            {attendeeNames.map((name, i) => (
+                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                                <span style={{ fontFamily: 'var(--font-jost)', fontSize: '12px', color: 'var(--gold)', minWidth: '18px', textAlign: 'center' }}>{i + 1}</span>
+                                <input
+                                  type="text"
+                                  value={name}
+                                  placeholder={`Nombre del acompañante ${i + 1}`}
+                                  onChange={(e) => {
+                                    const next = [...attendeeNames];
+                                    next[i] = e.target.value;
+                                    setAttendeeNames(next);
+                                  }}
+                                  style={{ flex: 1, padding: '8px 12px', border: '1px solid rgba(184,150,90,0.4)', borderRadius: '4px', background: 'transparent', fontFamily: 'var(--font-jost)', fontSize: '13px', color: 'var(--charcoal)', outline: 'none' }}
+                                />
+                              </div>
+                            ))}
                           </div>
-                        );
-                      })}
+                        )
+                      ) : (
+                        attendeeNames.map((name, i) => {
+                          const attending = attendeeChecked[i] ?? true;
+                          return (
+                            <div key={i} className="attendee-row">
+                              <label className="attendee-check-label">
+                                <input
+                                  type="checkbox"
+                                  checked={attending}
+                                  onChange={() => {
+                                    const updated = [...attendeeChecked];
+                                    updated[i] = !updated[i];
+                                    setAttendeeChecked(updated);
+                                  }}
+                                />
+                                <span className="attendee-check-box" />
+                              </label>
+                              <span className={`attendee-name${!attending ? ' attendee-name--muted' : ''}`}>
+                                {name}
+                              </span>
+                              <span className={`attendee-badge ${attending ? 'attendee-badge--yes' : 'attendee-badge--no'}`}>
+                                {attending ? 'Asistirá' : 'No asistirá'}
+                              </span>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
 
                     {/* Opciones Dietéticas por Persona */}
@@ -2829,8 +2885,8 @@ export default function DeluxeTemplate({
                       return (
                         <div className="dlx-dietary-wrap">
                           <p className="label muted" style={{ marginBottom: '0.75rem', textAlign: 'center' }}>Restricción alimentaria</p>
-                          {attendingNames.map((personName) => (
-                            <div key={personName} style={{ marginBottom: '1rem' }}>
+                          {attendingNames.map((personName, pi) => (
+                            <div key={pi} style={{ marginBottom: '1rem' }}>
                               <p style={{ fontSize: '0.72rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '0.4rem', textAlign: 'center' }}>
                                 {personName}
                               </p>

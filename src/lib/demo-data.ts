@@ -160,11 +160,24 @@ export const DELUXE_DEMO: DeluxeConfig = {
     displayFont: 'playfair',
     bodyFont: 'montserrat'
   },
+  quote: {
+    text: 'El amor es paciente, es bondadoso; el amor no tiene envidia, no es jactancioso, no se envanece.',
+    reference: '1 Corintios 13:4',
+  },
   photos: [
     { role: 'hero', url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1600&q=85' },
     { role: 'block', afterSection: 'hero', layout: 'trio', blockGroup: 1, url: 'https://images.unsplash.com/photo-1529636798458-92182e662485?w=800&q=80', orderInBlock: 1 },
     { role: 'block', afterSection: 'hero', layout: 'trio', blockGroup: 1, url: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=800&q=80', orderInBlock: 2 },
     { role: 'block', afterSection: 'hero', layout: 'trio', blockGroup: 1, url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&q=80', orderInBlock: 3 },
+    { role: 'block', afterSection: 'parents', layout: 'full', blockGroup: 2, url: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1400&q=80', orderInBlock: 1 },
+    { role: 'block', afterSection: 'itinerary', layout: 'duo', blockGroup: 3, url: 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=900&q=80', orderInBlock: 1 },
+    { role: 'block', afterSection: 'itinerary', layout: 'duo', blockGroup: 3, url: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=900&q=80', orderInBlock: 2 },
+    { role: 'block', afterSection: 'dressCode', layout: 'full', blockGroup: 4, url: 'https://images.unsplash.com/photo-1478146059778-26028b07395a?w=1400&q=80', orderInBlock: 1 },
+    { role: 'block', afterSection: 'gifts', layout: 'carousel', blockGroup: 5, url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1400&q=85', orderInBlock: 1 },
+    { role: 'block', afterSection: 'gifts', layout: 'carousel', blockGroup: 5, url: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=1400&q=85', orderInBlock: 2 },
+    { role: 'block', afterSection: 'gifts', layout: 'carousel', blockGroup: 5, url: 'https://images.unsplash.com/photo-1529636798458-92182e662485?w=1400&q=85', orderInBlock: 3 },
+    { role: 'block', afterSection: 'gifts', layout: 'carousel', blockGroup: 5, url: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1400&q=85', orderInBlock: 4 },
+    { role: 'block', afterSection: 'gifts', layout: 'carousel', blockGroup: 5, url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1400&q=85', orderInBlock: 5 },
   ],
   itinerary: [
     {
@@ -176,10 +189,17 @@ export const DELUXE_DEMO: DeluxeConfig = {
     },
     {
       time: '18:00',
-      name: 'Banquete Toscano',
-      venue: 'Terraza Principal',
+      name: 'Coctel al Atardecer',
+      venue: 'Terraza del Olivo',
       address: 'Villa La Foce',
       image: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600&q=80',
+    },
+    {
+      time: '20:00',
+      name: 'Banquete Toscano',
+      venue: 'Gran Salón Principal',
+      address: 'Villa La Foce',
+      image: 'https://images.unsplash.com/photo-1478146059778-26028b07395a?w=600&q=80',
     },
   ],
   dressCode: {
@@ -205,10 +225,17 @@ export const DELUXE_DEMO: DeluxeConfig = {
         name: 'Hotel Val d\'Orcia',
         category: 'Boutique · Recomendado',
         address: 'Pienza',
-        note: 'Transporte incluido a la villa.',
+        note: 'Tarifa especial para invitados: código ISABELLA26',
         phone: '+39 0578 748311',
       },
     ],
+    transport: {
+      info: 'Servicio de shuttle privado desde los hoteles principales hacia la villa y de regreso.',
+      schedule: [
+        { time: '15:30', detail: 'Salida desde Hotel Val d\'Orcia' },
+        { time: '01:30', detail: 'Retorno a los hoteles' },
+      ],
+    },
   },
   gifts: {
     giftListUrl: 'https://www.honeyfund.com/',
@@ -219,6 +246,7 @@ export const DELUXE_DEMO: DeluxeConfig = {
     person1: 'Marco Antonio Rossi &\nGiulia Ferrari de Rossi',
     person2: 'William James Wright &\nEleanor Grace Wright',
   },
+  whatsapp: { number: '5215512345678', message: 'Hola, confirmo mi asistencia a la boda de Isabella & Alexander. 🤍' },
   rsvpDeadline: '30 de Junio de 2026',
   rsvp: {
     maxPlusOnes: 2,
@@ -288,16 +316,44 @@ export const CLASSIC_ELEGANCE_DEMO: ClassicEleganceConfig = {
     giftListLabel: 'Mesa de Regalos Amazon',
     envelopeMessage: 'Tu presencia es nuestro mejor regalo. Si deseas tener un detalle, agradecemos el sobre.',
   },
+  whatsapp: { number: '5215512345678', message: 'Hola, confirmo mi asistencia a la boda de Xavier & Nayely. 🤍' },
   rsvpDeadline: '1 de Agosto de 2026',
   rsvp: {
     maxPlusOnes: 2,
   },
   dietary: { enabled: true, options: ['Vegetariano', 'Vegano', 'Sin gluten', 'Sin lácteos', 'Sin mariscos', 'Otro'] },
+  destination: {
+    hotels: [
+      {
+        name: 'Hampton Inn Porterville',
+        category: 'Hotel recomendado · 3 estrellas',
+        address: '1 W. Montgomery Ave, Porterville, CA',
+        note: 'Menciona la boda de Xavier & Nayely para tarifa especial.',
+        phone: '+1 559 782 2900',
+      },
+      {
+        name: 'SpringHill Suites Visalia',
+        category: 'Suite familiar · 3 estrellas',
+        address: '4701 W Mineral King Ave, Visalia, CA',
+        note: 'A 30 min del evento. Desayuno incluido.',
+        phone: '+1 559 739 5555',
+      },
+    ],
+    transport: {
+      info: 'Habrá servicio de transporte gratuito desde Hampton Inn hacia los venues del día.',
+      schedule: [
+        { time: '1:00 PM', detail: 'Salida hacia Holy Cross Catholic Church' },
+        { time: '3:00 PM', detail: 'Traslado a Loya Ranch' },
+        { time: '12:00 AM', detail: 'Retorno al hotel' },
+      ],
+    },
+  },
   sections: {
     quote: true,
     parents: true,
     itinerary: true,
     dressCode: true,
+    destination: true,
     gifts: true,
   },
 };

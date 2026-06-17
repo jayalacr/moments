@@ -62,24 +62,21 @@ export async function getGuestsForEvent(eventId: string): Promise<{
     { confirmed: 0, declined: 0, pending: 0, totalSeats: 0 },
   );
 
-  let guestsWithRsvp: GuestWithRsvp[] = [];
-  if (event.plan === 'deluxe') {
-    const { data: gwrData } = await supabase
-      .from('guests')
-      .select('id, name, token, max_companions, companion_names, rsvps(id, status, seats, companion_names, dietary, created_at)')
-      .eq('event_id', event.id)
-      .order('name', { ascending: true });
+  const { data: gwrData } = await supabase
+    .from('guests')
+    .select('id, name, token, max_companions, companion_names, rsvps(id, status, seats, companion_names, dietary, created_at)')
+    .eq('event_id', event.id)
+    .order('name', { ascending: true });
 
-    guestsWithRsvp = (gwrData ?? []).map(g => {
-      const rsvpArr = (g as any).rsvps;
-      return {
-        id: g.id, name: g.name, token: g.token,
-        max_companions: g.max_companions,
-        companion_names: (g.companion_names as string[]) ?? [],
-        rsvp: rsvpArr && rsvpArr.length > 0 ? rsvpArr[0] : null,
-      };
-    }) as GuestWithRsvp[];
-  }
+  const guestsWithRsvp: GuestWithRsvp[] = (gwrData ?? []).map(g => {
+    const rsvpArr = (g as any).rsvps;
+    return {
+      id: g.id, name: g.name, token: g.token,
+      max_companions: g.max_companions,
+      companion_names: (g.companion_names as string[]) ?? [],
+      rsvp: rsvpArr && rsvpArr.length > 0 ? rsvpArr[0] : null,
+    };
+  }) as GuestWithRsvp[];
 
   return { guests, event: event as any, whatsappTemplate, rsvps, guestsWithRsvp, stats, maxCapacity };
 }

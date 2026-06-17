@@ -2,15 +2,13 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { notFound } from 'next/navigation';
 import { TEMPLATES } from '@/lib/templates';
 import { Jost } from 'next/font/google';
-import { decodePasses } from '@/lib/rsvp-utils';
-
 export const revalidate = 86400;
 
 const jost = Jost({ subsets: ['latin'], weight: ['300', '400'] });
 
 interface Props {
   params: Promise<{ type: string; slug: string }>;
-  searchParams: Promise<{ id?: string; p?: string }>;
+  searchParams: Promise<{ id?: string }>;
 }
 
 export async function generateMetadata({ params }: Pick<Props, 'params'>) {
@@ -60,7 +58,7 @@ export async function generateMetadata({ params }: Pick<Props, 'params'>) {
 
 export default async function InvitacionPage({ params, searchParams }: Props) {
   const { type, slug } = await params;
-  const { id: guestToken, p: passesCode } = await searchParams;
+  const { id: guestToken } = await searchParams;
   const supabase = createAdminClient();
 
   const { data: event } = await supabase
@@ -196,11 +194,11 @@ export default async function InvitacionPage({ params, searchParams }: Props) {
     } else {
       invalidToken = true;
     }
-  } else if (passesCode) {
-    const decoded = decodePasses(passesCode);
-    if (decoded !== null) {
-      maxCompanions = decoded;
-    }
+  }
+
+  const requiereToken = event.plan === 'plus' || event.plan === 'deluxe';
+  if (requiereToken && (!guestToken || invalidToken)) {
+    return <NotReady message={'Esta invitación es personal.\nÁbrela desde el link que te compartieron.'} />;
   }
 
   const Template = entry.component;

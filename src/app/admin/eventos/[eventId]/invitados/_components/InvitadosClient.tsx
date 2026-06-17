@@ -1094,7 +1094,9 @@ export default function InvitadosClient({
             const rsvp = guest.rsvp;
             const titularStatus = rsvp?.status ?? 'pending';
             const confirmedSet = new Set<string>(rsvp?.companion_names ?? []);
-            const allCompanions = isDeluxe ? (guest.companion_names ?? []) : [];
+            const allCompanions = isDeluxe
+              ? (guest.companion_names ?? [])
+              : (rsvp?.companion_names ?? []);
             const titularMeta = statusMetaConf[titularStatus];
             const dMap = rsvp?.dietary_per_person ?? {};
             const hasDetailedDietary = Object.keys(dMap).length > 0;
@@ -1106,7 +1108,9 @@ export default function InvitadosClient({
                 ? 'pending' as const
                 : rsvp.status === 'declined'
                   ? 'declined' as const
-                  : confirmedSet.has(name) ? 'confirmed' as const : 'declined' as const,
+                  : isDeluxe
+                    ? (confirmedSet.has(name) ? 'confirmed' as const : 'declined' as const)
+                    : 'confirmed' as const,
             }));
 
             const COLS = '35% 15% 9% 26% 15%';
