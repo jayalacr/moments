@@ -36,7 +36,7 @@ interface ItineraryItem {
 export interface Swatch { color: string; name: string; }
 export interface HotelEntry { name: string; category: string; address: string; note: string; phone: string; }
 
-export interface ClassicEleganceConfig {
+export interface EleganceConfig {
   theme?: {
     accentColor?:     string;
     backgroundColor?: string;
@@ -86,7 +86,7 @@ export interface ClassicEleganceConfig {
 }
 
 interface Props {
-  config: ClassicEleganceConfig;
+  config: EleganceConfig;
   plan?: import('@/lib/plans').EventPlan;
   eventId?: string;
   guestToken?: string;
@@ -373,7 +373,7 @@ const css = `
 // ---------------------------------------------------------------------------
 // Theme CSS Override
 // ---------------------------------------------------------------------------
-function buildThemeCSS(theme?: ClassicEleganceConfig['theme']): string {
+function buildThemeCSS(theme?: EleganceConfig['theme']): string {
   if (!theme) return '';
   const displayFontMap: Record<string, string> = {
     pinyon:    'var(--font-pinyon), cursive',
@@ -496,7 +496,7 @@ const SectionHeading = ({ eyebrow, title, light = false }: { eyebrow?: string; t
 // ---------------------------------------------------------------------------
 // Main Component
 // ---------------------------------------------------------------------------
-export default function ClassicEleganceTemplate({
+export default function EleganceTemplate({
   config,
   plan: planProp,
   eventId,

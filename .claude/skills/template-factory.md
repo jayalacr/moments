@@ -1,6 +1,6 @@
 # Skill: TemplateFactory (Moments)
 
-Guía técnica completa para la generación de nuevas plantillas premium en el ecosistema de Moments. Este documento contiene todo el contexto necesario para producir plantillas funcionales, consistentes y listas para producción en cualquiera de los tres planes.
+Guía técnica para la creación de nuevas plantillas en Moments. Una plantilla es un **diseño visual** que funciona con los 3 planes (Essential, Plus, Deluxe). El plan determina las funcionalidades disponibles en tiempo de render — no está fijo en la plantilla.
 
 ---
 
@@ -8,8 +8,7 @@ Guía técnica completa para la generación de nuevas plantillas premium en el e
 
 Activar esta skill cuando el usuario pida:
 - "Crea una nueva plantilla para [Evento]"
-- "Genera un diseño nivel [Tier]"
-- "Crea una variante de [Plantilla existente]"
+- "Nuevo diseño de invitación estilo [X]"
 - "Adapta el diseño de [Referencia visual] al proyecto"
 - "Quiero un nuevo estilo de invitación"
 
@@ -17,352 +16,315 @@ Activar esta skill cuando el usuario pida:
 
 ## 2. Antes de Empezar: Preguntas Obligatorias
 
-Antes de escribir código, confirmar con el usuario:
+1. **¿Slug identificador?** → Nombre corto en kebab-case (ej. `jardin`, `rustico`, `moderno`).
+2. **¿Estilo visual?** → Rústico, moderno, minimalista, romántico, tropical, etc.
+3. **¿Paleta de colores?** → Si no la tiene, proponer una.
+4. **¿Tipografías?** → Si no las tiene, seleccionar del catálogo aprobado (sección 6).
 
-1. **¿Qué plan/tier?** → Essential, Plus o Deluxe (determina las funcionalidades disponibles).
-2. **¿Qué tipo de evento?** → Boda, XV años, bautizo, graduación, etc.
-3. **¿Slug identificador?** → Nombre corto en kebab-case (ej. `boda-rustica`, `elegance-garden`).
-4. **¿Estilo visual deseado?** → Rústico, moderno, minimalista, romántico, tropical, etc.
-5. **¿Paleta de colores?** → Si no la tiene, proponer una coherente con el estilo.
-6. **¿Tipografías preferidas?** → Si no las tiene, seleccionar del catálogo aprobado (ver sección 5).
+**NO preguntar el plan** — la plantilla soporta los 3 automáticamente.
 
 ---
 
-## 3. Arquitectura del Sistema de Templates
+## 3. Arquitectura del Sistema
 
 ### 3.1 Principio Fundamental
-**NUNCA crear layouts desde cero.** Siempre copiar el componente base del tier correspondiente y personalizarlo. Los templates base ya contienen toda la lógica funcional (RSVP, observers, música, etc.).
 
-### 3.2 Archivos Base por Tier
+**1 diseño × 3 planes.** Una plantilla recibe `plan` como prop y activa/desactiva features según `PLAN_CAPABILITIES` de `src/lib/plans.ts`. El plan no va en el registro de templates.
 
-| Tier | Archivo base | Ruta |
-|------|-------------|------|
-| Essential | `EssentialTemplate.tsx` | `src/components/templates/essential/` |
-| Plus | `PlusTemplate.tsx` | `src/components/templates/plus/` |
-| Deluxe | `DeluxeTemplate.tsx` | `src/components/templates/deluxe/` |
+```
+src/components/templates/
+  classic/       ← diseño oscuro, soporta essential/plus/deluxe
+  elegance/      ← diseño claro, soporta essential/plus/deluxe
+  [nuevo-slug]/  ← nuevo diseño, misma estructura
+```
 
-### 3.3 Props que Recibe Todo Template
-
-Todos los templates reciben las mismas props desde `src/app/[type]/[slug]/page.tsx`:
+### 3.2 Props que Recibe Todo Template
 
 ```typescript
+// Definido en src/lib/templates.ts como TemplateComponent
 {
-  config: EssentialConfig | PlusConfig | DeluxeConfig;  // Configuración del evento
-  eventId?: string;            // UUID del evento (para llamadas al API de RSVP)
-  guestToken?: string;         // Token único del invitado (Deluxe: datos precargados)
-  maxCompanions?: number;      // Número de acompañantes permitidos
-  companionNames?: string[];   // Nombres precargados de acompañantes
-  guestName?: string;          // Nombre precargado del invitado
-  hasExistingRsvp?: boolean;   // Ya confirmó anteriormente
-  invalidToken?: boolean;      // Token inválido o expirado
+  config: any;                  // Configuración del evento (del campo JSONB en DB)
+  plan?: EventPlan;             // 'essential' | 'plus' | 'deluxe'
+  eventId?: string;
+  guestToken?: string;
+  maxCompanions?: number;
+  companionNames?: string[];
+  guestName?: string;
+  hasExistingRsvp?: boolean;
+  invalidToken?: boolean;
 }
 ```
 
-### 3.4 Registro Central en `src/lib/templates.ts`
+### 3.3 Cómo Usar el Plan Dentro del Template
 
-Cada template nuevo debe registrarse aquí:
+```typescript
+import { getCapabilities } from '@/lib/plans';
+
+// Dentro del componente:
+const caps = getCapabilities(plan);
+
+// Luego usar caps para condicionales:
+{caps.countdown && <CountdownSection targetDate={config.targetDate} />}
+{caps.music && config.music && <MusicPlayer ... />}
+{caps.carousel === 'auto' ? <AutoCarousel ... /> : <StaticGallery ... />}
+```
+
+### 3.4 Funcionalidades por Plan
+
+| Funcionalidad | Essential | Plus | Deluxe |
+|--------------|-----------|------|--------|
+| Loader animado | ❌ | ❌ | ✅ |
+| Música de fondo | ❌ | ❌ | ✅ |
+| Cuenta regresiva | ❌ | ✅ | ✅ |
+| Google Maps interactivo | ❌ | ✅ | ✅ |
+| Sección Destino | ❌ | ✅ | ✅ |
+| Google Calendar | ❌ | ❌ | ✅ |
+| Fotos | 5 (estática) | 5-10 (manual) | 20 (auto) |
+| RSVP | WhatsApp | Modal manual | Modal token |
+| Dashboard | ❌ | Global | Individual |
+
+Fuente de verdad: `src/lib/plans.ts` → `PLAN_CAPABILITIES`.
+
+### 3.5 Registro Central (`src/lib/templates.ts`)
 
 ```typescript
 import NuevoTemplate from '@/components/templates/[slug]/[Nombre]Template';
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
-  // ... templates existentes ...
-  '[slug-identificador]': {
+  // ... existentes ...
+  '[slug]': {
     component: NuevoTemplate as TemplateComponent,
     label: '[Nombre descriptivo]',
-    plan: 'essential' | 'plus' | 'deluxe',
+    // Sin campo `plan` — soporta los 3
   },
 };
 ```
 
 ---
 
-## 4. Funcionalidades por Tier (Matriz de Referencia)
+## 4. Config Compartida entre Planes
 
-Usar esta tabla para saber exactamente qué incluir y qué omitir según el plan:
+A diferencia de la arquitectura anterior (EssentialConfig / PlusConfig / DeluxeConfig separadas), ahora **una sola interfaz** cubre los 3 planes. Los campos de planes superiores simplemente se ignoran cuando el plan no los soporta.
 
-| Funcionalidad | Essential | Plus | Deluxe |
-|--------------|-----------|------|--------|
-| Hero con foto de fondo | ✅ | ✅ | ✅ |
-| Frase / Cita bíblica | ✅ | ✅ | ✅ |
-| Nombres de padres | ✅ | ✅ | ✅ |
-| Galería de fotos | Hasta 5 (estática) | 5-10 (carrusel manual) | Ilimitada (auto, distribuida) |
-| Itinerario | Estático | Animado + imágenes | Animado + imágenes |
-| Dress Code | ✅ (swatches) | ✅ (swatches + avoid) | ✅ (swatches + avoid) |
-| Mesa de Regalos | ✅ | ✅ | ✅ |
-| Notas adicionales | ✅ | ✅ | ✅ |
-| Cuenta regresiva | ❌ | ✅ | ✅ |
-| Google Maps interactivo | ❌ | ✅ | ✅ |
-| Sección Destino (hoteles/transporte) | ❌ | ✅ | ✅ |
-| Loader animado | ❌ | ❌ | ✅ |
-| Música de fondo | ❌ | ❌ | ✅ |
-| Monograma | ❌ | ❌ | ✅ |
-| Google Calendar | ❌ | ❌ | ✅ |
-| RSVP vía WhatsApp | ✅ | ❌ | ❌ |
-| RSVP modal (nombre manual) | ❌ | ✅ | ❌ |
-| RSVP modal (link único, datos precargados) | ❌ | ❌ | ✅ |
-| Dashboard de gestión | ❌ | General | Completo (por invitado) |
-| ContentProtection (anti-copia) | ✅ | ✅ | ✅ |
-
----
-
-## 5. Interfaces de Configuración por Tier
-
-### 5.1 EssentialConfig
+### Config Base (campos comunes a todos los planes)
 
 ```typescript
-interface EssentialConfig {
-  heroLabel: string;                    // Texto sobre el hero (ej. "Nuestro gran día")
+interface [Nombre]Config {
+  // Siempre presentes
+  heroLabel: string;
   couple: { person1: string; person2: string };
   fullNames: { person1: string; person2: string };
   date: { day: string; month: string; year: string };
   location: string;
-  images: string[];                     // Hasta 5 URLs de imágenes
+  images: string[] | PhotoEntry[];
   quote?: { text: string; reference: string };
   parents?: { person1: string; person2: string };
   itinerary: Array<{
-    time: string;
-    name: string;
-    venue: string;
-    address: string;
+    time: string; name: string; venue: string; address: string;
+    image?: string; mapsUrl?: string;
   }>;
   dressCode?: {
-    label: string;
-    women: string;
-    men: string;
+    label: string; women: string; men: string;
     swatches: Array<{ color: string; name: string }>;
     avoid?: Array<{ color: string; name: string }>;
   };
-  notes?: string[];
   gifts?: {
-    bank: string; holder: string;
-    account: string; clabe: string;
+    bank?: string; holder?: string; account?: string; clabe?: string;
     giftListUrl?: string; giftListLabel?: string;
-    giftTypes?: string[];
     envelopeMessage?: string;
   };
-  whatsapp: { number: string; message: string };  // Obligatorio en Essential
   noChildren?: boolean;
-  noChildrenMessage?: string;
   rsvpDeadline?: string;
-  theme?: {
-    accentColor: string;
-    backgroundColor: string;
-    textColor: string;
-    displayFont: string;
-    bodyFont: string;
-  };
-  sections?: {
-    quote: boolean;
-    parents: boolean;
-    dressCode: boolean;
-    notes: boolean;
-    gifts: boolean;
-  };
-}
-```
+  sections?: Record<string, boolean>;
 
-### 5.2 PlusConfig (extiende Essential)
+  // Plus/Deluxe
+  targetDate?: string;           // ISO 8601 para cuenta regresiva
+  destination?: { hotels: [...]; transport?: {...} };
+  rsvp?: { deadline: string; };
+  dietary?: { enabled: boolean; options: string[] };
 
-Todo lo de Essential más:
-
-```typescript
-interface PlusConfig extends Omit<EssentialConfig, 'whatsapp'> {
-  targetDate: string;                   // ISO 8601 para cuenta regresiva
-  itinerary: Array<{
-    time: string;
-    name: string;
-    venue: string;
-    address: string;
-    image?: string;                     // Imagen del venue
-    mapsUrl?: string;                   // Enlace a Google Maps
-    imageObjectPosition?: string;
-    imageScale?: number;
-  }>;
-  destination?: {
-    hotels: Array<{
-      name: string;
-      category: string;
-      address: string;
-      note?: string;
-      phone?: string;
-    }>;
-    transport?: {
-      info: string;
-      schedule?: string;
-      contact?: string;
-    };
-  };
-  rsvp?: {
-    maxPlusOnes: number;
-    deadline: string;
-    dietaryOptions?: string[];          // Ej: ["Vegetariano", "Vegano", "Sin gluten"]
-  };
-  photos?: PhotoEntry[];               // Modelo avanzado (ver sección 6)
-}
-```
-
-### 5.3 DeluxeConfig (extiende Plus)
-
-Todo lo de Plus más:
-
-```typescript
-interface DeluxeConfig extends PlusConfig {
+  // Deluxe
   music?: { url: string; title: string; artist: string };
-  monogram?: string;                   // Iniciales para el loader (ej. "I&A")
-  photos: PhotoEntry[];                // Obligatorio: modelo avanzado con roles
-  sections?: {
-    quote: boolean;
-    parents: boolean;
-    itinerary: boolean;
-    dressCode: boolean;
-    notes: boolean;
-    gifts: boolean;
-    destination: boolean;
-  };
+  monogram?: string;
+
+  // Essential RSVP
+  whatsapp?: { number: string; message: string };
 }
 ```
+
+El template decide internamente qué renderizar según `caps = getCapabilities(plan)`.
 
 ---
 
-## 6. Sistema de Fotos (PhotoEntry)
-
-El proyecto usa dos modelos de imágenes. **Preferir siempre el modelo nuevo (`PhotoEntry[]`)** para Plus y Deluxe:
+## 5. Sistema de Fotos (PhotoEntry)
 
 ```typescript
-// Definido en src/lib/imageLayout.ts
+// src/lib/imageLayout.ts
 type ImageLayout = 'full' | 'duo' | 'trio' | 'carousel';
 
 interface PhotoEntry {
   url: string;
-  role: 'hero' | 'block' | null;       // hero = portada, block = en sección, null = no asignada
-  afterSection?: string;                // Dónde insertar (ej. 'hero', 'quote', 'itinerary')
-  layout?: ImageLayout;                 // Cómo mostrar el bloque
-  blockGroup?: number;                  // Agrupar fotos en un mismo bloque
-  orderInBlock?: number;                // Orden dentro del bloque (0-indexed)
-  objectPosition?: string;              // CSS object-position (ej. "40% 20%")
-  scale?: number;                       // Zoom [1, 3], se aplica como transform: scale(N)
+  role: 'hero' | 'block' | null;
+  afterSection?: string;
+  layout?: ImageLayout;
+  blockGroup?: number;
+  orderInBlock?: number;
+  objectPosition?: string;
+  scale?: number;
 }
 ```
 
-### Límites por Layout
-| Layout | Mín | Máx | Descripción |
-|--------|-----|-----|-------------|
-| `full` | 1 | 1 | Ancho completo |
-| `duo` | 2 | 2 | Dos imágenes lado a lado |
-| `trio` | 3 | 3 | Tres imágenes en grid |
-| `carousel` | 2 | ∞ | Carrusel deslizable |
-
-### Essential usa el modelo legacy
-Essential usa `images: string[]` (array plano de URLs, máximo 5). NO usa `PhotoEntry`.
+- **Essential** (`caps.carousel === 'none'`): usar `images: string[]` (primeras 5 del array)
+- **Plus** (`caps.carousel === 'manual'`): carrusel manual con `PhotoEntry[]`
+- **Deluxe** (`caps.carousel === 'auto'`): carrusel automático distribuido, `PhotoEntry[]`
 
 ---
 
-## 7. Sistema de Estilos y Tematización
-
-### 7.1 Variables CSS Estándar (bloque `<style>` interno)
-
-Cada template define sus propias variables CSS. Al crear uno nuevo, modificar estas en el `:root` o scope del componente:
-
-```css
-:root {
-  --ivory: #F8F3EC;       /* Color de fondo principal */
-  --charcoal: #1C1611;    /* Color de texto principal */
-  --dark: #14100C;        /* Overlays oscuros */
-  --gold: #B8965A;        /* Color de acento (líneas, botones, detalles) */
-  --muted: #E6DDD2;       /* Bordes y separadores */
-  --muted-fg: #9B8B78;    /* Texto secundario */
-  --section-gap: clamp(3rem, 5vw, 4.5rem);  /* Espaciado entre secciones */
-}
-```
-
-**Para un nuevo template**, renombrar estas variables o crear un nuevo set coherente con la paleta elegida. NUNCA tocar `src/app/globals.css`.
-
-### 7.2 Tipografías Aprobadas (Google Fonts)
+## 6. Tipografías Aprobadas (Google Fonts)
 
 **Display (títulos, nombres):**
-- Cormorant Garamond (default, elegante serif)
-- Playfair Display (clásico editorial)
-- EB Garamond (romano tradicional)
-- Great Vibes (script cursivo)
-- Tangerine (script ligero)
+- Cormorant Garamond (elegante serif — default Classic)
+- Playfair Display (editorial)
+- Pinyon Script (script cursivo — usado en Elegance)
+- Great Vibes (script ligero)
 
-**Body (texto general):**
+**Headings:**
+- Cinzel (romano, usado en Elegance)
+- EB Garamond (clásico)
+
+**Body:**
 - Jost (geométrica moderna)
-- Raleway (elegante sans-serif)
-- Montserrat (limpia y legible)
-- DM Sans (moderna y compacta)
+- Lora (serif de lectura — usado en Elegance)
+- Raleway (sans elegante)
+- Montserrat (limpia)
+- DM Sans (compacta)
 
-**Regla**: Cada template debe cargar sus fonts con `<link>` en el head o dinámicamente. El theme del config permite que el organizador elija fonts (`theme.displayFont`, `theme.bodyFont`).
+---
 
-### 7.3 Clases de Animación Disponibles
+## 7. Flujo de Implementación (Receta)
 
-Estas clases ya están definidas en el CSS interno de los templates y funcionan con `IntersectionObserver`:
+### Paso 1: Copiar Template Existente
 
-| Clase | Efecto |
-|-------|--------|
-| `.reveal` | Fade in + translateY(20px) → 0 |
-| `.reveal--image` | Fade in + translateY(40px) + scale(0.98) → 1 |
-| `.reveal--slide-left` | Fade in desde la izquierda (-32px) |
-| `.reveal--slide-right` | Fade in desde la derecha (+32px) |
-| `.delay-1` a `.delay-5` | Retraso escalonado (0.1s a 0.5s) |
-
-**Curva de easing estándar**: `cubic-bezier(0.16, 1, 0.3, 1)`
-
-### 7.4 Keyframes Disponibles
-
-| Keyframe | Uso | Tier |
-|----------|-----|------|
-| `heroZoom` | Zoom lento en foto hero (scale 1.04→1.09) | Todos |
-| `heroFadeUp` | Fade + translateY en contenido hero | Todos |
-| `heroLine` | Línea decorativa que se expande (scaleX 0→1) | Todos |
-| `scrollDown` | Indicador de scroll | Todos |
-| `wave` | Barras de música animadas | Solo Deluxe |
-| `glowPulse` | Brillo dorado pulsante | Solo Deluxe |
-
-### 7.5 Clases de Layout para Secciones
-
-```css
-.section          /* max-width: 680px, padding: var(--section-gap) 2rem, centrado */
-.section--wide    /* max-width: 860px */
-.section--left    /* text-align: left */
+```
+src/components/templates/classic/ClassicTemplate.tsx
+→ src/components/templates/[slug]/[Nombre]Template.tsx
 ```
 
-### 7.6 Clases de Layout para Fotos
+Copiar Classic (oscuro) o Elegance (claro) según la estética más cercana.
 
+### Paso 2: Personalizar
+
+**2a. Variables CSS** (bloque `<style>` interno):
 ```css
-.photo-full       /* height: clamp(380px, 55vw, 640px) */
-.photo-center     /* height: clamp(440px, 65vw, 720px) con líneas decorativas */
-.photo-duo        /* Grid de 2 columnas */
-.photo-img--hover /* Scale 1.04 en hover con gradient overlay */
+--ivory: #...;   /* fondo */
+--charcoal: #...; /* texto */
+--gold: #...;     /* acento */
+```
+
+**2b. Renombrar la interfaz de config**:
+```typescript
+export interface JardinConfig { ... }
+```
+
+**2c. Ajustar elementos visuales** (SVGs decorativos, formas de sección, etc.)
+
+**2d. Mantener intacta la lógica funcional**:
+- `getCapabilities(plan)` para condicionales de features
+- IntersectionObserver para reveals
+- Lógica RSVP (ver sección 8)
+- ContentProtection wrapper
+
+### Paso 3: Demo Data
+
+```typescript
+// src/lib/demo-data.ts
+import { JardinConfig } from '@/components/templates/jardin/JardinTemplate';
+
+export const JARDIN_DEMO: JardinConfig = {
+  // Datos ficticios completos — cubrir todos los campos incluyendo Plus/Deluxe
+  // Imágenes Unsplash: hero ?w=1400&q=80, interiores ?w=1200&q=80
+};
+```
+
+### Paso 4: Registrar en `templates.ts`
+
+```typescript
+import JardinTemplate from '@/components/templates/jardin/JardinTemplate';
+
+'jardin': {
+  component: JardinTemplate as TemplateComponent,
+  label: 'Jardín',
+},
+```
+
+### Paso 5: Página de Preview
+
+```typescript
+// src/app/plantillas/jardin/page.tsx
+import JardinTemplate from '@/components/templates/jardin/JardinTemplate';
+import { JARDIN_DEMO } from '@/lib/demo-data';
+import FloatingPlanSwitcher from '@/components/templates/shared/FloatingPlanSwitcher';
+import type { EventPlan } from '@/lib/plans';
+
+const VALID_PLANS: EventPlan[] = ['essential', 'plus', 'deluxe'];
+
+export default async function JardinPreviewPage({
+  searchParams,
+}: { searchParams: Promise<{ plan?: string }> }) {
+  const { plan: rawPlan } = await searchParams;
+  const plan: EventPlan = VALID_PLANS.includes(rawPlan as EventPlan)
+    ? (rawPlan as EventPlan)
+    : 'deluxe';
+
+  return (
+    <>
+      <FloatingPlanSwitcher activePlan={plan} baseUrl="/plantillas/jardin" />
+      <JardinTemplate key={plan} config={JARDIN_DEMO} plan={plan} />
+    </>
+  );
+}
+```
+
+### Paso 6: Agregar al Catálogo
+
+Actualizar `src/app/plantillas/page.tsx` añadiendo la nueva plantilla al array `TEMPLATES`:
+
+```typescript
+{
+  key: 'jardin',
+  name: 'Jardín',
+  tagline: 'Descripción breve.',
+  description: 'Descripción más larga para la card.',
+  previewBase: '/plantillas/jardin',
+  style: 'light' as const, // o 'dark'
+},
 ```
 
 ---
 
-## 8. Integración RSVP por Tier
+## 8. Integración RSVP por Plan
 
-La lógica de RSVP es CRÍTICA y varía según el plan. El endpoint es `POST /api/rsvp`.
+La lógica RSVP se decide con `caps.rsvpMode`:
 
-### Essential: WhatsApp directo
-- Botón que abre `https://wa.me/{number}?text={encodedMessage}`
-- NO hay formulario ni llamada al API
-- Config requerida: `whatsapp: { number, message }`
+### `'whatsapp'` (Essential)
+```typescript
+if (caps.rsvpMode === 'whatsapp') {
+  // Botón directo: https://wa.me/{number}?text={message}
+  // Config requerida: config.whatsapp.number, config.whatsapp.message
+}
+```
 
-### Plus: Modal con nombre manual
-- Modal que pide nombre, número de acompañantes y restricciones alimentarias
-- El invitado escribe su nombre (no hay token)
-- Llama a `/api/rsvp` en modo anónimo (`guest_id: null`)
-- `maxCompanions` viene del parámetro `p` en la URL (codificado con `encodePasses()`)
-- Config requerida: `rsvp: { maxPlusOnes, deadline, dietaryOptions }`
+### `'modalManual'` (Plus)
+- Modal con campo de nombre, acompañantes y dietary
+- `guest_id: null` en el payload
+- `maxCompanions` viene del query param `p` (codificado)
 
-### Deluxe: Modal con link único
-- El invitado accede con `?id={token}` en la URL
-- El nombre y acompañantes se precargan desde la DB
-- Llama a `/api/rsvp` en modo token (`guest_id` se resuelve server-side)
-- Muestra estado "Ya confirmaste" si `hasExistingRsvp === true`
-- Muestra error si `invalidToken === true`
+### `'modalToken'` (Deluxe)
+- Link único por invitado con `?id={token}`
+- Datos precargados del invitado desde BD
+- `hasExistingRsvp` y `invalidToken` manejan estados especiales
 
-**REGLA IRROMPIBLE**: No modificar la firma del endpoint `/api/rsvp` ni el payload esperado:
+**REGLA IRROMPIBLE**: No modificar la firma de `POST /api/rsvp`:
 ```typescript
 {
   event_id: string;
@@ -378,178 +340,62 @@ La lógica de RSVP es CRÍTICA y varía según el plan. El endpoint es `POST /ap
 
 ---
 
-## 9. Flujo de Implementación Completo (Receta)
+## 9. Estilos y Responsividad
 
-### Paso 1: Identificar Tier y Validar Funcionalidades
-Cruzar lo que el usuario pide con la matriz de la sección 4. Si pide algo que no corresponde al tier, informar.
+**No crear archivos CSS separados.** Todo el estilo va en el `<style>` interno del componente.
 
-### Paso 2: Copiar Template Base
-```
-src/components/templates/[tier-base]/[Tier]Template.tsx
-→ copiar a →
-src/components/templates/[nuevo-slug]/[Nombre]Template.tsx
-```
+**No modificar `src/app/globals.css`.**
 
-Ejemplo: Para crear "boda-rustica" en plan Plus:
-```
-src/components/templates/plus/PlusTemplate.tsx
-→ src/components/templates/boda-rustica/BodaRusticaTemplate.tsx
-```
+### Breakpoints mínimos requeridos
 
-### Paso 3: Personalizar el Componente
+| Breakpoint | Ajuste |
+|------------|--------|
+| `> 768px` | Layout completo |
+| `≤ 768px` | Padding reducido, fonts menores |
+| `≤ 600px` | Grids en 1 columna |
+| `≤ 480px` | Hero en columna, padding mínimo |
 
-**3a. Actualizar las variables CSS** en el bloque `<style>` interno:
-- Cambiar paleta de colores (--ivory, --gold, --charcoal, etc.)
-- Ajustar tipografías en los `<link>` de Google Fonts
-- Modificar espaciados si el estilo lo requiere
+### Clases de Animación (IntersectionObserver)
 
-**3b. Actualizar la interfaz de config** (renombrar el export del tipo):
-- `export interface BodaRusticaConfig { ... }` (basada en la interface del tier)
-
-**3c. Ajustar elementos visuales únicos**:
-- Decoradores SVG o imágenes de fondo
-- Formas de secciones (bordes, separadores)
-- Efectos de hover o animaciones adicionales
-
-**3d. Mantener intacta toda la lógica funcional**:
-- IntersectionObserver para reveals
-- Lógica del RSVP (modal, fetch, estados)
-- ContentProtection wrapper
-- Reproductor de música (Deluxe)
-- Countdown timer (Plus/Deluxe)
-
-### Paso 4: Crear Demo Data
-
-Agregar constante de ejemplo en `src/lib/demo-data.ts`:
-
-```typescript
-import { BodaRusticaConfig } from '@/components/templates/boda-rustica/BodaRusticaTemplate';
-
-export const BODA_RUSTICA_DEMO: BodaRusticaConfig = {
-  // Llenar con datos ficticios coherentes y completos
-  // Usar imágenes de Unsplash de alta calidad
-  // Cubrir TODAS las secciones habilitadas
-};
-```
-
-**Reglas para demo data**:
-- Usar nombres hispanos realistas
-- Imágenes de Unsplash con `?w=1400&q=80` para hero, `?w=1200&q=80` para interiores
-- Cubrir todas las secciones que el tier soporta
-- Incluir al menos 3 items de itinerario
-- Si tiene dress code, incluir 3+ swatches con nombres de color
-- Si tiene regalos, incluir datos bancarios ficticios completos
-
-### Paso 5: Registrar en `src/lib/templates.ts`
-
-```typescript
-import BodaRusticaTemplate from '@/components/templates/boda-rustica/BodaRusticaTemplate';
-
-// Dentro del objeto TEMPLATES:
-'boda-rustica': {
-  component: BodaRusticaTemplate as TemplateComponent,
-  label: 'Boda Rústica',
-  plan: 'plus',  // El tier correspondiente
-},
-```
-
-### Paso 6: Crear Página de Preview
-
-Crear `src/app/plantillas/[slug]/page.tsx`:
-
-```typescript
-import BodaRusticaTemplate from '@/components/templates/boda-rustica/BodaRusticaTemplate';
-import { BODA_RUSTICA_DEMO } from '@/lib/demo-data';
-
-export const metadata = {
-  title: 'Boda Rústica — Moments',
-  description: 'Vista previa de la plantilla Boda Rústica para invitaciones digitales.',
-};
-
-export default function BodaRusticaPreviewPage() {
-  return <BodaRusticaTemplate config={BODA_RUSTICA_DEMO} />;
-}
-```
-
-### Paso 7: Verificación Final
-
-Ejecutar `npm run dev` y revisar en `/plantillas/[slug]`.
+| Clase | Efecto |
+|-------|--------|
+| `.reveal` | Fade in + translateY(20px) |
+| `.reveal--slide-left` | Desde izquierda (-32px) |
+| `.reveal--slide-right` | Desde derecha (+32px) |
+| `.delay-1` a `.delay-5` | Retraso escalonado 0.1s–0.5s |
 
 ---
 
-## 10. Breakpoints y Responsividad
+## 10. Componentes Compartidos
 
-Todos los templates deben funcionar en estos breakpoints:
-
-| Breakpoint | Ajustes esperados |
-|------------|-------------------|
-| `> 768px` | Layout completo, secciones a 680px max |
-| `≤ 768px` | Secciones a padding reducido, fonts ligeramente menores |
-| `≤ 600px` | Grids de regalos/fotos en 1 columna, imágenes más compactas |
-| `≤ 480px` | Hero meta en columna, padding mínimo, photo-duo apilado |
-
-**No crear media queries nuevas salvo que el diseño lo exija**. Los templates base ya traen responsive incorporado.
+- **`ContentProtection`** (`src/components/templates/shared/ContentProtection.tsx`): bloquea clic derecho, atajos, arrastrar imágenes. **Siempre incluirlo** como wrapper.
+- **`FloatingPlanSwitcher`** (`src/components/templates/shared/FloatingPlanSwitcher.tsx`): UI de cambio de plan en preview. Solo en páginas `/plantillas/[slug]`.
 
 ---
 
-## 11. Componentes Compartidos
+## 11. Restricciones
 
-### ContentProtection (`src/components/templates/shared/ContentProtection.tsx`)
-- Bloquea clic derecho, arrastrar imágenes, atajos de teclado (Ctrl+S, Ctrl+U, Ctrl+Shift+I)
-- Prop `enabled` para activar/desactivar
-- **Siempre incluirlo** como wrapper del template completo
-
-### Optimización de Imágenes (`src/lib/cloudinary.ts`)
-- Contiene presets de transformación en el objeto `T`: `heroMobile`, `heroDesktop`, `fullMobile`, `fullDesktop`, `centered`, `duo`
-- Usar cuando las imágenes estén en Cloudinary (producción), no para Unsplash (demos)
-
----
-
-## 12. Restricciones (Guardrails)
-
-1. **NO** modificar `src/app/globals.css` para estilos de una plantilla específica. Usar siempre el `<style>` interno del componente.
-2. **NO** alterar la lógica del RSVP ni el payload del endpoint `/api/rsvp`.
-3. **NO** cambiar las props que recibe el template (la interfaz `TemplateComponent` es fija).
-4. **NO** usar imágenes placeholder genéricas. Usar Unsplash de alta calidad con query params de tamaño.
-5. **NO** omitir el `ContentProtection` wrapper.
-6. **NO** agregar dependencias npm nuevas sin confirmar con el usuario.
-7. **NO** romper la paridad con el sistema de tokens de Supabase.
-8. **NO** crear archivos CSS separados para el template. Todo el estilo va dentro del componente (tag `<style>` o Tailwind inline).
-9. **SÍ** exportar la interfaz de config del template para que `demo-data.ts` pueda importarla.
-10. **SÍ** mantener las secciones como condicionales controladas por `config.sections` para que el organizador pueda activar/desactivar desde el admin.
+1. **NO** fijar el plan en el registro de templates — siempre pasa como prop.
+2. **NO** crear interfaces de config separadas por plan (Essential/Plus/Deluxe) — una sola por diseño.
+3. **NO** alterar el payload de `/api/rsvp`.
+4. **NO** cambiar la interfaz `TemplateComponent`.
+5. **NO** omitir `ContentProtection`.
+6. **NO** agregar dependencias npm sin confirmar.
+7. **SÍ** exportar la interfaz de config para que `demo-data.ts` pueda importarla.
+8. **SÍ** usar `getCapabilities(plan)` para todos los condicionales de features.
+9. **SÍ** incluir `FloatingPlanSwitcher` en la página de preview.
 
 ---
 
-## 13. Checklist de Calidad (Pre-entrega)
+## 12. Checklist Pre-entrega
 
-Antes de dar por terminado un template, verificar:
-
-- [ ] **Compila sin errores**: `npm run dev` corre sin warnings en el template.
-- [ ] **Registro correcto**: Template aparece en `TEMPLATES` con plan correcto.
-- [ ] **Preview funcional**: La ruta `/plantillas/[slug]` renderiza correctamente.
-- [ ] **Responsive**: Funciona en mobile (375px), tablet (768px) y desktop (1440px).
-- [ ] **Todas las secciones**: Cada sección habilitada del tier se renderiza.
-- [ ] **Secciones opcionales**: Las secciones con toggle `config.sections.X` se ocultan correctamente al poner `false`.
-- [ ] **RSVP funcional**: El mecanismo de confirmación del tier funciona (WhatsApp / Modal anónimo / Modal con token).
-- [ ] **Animaciones**: Los `reveal` se disparan al hacer scroll.
-- [ ] **Fonts cargadas**: Las tipografías elegidas cargan correctamente.
-- [ ] **Imágenes válidas**: Todas las URLs de demo resuelven y se ven bien.
-- [ ] **ContentProtection**: El wrapper está aplicado.
-- [ ] **Música** (solo Deluxe): El reproductor aparece y funciona.
-- [ ] **Countdown** (Plus/Deluxe): Muestra la cuenta regresiva correctamente.
-- [ ] **Demo data exportada**: La constante de demo está en `demo-data.ts` con el tipo correcto.
-
----
-
-## 14. Ejemplo Rápido: Crear "Jardín Dorado" (Plus)
-
-```
-1. Tier: Plus → copiar PlusTemplate.tsx
-2. Crear: src/components/templates/jardin-dorado/JardinDoradoTemplate.tsx
-3. Paleta: --ivory: #FDF8F0, --gold: #C4A35A, --charcoal: #2C2416
-4. Fonts: Great Vibes (display) + Raleway (body)
-5. Demo: JARDIN_DORADO_DEMO en demo-data.ts
-6. Registro: 'jardin-dorado' en templates.ts con plan: 'plus'
-7. Preview: src/app/plantillas/jardin-dorado/page.tsx
-8. Verificar: npm run dev → /plantillas/jardin-dorado
-```
+- [ ] `npm run build` sin errores
+- [ ] Template registrado en `templates.ts` sin campo `plan`
+- [ ] Preview en `/plantillas/[slug]?plan=essential|plus|deluxe` funciona para los 3 planes
+- [ ] Essential: solo foto estática, RSVP WhatsApp, sin countdown
+- [ ] Plus: carrusel manual, modal RSVP anónimo, countdown visible
+- [ ] Deluxe: loader, música, carrusel auto, modal token
+- [ ] Responsive en 375px / 768px / 1440px
+- [ ] ContentProtection aplicado
+- [ ] Demo data en `demo-data.ts` con tipo correcto exportado
+- [ ] Card agregada en `/plantillas/page.tsx`

@@ -23,7 +23,7 @@ interface ItineraryItem {
 export interface Swatch { color: string; name: string; }
 export interface Hotel { name: string; category: string; address: string; note: string; phone: string; }
 
-export interface DeluxeConfig {
+export interface ClassicConfig {
   theme?: {
     accentColor?:     string;
     backgroundColor?: string;
@@ -72,7 +72,7 @@ export interface DeluxeConfig {
 }
 
 interface Props {
-  config: DeluxeConfig;
+  config: ClassicConfig;
   plan?: import('@/lib/plans').EventPlan;
   eventId?: string;
   guestToken?: string;
@@ -1812,7 +1812,7 @@ function useCountdown(targetDate: string) {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export default function DeluxeTemplate({
+export default function ClassicTemplate({
   config,
   plan: planProp,
   eventId,
@@ -1826,7 +1826,7 @@ export default function DeluxeTemplate({
   const caps = getCapabilities(planProp);
   const isPlus = planProp === 'plus';
   // ── Build data from config with defaults ────────────────────────────────
-  const cfg = (config ?? {}) as DeluxeConfig;
+  const cfg = (config ?? {}) as ClassicConfig;
   const dietary = cfg.dietary ?? { enabled: false, options: [] };
 
   // ── Theme ────────────────────────────────────────────────────────────────

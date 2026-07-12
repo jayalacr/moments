@@ -29,7 +29,7 @@ export default function TemplateSelector({ eventId, currentType, eventSlug, even
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const entries = Object.entries(TEMPLATES);
+  const entries = Object.entries(TEMPLATES).filter(([, e]) => !e.hidden);
 
   function handleSave() {
     startTransition(async () => {

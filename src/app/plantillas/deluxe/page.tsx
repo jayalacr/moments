@@ -1,4 +1,4 @@
-import DeluxeTemplate from '@/components/templates/deluxe/DeluxeTemplate';
+import ClassicTemplate from '@/components/templates/classic/ClassicTemplate';
 import { DELUXE_DEMO } from '@/lib/demo-data';
 import FloatingPlanSwitcher from '@/components/templates/shared/FloatingPlanSwitcher';
 import type { EventPlan } from '@/lib/plans';
@@ -23,7 +23,7 @@ export default async function DeluxePreviewPage({
   return (
     <>
       <FloatingPlanSwitcher activePlan={plan} baseUrl="/plantillas/deluxe" />
-      <DeluxeTemplate key={plan} config={DELUXE_DEMO} plan={plan} />
+      <ClassicTemplate key={plan} config={DELUXE_DEMO} plan={plan} />
     </>
   );
 }

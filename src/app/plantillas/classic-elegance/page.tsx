@@ -1,4 +1,4 @@
-import ClassicEleganceTemplate from '@/components/templates/classic-elegance/ClassicEleganceTemplate';
+import EleganceTemplate from '@/components/templates/elegance/EleganceTemplate';
 import { CLASSIC_ELEGANCE_DEMO } from '@/lib/demo-data';
 import FloatingPlanSwitcher from '@/components/templates/shared/FloatingPlanSwitcher';
 import type { EventPlan } from '@/lib/plans';
@@ -23,7 +23,7 @@ export default async function ClassicElegancePreviewPage({
   return (
     <>
       <FloatingPlanSwitcher activePlan={plan} baseUrl="/plantillas/classic-elegance" />
-      <ClassicEleganceTemplate key={plan} config={CLASSIC_ELEGANCE_DEMO} plan={plan} />
+      <EleganceTemplate key={plan} config={CLASSIC_ELEGANCE_DEMO} plan={plan} />
     </>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Cormorant_Garamond, Jost, Montserrat } from 'next/font/google';
 import { Check, Minus, Sparkles, Star, Crown } from 'lucide-react';
 import Link from 'next/link';
@@ -199,7 +199,7 @@ const PLAN_DATA = [
     tagline: 'Experiencia completa',
     Icon: Star,
     accentColor: '#B8965A',
-    popular: true,
+    popular: false,
     highlights: [
       'Todo lo del plan Essential',
       'Cuenta regresiva al gran evento',
@@ -213,7 +213,7 @@ const PLAN_DATA = [
     tagline: 'Premium e inmersivo',
     Icon: Crown,
     accentColor: '#8B6030',
-    popular: false,
+    popular: true,
     highlights: [
       'Todo lo del plan Plus',
       'Loader animado y música de fondo',
@@ -256,8 +256,19 @@ function Cell({ val, note, tier }: { val: Val; note?: string; tier: 'e' | 'p' | 
   );
 }
 
+const WA_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '5200000000';
+const WA_HREF = `https://wa.me/${WA_NUMBER}?text=Hola%20Moments%2C%20quiero%20cotizar%20mi%20invitaci%C3%B3n`;
+
 export default function PlanesPage() {
   const [activeTab, setActiveTab] = useState<PlanKey>('plus');
+  const [navScrolled, setNavScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setNavScrolled(window.scrollY > 24);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const activeTier = TIER_MAP[activeTab];
   const activeBg = BG_MAP[activeTab];
@@ -272,6 +283,70 @@ export default function PlanesPage() {
       --muted-fg: #9B8B78;
     }
 
+    /* ── Nav ── */
+    .pnav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: var(--charcoal);
+      transition: box-shadow 0.4s;
+    }
+    .pnav.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.4); }
+    .pnav__inner {
+      max-width: 1020px; margin: 0 auto; padding: 0 20px;
+      display: flex; align-items: center; gap: 40px; height: 64px;
+    }
+    .pnav__brand {
+      font-family: var(--font-montserrat), 'Montserrat', sans-serif;
+      font-size: 18px; font-weight: 300; letter-spacing: 0.28em;
+      color: white; text-decoration: none;
+    }
+    .pnav__links { display: flex; align-items: center; gap: 24px; flex: 1; }
+    .pnav__links a {
+      font-family: var(--font-jost), system-ui, sans-serif;
+      font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+      color: rgba(255,255,255,0.55); text-decoration: none; transition: color 0.18s;
+    }
+    .pnav__links a:hover { color: rgba(255,255,255,0.9); }
+    .pnav__cta { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+    .pnav__btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-jost), system-ui, sans-serif;
+      font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 10px 22px; border-radius: 100px; min-height: 40px;
+      text-decoration: none; cursor: pointer; transition: opacity 0.2s, transform 0.15s;
+    }
+    .pnav__btn:hover { opacity: 0.82; transform: translateY(-1px); }
+    .pnav__btn--ghost {
+      background: transparent; color: rgba(255,255,255,0.75);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    .pnav__btn--ghost:hover { border-color: rgba(255,255,255,0.6); color: white; opacity: 1; }
+    .pnav__btn--gold { background: var(--gold); color: white; border: none; }
+    .pnav__burger {
+      display: none; flex-direction: column; justify-content: center; gap: 5px;
+      width: 44px; height: 44px; background: none; border: none; cursor: pointer;
+      padding: 10px; margin-left: auto;
+    }
+    .pnav__burger span { display: block; width: 20px; height: 1.5px; background: rgba(255,255,255,0.8); }
+    .pnav__drawer {
+      display: none; position: fixed; top: 64px; left: 0; right: 0;
+      background: #111; border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding: 16px 20px 24px; flex-direction: column; gap: 2px; z-index: 99;
+    }
+    .pnav__drawer.open { display: flex; }
+    .pnav__drawer a {
+      font-family: var(--font-jost), system-ui, sans-serif;
+      font-size: 15px; font-weight: 400; color: rgba(255,255,255,0.75);
+      text-decoration: none; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.08);
+      transition: color 0.18s;
+    }
+    .pnav__drawer a:last-child { border-bottom: none; }
+    .pnav__drawer a:hover { color: var(--gold); }
+    @media (max-width: 900px) {
+      .pnav__links { display: none; }
+      .pnav__cta .pnav__btn--ghost { display: none; }
+      .pnav__burger { display: flex; }
+    }
+
     .planes-root {
       font-family: var(--font-jost), system-ui, sans-serif;
       background: var(--ivory);
@@ -282,7 +357,7 @@ export default function PlanesPage() {
     /* ── Hero ── */
     .planes-hero {
       text-align: center;
-      padding: 72px 24px 48px;
+      padding: 120px 24px 48px;
       position: relative;
     }
     .planes-hero::before {
@@ -351,20 +426,20 @@ export default function PlanesPage() {
     }
     .plan-card:hover { box-shadow: 0 8px 32px rgba(28,22,17,0.1); transform: translateY(-4px); }
     .plan-card.card-essential { background: #F5F1EC; }
-    .plan-card.card-plus {
-      background: #FDFBF7;
-      border-color: var(--gold);
+    .plan-card.card-plus { background: #FDFBF7; }
+    .plan-card.card-deluxe {
+      background: #F7F2EA;
+      border-color: #8B6030;
       border-width: 1.5px;
-      box-shadow: 0 8px 28px rgba(184,150,90,0.16);
+      box-shadow: 0 8px 28px rgba(139,96,48,0.16);
       padding: 36px 26px 30px;
       transform: translateY(-6px);
       z-index: 1;
     }
-    .plan-card.card-plus:hover {
-      box-shadow: 0 14px 44px rgba(184,150,90,0.24);
+    .plan-card.card-deluxe:hover {
+      box-shadow: 0 14px 44px rgba(139,96,48,0.24);
       transform: translateY(-10px);
     }
-    .plan-card.card-deluxe { background: #F7F2EA; }
 
     .plan-card-badge {
       position: absolute;
@@ -399,7 +474,7 @@ export default function PlanesPage() {
       line-height: 1;
       margin-bottom: 3px;
     }
-    .card-plus .plan-card-name { font-size: 28px; }
+    .card-deluxe .plan-card-name { font-size: 28px; }
     .plan-card-tagline {
       font-size: 11px;
       font-weight: 300;
@@ -424,7 +499,7 @@ export default function PlanesPage() {
       font-family: var(--font-cormorant), Georgia, serif;
       font-size: 30px; font-weight: 400; color: var(--charcoal); line-height: 1;
     }
-    .card-plus .plan-card-price-amount { font-size: 36px; color: #3D2E1A; }
+    .card-deluxe .plan-card-price-amount { font-size: 36px; color: #3D2E1A; }
     .plan-card-price-note {
       font-size: 10px; font-weight: 300; color: var(--muted-fg); font-family: var(--font-jost);
     }
@@ -437,7 +512,7 @@ export default function PlanesPage() {
     .plan-card-feature-text {
       font-size: 12px; color: #5C5248; font-family: var(--font-jost); line-height: 1.45;
     }
-    .card-plus .plan-card-feature-text { font-size: 12.5px; color: #3D2E1A; }
+    .card-deluxe .plan-card-feature-text { font-size: 12.5px; color: #3D2E1A; }
 
     .plan-card-cta {
       display: block; text-align: center;
@@ -682,8 +757,8 @@ export default function PlanesPage() {
       display: flex; flex-direction: column; align-items: center; gap: 6px;
     }
     .pf-cell.e { background: #F5F1EC; border-radius: 0 0 0 16px; }
-    .pf-cell.p { background: #FDFBF7; border-left: 1.5px solid var(--gold); border-right: 1.5px solid var(--gold); border-bottom: 1.5px solid var(--gold); border-radius: 0 0 12px 12px; }
-    .pf-cell.d { background: #F7F2EA; border-radius: 0 0 16px 0; }
+    .pf-cell.p { background: #FDFBF7; }
+    .pf-cell.d { background: #F7F2EA; border-left: 1.5px solid #8B6030; border-right: 1.5px solid #8B6030; border-bottom: 1.5px solid #8B6030; border-radius: 0 0 12px 12px; }
 
     .btn-cta {
       display: inline-block; font-family: var(--font-jost), system-ui, sans-serif;
@@ -801,9 +876,38 @@ export default function PlanesPage() {
     <div className={`${cormorant.variable} ${jost.variable} ${montserrat.variable} planes-root`}>
       <style suppressHydrationWarning>{css}</style>
 
+      {/* ── Nav ── */}
+      <nav className={`pnav${navScrolled ? ' scrolled' : ''}`}>
+        <div className="pnav__inner">
+          <Link href="/" className="pnav__brand">moments</Link>
+          <div className="pnav__links">
+            <Link href="/#plantillas">Plantillas</Link>
+            <Link href="/#planes">Planes</Link>
+            <Link href="/">Inicio</Link>
+          </div>
+          <div className="pnav__cta">
+            <Link href="/plantillas" className="pnav__btn pnav__btn--ghost">Ver plantillas</Link>
+            <a href={WA_HREF} target="_blank" rel="noopener noreferrer" className="pnav__btn pnav__btn--gold">Cotizar</a>
+          </div>
+          <button
+            className="pnav__burger"
+            aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            <span /><span /><span />
+          </button>
+        </div>
+        <div className={`pnav__drawer${menuOpen ? ' open' : ''}`}>
+          <Link href="/plantillas" onClick={() => setMenuOpen(false)}>Plantillas</Link>
+          <Link href="/#planes" onClick={() => setMenuOpen(false)}>Planes</Link>
+          <Link href="/" onClick={() => setMenuOpen(false)}>Inicio</Link>
+          <a href={WA_HREF} target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)}>Cotizar por WhatsApp</a>
+        </div>
+      </nav>
+
       {/* ── Hero ── */}
       <div className="planes-hero">
-        <p className="planes-wordmark">moments</p>
         <h1 className="planes-title">
           Elige el plan perfecto<br /><em>para tu celebración</em>
         </h1>
@@ -976,13 +1080,13 @@ export default function PlanesPage() {
               <a href="/plantillas/deluxe?plan=essential" target="_blank" className="btn-example">Ver demo</a>
             </div>
             <div className="ph-plan p">
-              <div className="ph-badge">Más popular</div>
               <div className="ph-icon-wrap p"><Star size={16} color="#B8965A" strokeWidth={1.5} /></div>
               <p className="ph-name">Plus</p>
               <p className="ph-desc">Experiencia completa</p>
               <a href="/plantillas/deluxe?plan=plus" target="_blank" className="btn-example">Ver demo</a>
             </div>
             <div className="ph-plan d">
+              <div className="ph-badge">Más popular</div>
               <div className="ph-icon-wrap d"><Crown size={16} color="#8B6030" strokeWidth={1.5} /></div>
               <p className="ph-name">Deluxe</p>
               <p className="ph-desc">Premium e inmersivo</p>
@@ -1036,6 +1140,9 @@ export default function PlanesPage() {
 
         <p className="plans-note">
           Tú editas la información · diseño personalizado incluido
+        </p>
+        <p className="plans-note" style={{ paddingTop: 12 }}>
+          * La carga de datos puede realizarla el organizador desde su panel o solicitarla a Moments con costo adicional, sujeto a disponibilidad.
         </p>
       </div>
     </div>

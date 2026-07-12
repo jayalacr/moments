@@ -2,10 +2,12 @@
  * Registro central de templates disponibles.
  *
  * Para agregar un template nuevo:
- *   1. Crea el componente en src/components/templates/[nombre]/index.tsx
- *   2. Agrégalo aquí con su clave, label y plan
+ *   1. Crea el componente en src/components/templates/[nombre]/
+ *   2. Agrégalo aquí con su clave y label
  *   3. Commit + push → Vercel despliega automáticamente
  *   4. En el superadmin, asigna el template_type al evento
+ *
+ * El plan (essential/plus/deluxe) se pasa como prop al componente — no va en este registro.
  */
 
 import type { ComponentType } from 'react';
@@ -27,38 +29,32 @@ export type TemplateComponent = ComponentType<{
 export interface TemplateEntry {
   component: TemplateComponent;
   label: string;
+  hidden?: boolean;
 }
 
-import EssentialTemplate from '@/components/templates/essential/EssentialTemplate';
-import PlusTemplate from '@/components/templates/plus/PlusTemplate';
-import DeluxeTemplate from '@/components/templates/deluxe/DeluxeTemplate';
-import ClassicEleganceTemplate from '@/components/templates/classic-elegance/ClassicEleganceTemplate';
+import ClassicTemplate from '@/components/templates/classic/ClassicTemplate';
+import EleganceTemplate from '@/components/templates/elegance/EleganceTemplate';
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
-  'essential-demo': {
-    component: EssentialTemplate as TemplateComponent,
-    label: 'Essential — Demo clásico',
+  'classic': {
+    component: ClassicTemplate as TemplateComponent,
+    label: 'Classic',
   },
 
-  'plus-classic': {
-    component: PlusTemplate as TemplateComponent,
-    label: 'Plus — Clásico',
+  'elegance': {
+    component: EleganceTemplate as TemplateComponent,
+    label: 'Elegance',
   },
 
+  // ponytail: aliases de migración — borrar tras: UPDATE events SET template_type = 'classic' WHERE template_type = 'deluxe-classic'
   'deluxe-classic': {
-    component: DeluxeTemplate as TemplateComponent,
-    label: 'Deluxe — Clásico',
+    component: ClassicTemplate as TemplateComponent,
+    label: 'Classic (legacy)',
+    hidden: true,
   },
-
   'classic-elegance': {
-    component: ClassicEleganceTemplate as TemplateComponent,
-    label: 'Classic Elegance',
+    component: EleganceTemplate as TemplateComponent,
+    label: 'Elegance (legacy)',
+    hidden: true,
   },
-
-  // Agrega nuevos templates aquí:
-  // 'boda-rustica-2025': {
-  //   component: BodaRustica,
-  //   label: 'Boda Rústica 2025',
-  //   plan: 'essential',
-  // },
 };
