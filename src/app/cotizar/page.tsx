@@ -3,6 +3,8 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Cormorant_Garamond, Jost, Montserrat } from 'next/font/google';
+import SiteHeader from '@/components/site/SiteHeader';
+import SiteFooter from '@/components/site/SiteFooter';
 import { Sparkles, Star, Crown } from 'lucide-react';
 import {
   BASE_PRICES,
@@ -95,29 +97,25 @@ export default function CotizarPage() {
     }
     .q-hero {
       text-align: center;
-      padding: 64px 24px 32px;
+      padding: 64px 24px 48px;
+      position: relative;
     }
-    .q-wordmark {
-      font-family: var(--font-montserrat), 'Montserrat', sans-serif;
-      font-size: 36px;
-      font-weight: 400;
-      font-style: normal;
-      letter-spacing: 0.18em;
-      color: #b28375;
-      margin-bottom: 18px;
+    .q-hero::before {
+      content: ''; position: absolute; top: 0; left: 50%;
+      transform: translateX(-50%); width: 1px; height: 52px;
+      background: linear-gradient(to bottom, transparent, var(--gold));
     }
     .q-title {
       font-family: var(--font-cormorant), Georgia, serif;
-      font-size: clamp(2rem, 4.5vw, 3.2rem);
-      font-weight: 300;
+      font-size: clamp(2.4rem, 5.5vw, 4rem);
+      font-weight: 600;
       line-height: 1.1;
       color: var(--charcoal);
-      margin-bottom: 14px;
+      margin-bottom: 20px;
     }
-    .q-title em {
-      font-style: italic;
-      color: var(--gold);
-    }
+    .q-title em { font-style: italic; color: var(--gold); }
+    .q-ornament { display: flex; align-items: center; gap: 12px; justify-content: center; margin: 24px auto 0; max-width: 200px; opacity: 0.5; }
+    .q-ornament-line { flex: 1; height: 1px; background: var(--gold); }
     .q-sub {
       font-size: 14px;
       font-weight: 300;
@@ -376,11 +374,17 @@ export default function CotizarPage() {
     <div className={`${cormorant.variable} ${jost.variable} ${montserrat.variable} q-root`}>
       <style suppressHydrationWarning>{css}</style>
 
+      <SiteHeader />
+
       <div className="q-hero">
-        <p className="q-wordmark">moments</p>
-        <h1 className="q-title">
-          Simula tu <em>cotización</em>
-        </h1>
+        <h1 className="q-title">Simula tu <em>cotización</em></h1>
+        <div className="q-ornament">
+          <span className="q-ornament-line" />
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path d="M5 0L6.18 3.82L10 5L6.18 6.18L5 10L3.82 6.18L0 5L3.82 3.82L5 0Z" fill="#B8965A" />
+          </svg>
+          <span className="q-ornament-line" />
+        </div>
         <p className="q-sub">
           Elige el plan, el tiempo de publicación y los extras. El total se actualiza al instante.
           Cuando estés listo, escríbenos por WhatsApp y con gusto te damos todos los detalles.
@@ -569,6 +573,7 @@ export default function CotizarPage() {
           </a>
         </aside>
       </div>
+      <SiteFooter />
     </div>
   );
 }

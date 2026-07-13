@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Cormorant_Garamond, Jost, Montserrat } from 'next/font/google';
 import { Instagram } from 'lucide-react';
+import SiteHeader from '@/components/site/SiteHeader';
+import SiteFooter from '@/components/site/SiteFooter';
 import { BASE_PRICES } from '@/lib/pricing';
 
 const cormorant = Cormorant_Garamond({
@@ -48,9 +50,14 @@ function CheckIcon() {
 export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [navScrolled, setNavScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
+    // Si hay hash en la URL (ej. /#faq desde otra página), revelar todo de inmediato
+    if (window.location.hash) {
+      document.querySelectorAll('.reveal').forEach((el) => el.classList.add('revealed'));
+      const target = document.querySelector(window.location.hash);
+      if (target) target.scrollIntoView({ behavior: 'smooth' });
+    }
     const observer = new IntersectionObserver(
       (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('revealed'); }),
       { threshold: 0.07, rootMargin: '0px 0px -40px 0px' }
@@ -72,7 +79,7 @@ export default function LandingPage() {
       --charcoal: #1C1611;
       --warm-mid: #5C5248;
       --muted:    #E6DDD2;
-      --muted-fg: #9B8B78;
+      --muted-fg: #6B5D52;
     }
     .landing {
       --font-c: var(--font-cormorant), Georgia, serif;
@@ -184,14 +191,14 @@ export default function LandingPage() {
     .eyebrow.centered { text-align: center; }
 
     h2 {
-      font-family: var(--font-c); font-size: clamp(2.4rem, 5vw, 3.8rem);
-      font-weight: 300; line-height: 1.08; margin-bottom: 24px;
+      font-family: var(--font-c); font-size: clamp(2.8rem, 6vw, 5rem);
+      font-weight: 300; line-height: 1.08; margin-bottom: 28px;
     }
     h2 em { font-style: italic; color: var(--gold); font-weight: 400; }
     .section--dark h2 { color: white; }
     .lede {
-      font-family: var(--font-c); font-size: 19px; font-weight: 300; font-style: italic;
-      color: var(--muted-fg); line-height: 1.75; max-width: 580px;
+      font-family: var(--font-c); font-size: 22px; font-weight: 300; font-style: italic;
+      color: var(--muted-fg); line-height: 1.75; max-width: 640px;
     }
     .section--dark .lede { color: rgba(250,247,242,0.45); }
     .section-head.centered .lede { margin: 0 auto; }
@@ -202,7 +209,7 @@ export default function LandingPage() {
       50% { transform: translateY(8px); opacity: 1; }
     }
     .hero__scroll-hint {
-      position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%);
+      position: fixed; bottom: 36px; left: 0; right: 0; margin: 0 auto; width: fit-content;
       z-index: 2;
       display: flex; flex-direction: column; align-items: center; gap: 8px;
       color: rgba(250,247,242,0.45); font-family: var(--font-j);
@@ -211,7 +218,7 @@ export default function LandingPage() {
       transition: opacity 0.4s;
     }
     .hero__scroll-hint svg { width: 18px; height: 18px; }
-    .hero__scroll-hint.hidden { opacity: 0; pointer-events: none; }
+    .hero__scroll-hint.hidden { opacity: 0; pointer-events: none; animation: none; visibility: hidden; }
 
     /* Hero animations */
     @keyframes auraDrift {
@@ -493,7 +500,7 @@ export default function LandingPage() {
       .values { grid-template-columns: 1fr; gap: 36px; }
       .plans { grid-template-columns: 1fr; }
       .footer__links { gap: 16px; }
-      h2 { font-size: 2rem; }
+      h2 { font-size: 2.4rem; }
       .ctaband { padding: 80px 0; }
       .ctaband h2 { font-size: 2rem; }
       .hero__wordmark { letter-spacing: 0.2em; }
@@ -574,39 +581,7 @@ export default function LandingPage() {
     <div className={`${cormorant.variable} ${jost.variable} ${montserrat.variable} landing`}>
       <style suppressHydrationWarning>{css}</style>
 
-      {/* Nav */}
-      <nav className={`nav${navScrolled ? ' scrolled' : ''}`}>
-        <div className="nav__inner">
-          <Link className="brand" href="/">
-            <span className="brand__wordmark">moments</span>
-          </Link>
-          <div className="nav__links">
-            <Link href="/plantillas">Plantillas</Link>
-            <a href="#planes">Planes</a>
-            <a href="#como">Cómo funciona</a>
-            <a href="#faq">Preguntas</a>
-          </div>
-          <div className="nav__cta">
-            <Link href="/plantillas" className="btn btn--ghost">Ver plantillas</Link>
-            <a className="btn btn--gold" href={WA_HREF} target="_blank" rel="noopener noreferrer">Cotizar</a>
-          </div>
-          <button
-            className="nav__burger"
-            aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            <span /><span /><span />
-          </button>
-        </div>
-        <div className={`nav__drawer${menuOpen ? ' open' : ''}`}>
-          <Link href="/plantillas" onClick={() => setMenuOpen(false)}>Plantillas</Link>
-          <a href="#planes" onClick={() => setMenuOpen(false)}>Planes</a>
-          <a href="#como" onClick={() => setMenuOpen(false)}>Cómo funciona</a>
-          <a href="#faq" onClick={() => setMenuOpen(false)}>Preguntas</a>
-          <a href={WA_HREF} target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)}>Cotizar por WhatsApp</a>
-        </div>
-      </nav>
+      <SiteHeader mode="fixed" scrolled={navScrolled} />
 
       {/* Hero */}
       <header className="hero" id="top">
@@ -618,7 +593,6 @@ export default function LandingPage() {
           <span className="hero__wordmark">moments</span>
           <span className="hero__eyebrow">Invitaciones digitales</span>
           <h1 className="hero__heading">Una invitación tan única como su boda.</h1>
-          <p className="hero__sub">Diseñamos una pieza digital única que tus invitados abren con un solo toque — sin papel, sin imprentas.</p>
           <div className="hero__ctas">
             <Link className="btn btn--gold" href="/plantillas">Ver plantillas</Link>
             <a className="btn btn--ghost" href={WA_HREF} target="_blank" rel="noopener noreferrer">
@@ -635,6 +609,48 @@ export default function LandingPage() {
         </div>
       </header>
 
+
+      {/* ¿Qué es? */}
+      <section className="section" id="que-es">
+        <div className="wrap">
+          <div className="section-head centered reveal">
+            <span className="eyebrow centered">¿Qué es Moments?</span>
+            <h2>Tu boda anunciada con la <em>elegancia que merece</em>.</h2>
+            <p className="lede">Olvídate de las invitaciones genéricas. Creamos una pieza digital única, hecha a tu medida, que tus invitados abren con un solo toque.</p>
+          </div>
+          <div className="values">
+            <div className="value reveal" data-d="1">
+              <div className="value__mark">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+                  <rect x="7" y="3" width="10" height="18" rx="2.5" />
+                  <line x1="10.5" y1="18.2" x2="13.5" y2="18.2" />
+                </svg>
+              </div>
+              <h3>Digital</h3>
+              <p>Un enlace elegante que se ve impecable en cualquier celular. Lo compartes por WhatsApp y tus invitados confirman al instante.</p>
+            </div>
+            <div className="value reveal" data-d="2">
+              <div className="value__mark">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+                  <rect x="6.5" y="6.5" width="11" height="11" transform="rotate(45 12 12)" />
+                </svg>
+              </div>
+              <h3>Elegante</h3>
+              <p>Tipografía fina, paletas sobrias y composición cuidada. Cada detalle está pensado para sentirse premium, nunca recargado ni cursi.</p>
+            </div>
+            <div className="value reveal" data-d="3">
+              <div className="value__mark">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+                  <circle cx="12" cy="12" r="8.5" />
+                  <path d="M8.5 12.2l2.2 2.2 4.8-5" />
+                </svg>
+              </div>
+              <h3>Sin estrés</h3>
+              <p>Nosotros nos encargamos del diseño y la parte técnica. Tú solo apruebas. Una cosa menos en tu lista, justo cuando más cosas tienes que organizar.</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Templates section */}
       <section className="section templates-section" id="plantillas">
@@ -690,48 +706,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ¿Qué es? */}
-      <section className="section" id="que-es">
-        <div className="wrap">
-          <div className="section-head centered reveal">
-            <span className="eyebrow centered">¿Qué es Moments?</span>
-            <h2>Tu boda anunciada con la <em>elegancia que merece</em>.</h2>
-            <p className="lede">Olvídate de las invitaciones genéricas. Creamos una pieza digital única, hecha a tu medida, que tus invitados abren con un solo toque.</p>
-          </div>
-          <div className="values">
-            <div className="value reveal" data-d="1">
-              <div className="value__mark">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-                  <rect x="7" y="3" width="10" height="18" rx="2.5" />
-                  <line x1="10.5" y1="18.2" x2="13.5" y2="18.2" />
-                </svg>
-              </div>
-              <h3>Digital</h3>
-              <p>Un enlace elegante que se ve impecable en cualquier celular. Lo compartes por WhatsApp y tus invitados confirman al instante.</p>
-            </div>
-            <div className="value reveal" data-d="2">
-              <div className="value__mark">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-                  <rect x="6.5" y="6.5" width="11" height="11" transform="rotate(45 12 12)" />
-                </svg>
-              </div>
-              <h3>Elegante</h3>
-              <p>Tipografía fina, paletas sobrias y composición cuidada. Cada detalle está pensado para sentirse premium, nunca recargado ni cursi.</p>
-            </div>
-            <div className="value reveal" data-d="3">
-              <div className="value__mark">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-                  <circle cx="12" cy="12" r="8.5" />
-                  <path d="M8.5 12.2l2.2 2.2 4.8-5" />
-                </svg>
-              </div>
-              <h3>Sin estrés</h3>
-              <p>Nosotros nos encargamos del diseño y la parte técnica. Tú solo apruebas. Una cosa menos en tu lista, justo cuando más cosas tienes que organizar.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Planes */}
       <section className="section section--dark" id="planes">
         <div className="wrap">
@@ -779,6 +753,7 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Cómo funciona */}
       {/* Cómo funciona */}
       <section className="section" id="como">
         <div className="wrap">
@@ -860,17 +835,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="footer">
-        <div className="wrap footer__simple">
-          <span className="footer__copy">© 2026 Powered by code4u</span>
-          <span className="footer__wordmark">moments</span>
-          <div className="footer__links">
-            <a href={WA_HREF} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><WhatsAppIcon className="footer-wa-icon" /></a>
-            <a href="https://instagram.com/momentsdigital.mx" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><Instagram size={20} strokeWidth={1.5} /></a>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

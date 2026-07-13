@@ -1,7 +1,10 @@
 import Link from 'next/link';
 import { Cormorant_Garamond, Jost, Montserrat } from 'next/font/google';
+import SiteHeader from '@/components/site/SiteHeader';
+import SiteFooter from '@/components/site/SiteFooter';
 
-const cormorant = Cormorant_Garamond({ subsets: ['latin'], weight: ['400', '500'], style: ['normal', 'italic'], variable: '--font-cormorant' });
+
+const cormorant = Cormorant_Garamond({ subsets: ['latin'], weight: ['300', '400', '500'], style: ['normal', 'italic'], variable: '--font-cormorant' });
 const jost = Jost({ subsets: ['latin'], weight: ['300', '400', '500'], variable: '--font-jost' });
 const montserrat = Montserrat({ subsets: ['latin'], weight: ['300', '400'], variable: '--font-montserrat' });
 
@@ -54,29 +57,15 @@ export default function PlantillasPage() {
 
     .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
 
-    /* Nav */
-    .nav {
-      position: sticky; top: 0; z-index: 50;
-      background: rgba(28,22,17,0.92); backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(184,150,90,0.12);
-    }
-    .nav__inner {
-      max-width: 1100px; margin: 0 auto; padding: 0 24px;
-      display: flex; align-items: center; height: 60px; gap: 20px;
-    }
-    .brand { font-family: var(--font-m); font-size: 17px; font-weight: 300; letter-spacing: 0.22em; color: rgba(250,247,242,0.7); text-decoration: none; }
-    .brand:hover { color: rgba(250,247,242,0.95); }
-    .sep { color: rgba(250,247,242,0.2); font-size: 14px; }
-    .page-title { font-family: var(--font-j); font-size: 12px; font-weight: 400; letter-spacing: 0.12em; color: var(--gold); text-transform: uppercase; }
-    .back-link { margin-left: auto; font-size: 12px; color: rgba(250,247,242,0.45); text-decoration: none; letter-spacing: 0.06em; transition: color 0.2s; }
-    .back-link:hover { color: var(--gold); }
 
     /* Hero */
-    .hero { padding: 80px 0 64px; text-align: center; border-bottom: 1px solid var(--muted); }
-    .eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold); display: block; margin-bottom: 20px; }
-    .hero h1 { font-family: var(--font-c); font-size: clamp(2.6rem, 5vw, 4rem); font-weight: 400; line-height: 1.08; margin-bottom: 20px; }
+    .hero { padding: 64px 24px 48px; text-align: center; position: relative; border-bottom: 1px solid var(--muted); }
+    .hero::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 1px; height: 52px; background: linear-gradient(to bottom, transparent, var(--gold)); }
+    .hero h1 { font-family: var(--font-c); font-size: clamp(2.4rem, 5.5vw, 4rem); font-weight: 400; line-height: 1.1; color: var(--charcoal); margin-bottom: 20px; }
     .hero h1 em { font-style: italic; color: var(--gold); }
-    .hero p { font-size: 17px; font-weight: 300; color: var(--muted-fg); max-width: 540px; margin: 0 auto; line-height: 1.75; }
+    .hero-ornament { display: flex; align-items: center; gap: 12px; justify-content: center; margin: 24px auto 0; max-width: 200px; opacity: 0.5; }
+    .hero-ornament-line { flex: 1; height: 1px; background: var(--gold); }
+    .hero p { font-size: 14px; font-weight: 300; color: var(--muted-fg); max-width: 460px; margin: 20px auto 0; line-height: 1.75; }
 
     /* Grid */
     .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; padding: 80px 0; }
@@ -159,22 +148,19 @@ export default function PlantillasPage() {
     <div className={`${cormorant.variable} ${jost.variable} ${montserrat.variable}`}>
       <style suppressHydrationWarning>{css}</style>
 
-      <nav className="nav">
-        <div className="nav__inner">
-          <Link className="brand" href="/">moments</Link>
-          <span className="sep">/</span>
-          <span className="page-title">Plantillas</span>
-          <Link className="back-link" href="/">← Volver al inicio</Link>
-        </div>
-      </nav>
+      <SiteHeader />
 
       <main>
         <section className="hero">
-          <div className="wrap">
-            <span className="eyebrow">Catálogo de diseños</span>
-            <h1>El estilo que <em>imaginas</em>,<br />el plan que necesitas.</h1>
-            <p>Cada diseño funciona con cualquier plan. El plan define las funciones — tú eliges la estética.</p>
+          <h1>El estilo que <em>imaginas</em>,<br />el plan que necesitas.</h1>
+          <div className="hero-ornament">
+            <span className="hero-ornament-line" />
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M5 0L6.18 3.82L10 5L6.18 6.18L5 10L3.82 6.18L0 5L3.82 3.82L5 0Z" fill="#B8965A" />
+            </svg>
+            <span className="hero-ornament-line" />
           </div>
+          <p>Cada diseño funciona con cualquier plan. El plan define las funciones — tú eliges la estética.</p>
         </section>
 
         <div className="wrap">
@@ -236,12 +222,7 @@ export default function PlantillasPage() {
         </div>
       </main>
 
-      <footer className="wrap">
-        <div className="footer">
-          <span className="footer-brand">moments</span>
-          <Link className="footer-link" href="/">← Inicio</Link>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

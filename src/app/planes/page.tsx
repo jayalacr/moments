@@ -5,10 +5,12 @@ import { Cormorant_Garamond, Jost, Montserrat } from 'next/font/google';
 import { Check, Minus, Sparkles, Star, Crown } from 'lucide-react';
 import Link from 'next/link';
 import { BASE_PRICES, formatMXN } from '@/lib/pricing';
+import SiteHeader from '@/components/site/SiteHeader';
+import SiteFooter from '@/components/site/SiteFooter';
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
-  weight: ['300', '400', '500'],
+  weight: ['300', '400', '500', '600'],
   style: ['normal', 'italic'],
   variable: '--font-cormorant',
 });
@@ -256,19 +258,9 @@ function Cell({ val, note, tier }: { val: Val; note?: string; tier: 'e' | 'p' | 
   );
 }
 
-const WA_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '5200000000';
-const WA_HREF = `https://wa.me/${WA_NUMBER}?text=Hola%20Moments%2C%20quiero%20cotizar%20mi%20invitaci%C3%B3n`;
 
 export default function PlanesPage() {
   const [activeTab, setActiveTab] = useState<PlanKey>('plus');
-  const [navScrolled, setNavScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setNavScrolled(window.scrollY > 24);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
 
   const activeTier = TIER_MAP[activeTab];
   const activeBg = BG_MAP[activeTab];
@@ -280,72 +272,9 @@ export default function PlanesPage() {
       --gold: #B8965A;
       --charcoal: #1C1611;
       --muted: #E6DDD2;
-      --muted-fg: #9B8B78;
+      --muted-fg: #6B5D52;
     }
 
-    /* ── Nav ── */
-    .pnav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: var(--charcoal);
-      transition: box-shadow 0.4s;
-    }
-    .pnav.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.4); }
-    .pnav__inner {
-      max-width: 1020px; margin: 0 auto; padding: 0 20px;
-      display: flex; align-items: center; gap: 40px; height: 64px;
-    }
-    .pnav__brand {
-      font-family: var(--font-montserrat), 'Montserrat', sans-serif;
-      font-size: 18px; font-weight: 300; letter-spacing: 0.28em;
-      color: white; text-decoration: none;
-    }
-    .pnav__links { display: flex; align-items: center; gap: 24px; flex: 1; }
-    .pnav__links a {
-      font-family: var(--font-jost), system-ui, sans-serif;
-      font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
-      color: rgba(255,255,255,0.55); text-decoration: none; transition: color 0.18s;
-    }
-    .pnav__links a:hover { color: rgba(255,255,255,0.9); }
-    .pnav__cta { display: flex; align-items: center; gap: 10px; margin-left: auto; }
-    .pnav__btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-family: var(--font-jost), system-ui, sans-serif;
-      font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
-      padding: 10px 22px; border-radius: 100px; min-height: 40px;
-      text-decoration: none; cursor: pointer; transition: opacity 0.2s, transform 0.15s;
-    }
-    .pnav__btn:hover { opacity: 0.82; transform: translateY(-1px); }
-    .pnav__btn--ghost {
-      background: transparent; color: rgba(255,255,255,0.75);
-      border: 1px solid rgba(255,255,255,0.25);
-    }
-    .pnav__btn--ghost:hover { border-color: rgba(255,255,255,0.6); color: white; opacity: 1; }
-    .pnav__btn--gold { background: var(--gold); color: white; border: none; }
-    .pnav__burger {
-      display: none; flex-direction: column; justify-content: center; gap: 5px;
-      width: 44px; height: 44px; background: none; border: none; cursor: pointer;
-      padding: 10px; margin-left: auto;
-    }
-    .pnav__burger span { display: block; width: 20px; height: 1.5px; background: rgba(255,255,255,0.8); }
-    .pnav__drawer {
-      display: none; position: fixed; top: 64px; left: 0; right: 0;
-      background: #111; border-bottom: 1px solid rgba(255,255,255,0.1);
-      padding: 16px 20px 24px; flex-direction: column; gap: 2px; z-index: 99;
-    }
-    .pnav__drawer.open { display: flex; }
-    .pnav__drawer a {
-      font-family: var(--font-jost), system-ui, sans-serif;
-      font-size: 15px; font-weight: 400; color: rgba(255,255,255,0.75);
-      text-decoration: none; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.08);
-      transition: color 0.18s;
-    }
-    .pnav__drawer a:last-child { border-bottom: none; }
-    .pnav__drawer a:hover { color: var(--gold); }
-    @media (max-width: 900px) {
-      .pnav__links { display: none; }
-      .pnav__cta .pnav__btn--ghost { display: none; }
-      .pnav__burger { display: flex; }
-    }
 
     .planes-root {
       font-family: var(--font-jost), system-ui, sans-serif;
@@ -357,7 +286,7 @@ export default function PlanesPage() {
     /* ── Hero ── */
     .planes-hero {
       text-align: center;
-      padding: 120px 24px 48px;
+      padding: 64px 24px 48px;
       position: relative;
     }
     .planes-hero::before {
@@ -368,19 +297,11 @@ export default function PlanesPage() {
       width: 1px; height: 52px;
       background: linear-gradient(to bottom, transparent, var(--gold));
     }
-    .planes-wordmark {
-      font-family: var(--font-montserrat), 'Montserrat', sans-serif;
-      font-size: 36px;
-      font-weight: 400;
-      font-style: normal;
-      letter-spacing: 0.18em;
-      color: #b28375;
-      margin-bottom: 20px;
-    }
+
     .planes-title {
       font-family: var(--font-cormorant), Georgia, serif;
       font-size: clamp(2.4rem, 5.5vw, 4rem);
-      font-weight: 300;
+      font-weight: 600;
       line-height: 1.1;
       color: var(--charcoal);
       margin-bottom: 20px;
@@ -586,81 +507,6 @@ export default function PlanesPage() {
       margin-top: 10px; display: inline-block; letter-spacing: 0.05em; text-transform: uppercase;
     }
     .btn-example:hover { border-bottom-color: var(--gold); }
-
-    /* ── Templates gallery ── */
-    .templates-section {
-      max-width: 1020px; margin: 0 auto 48px; padding: 0 20px;
-    }
-    .templates-header {
-      margin-bottom: 24px;
-    }
-    .templates-eyebrow {
-      font-size: 9px; font-weight: 500; letter-spacing: 0.22em;
-      text-transform: uppercase; color: var(--gold);
-      font-family: var(--font-jost); margin-bottom: 8px;
-      display: block;
-    }
-    .templates-title {
-      font-family: var(--font-cormorant), Georgia, serif;
-      font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 300;
-      color: var(--charcoal); margin-bottom: 8px; line-height: 1.2;
-    }
-    .templates-title em { font-style: italic; color: var(--gold); }
-    .templates-subtitle {
-      font-size: 13px; font-weight: 300; color: var(--muted-fg);
-      font-family: var(--font-jost); line-height: 1.6; max-width: 520px;
-    }
-    .templates-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    .template-card {
-      background: white; border: 1px solid var(--muted);
-      border-radius: 16px; padding: 24px 22px 20px;
-      display: flex; flex-direction: column; gap: 16px;
-    }
-    .template-card-name {
-      font-family: var(--font-cormorant), Georgia, serif;
-      font-size: 22px; font-weight: 400; color: var(--charcoal); margin-bottom: 4px;
-    }
-    .template-card-traits {
-      list-style: none; padding: 0; margin: 0;
-      display: flex; flex-direction: column; gap: 5px;
-    }
-    .template-card-trait {
-      font-size: 12px; font-weight: 300; color: #5C5248;
-      font-family: var(--font-jost); display: flex; align-items: center; gap: 6px;
-    }
-    .template-card-trait::before {
-      content: ''; display: inline-block;
-      width: 4px; height: 4px; border-radius: 50%;
-      background: var(--gold); flex-shrink: 0;
-    }
-    .template-card-bottom {
-      border-top: 1px solid var(--muted); padding-top: 14px;
-    }
-    .template-pill-label {
-      font-size: 9px; font-weight: 500; letter-spacing: 0.16em;
-      text-transform: uppercase; color: var(--muted-fg);
-      font-family: var(--font-jost); margin-bottom: 10px; display: block;
-    }
-    .template-pills {
-      display: flex; gap: 6px; flex-wrap: wrap;
-    }
-    .template-pill {
-      font-family: var(--font-jost); font-size: 10.5px; font-weight: 500;
-      letter-spacing: 0.06em; padding: 6px 14px; border-radius: 100px;
-      text-decoration: none; transition: opacity 0.18s, transform 0.15s;
-      display: inline-block;
-    }
-    .template-pill:hover { opacity: 0.8; transform: translateY(-1px); }
-    .template-pill-e { background: #EAE4DB; color: #5C5248; }
-    .template-pill-p { background: rgba(184,150,90,0.15); color: #8B6030; border: 1px solid rgba(184,150,90,0.35); }
-    .template-pill-d { background: var(--charcoal); color: rgba(184,150,90,0.9); }
-    @media (max-width: 720px) {
-      .templates-grid { grid-template-columns: 1fr; gap: 12px; }
-    }
 
     /* ── What's included ── */
     .includes-section {
@@ -876,35 +722,7 @@ export default function PlanesPage() {
     <div className={`${cormorant.variable} ${jost.variable} ${montserrat.variable} planes-root`}>
       <style suppressHydrationWarning>{css}</style>
 
-      {/* ── Nav ── */}
-      <nav className={`pnav${navScrolled ? ' scrolled' : ''}`}>
-        <div className="pnav__inner">
-          <Link href="/" className="pnav__brand">moments</Link>
-          <div className="pnav__links">
-            <Link href="/#plantillas">Plantillas</Link>
-            <Link href="/#planes">Planes</Link>
-            <Link href="/">Inicio</Link>
-          </div>
-          <div className="pnav__cta">
-            <Link href="/plantillas" className="pnav__btn pnav__btn--ghost">Ver plantillas</Link>
-            <a href={WA_HREF} target="_blank" rel="noopener noreferrer" className="pnav__btn pnav__btn--gold">Cotizar</a>
-          </div>
-          <button
-            className="pnav__burger"
-            aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            <span /><span /><span />
-          </button>
-        </div>
-        <div className={`pnav__drawer${menuOpen ? ' open' : ''}`}>
-          <Link href="/plantillas" onClick={() => setMenuOpen(false)}>Plantillas</Link>
-          <Link href="/#planes" onClick={() => setMenuOpen(false)}>Planes</Link>
-          <Link href="/" onClick={() => setMenuOpen(false)}>Inicio</Link>
-          <a href={WA_HREF} target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)}>Cotizar por WhatsApp</a>
-        </div>
-      </nav>
+      <SiteHeader />
 
       {/* ── Hero ── */}
       <div className="planes-hero">
@@ -953,56 +771,6 @@ export default function PlanesPage() {
               </Link>
             </div>
           ))}
-        </div>
-      </div>
-
-      {/* ── Templates gallery ── */}
-      <div className="templates-section">
-        <div className="templates-header">
-          <span className="templates-eyebrow">Diseños disponibles</span>
-          <h2 className="templates-title">El mismo diseño, <em>capacidades que crecen</em></h2>
-          <p className="templates-subtitle">
-            Elige el diseño que te enamore. El plan determina qué secciones y funciones se activan — no el diseño en sí.
-          </p>
-        </div>
-        <div className="templates-grid">
-          <div className="template-card">
-            <div>
-              <p className="template-card-name">Deluxe Clásico</p>
-              <ul className="template-card-traits">
-                <li className="template-card-trait">Carrusel automático distribuido en la invitación</li>
-                <li className="template-card-trait">Loader animado y música de fondo</li>
-                <li className="template-card-trait">Paleta cálida, tipografía Cormorant Garamond</li>
-              </ul>
-            </div>
-            <div className="template-card-bottom">
-              <span className="template-pill-label">Ver con plan</span>
-              <div className="template-pills">
-                <Link href="/plantillas/deluxe?plan=essential" className="template-pill template-pill-e" target="_blank">Essential</Link>
-                <Link href="/plantillas/deluxe?plan=plus" className="template-pill template-pill-p" target="_blank">Plus</Link>
-                <Link href="/plantillas/deluxe?plan=deluxe" className="template-pill template-pill-d" target="_blank">Deluxe</Link>
-              </div>
-            </div>
-          </div>
-
-          <div className="template-card">
-            <div>
-              <p className="template-card-name">Classic Elegance</p>
-              <ul className="template-card-traits">
-                <li className="template-card-trait">Estética oscura, elegante y minimalista</li>
-                <li className="template-card-trait">Loader cinematográfico y música ambient</li>
-                <li className="template-card-trait">Formulario RSVP integrado en modal</li>
-              </ul>
-            </div>
-            <div className="template-card-bottom">
-              <span className="template-pill-label">Ver con plan</span>
-              <div className="template-pills">
-                <Link href="/plantillas/classic-elegance?plan=essential" className="template-pill template-pill-e" target="_blank">Essential</Link>
-                <Link href="/plantillas/classic-elegance?plan=plus" className="template-pill template-pill-p" target="_blank">Plus</Link>
-                <Link href="/plantillas/classic-elegance?plan=deluxe" className="template-pill template-pill-d" target="_blank">Deluxe</Link>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -1145,6 +913,7 @@ export default function PlanesPage() {
           * La carga de datos puede realizarla el organizador desde su panel o solicitarla a Moments con costo adicional, sujeto a disponibilidad.
         </p>
       </div>
+      <SiteFooter />
     </div>
   );
 }
