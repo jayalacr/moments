@@ -2,6 +2,7 @@
 
 import { ClassicConfig } from '@/components/templates/classic/ClassicTemplate';
 import { EleganceConfig } from '@/components/templates/elegance/EleganceTemplate';
+import { CostaConfig } from '@/components/templates/costa/CostaTemplate';
 
 
 export const DELUXE_DEMO: ClassicConfig = {
@@ -207,6 +208,112 @@ export const CLASSIC_ELEGANCE_DEMO: EleganceConfig = {
         { time: '1:00 PM', detail: 'Salida hacia Holy Cross Catholic Church' },
         { time: '3:00 PM', detail: 'Traslado a Loya Ranch' },
         { time: '12:00 AM', detail: 'Retorno al hotel' },
+      ],
+    },
+  },
+  sections: {
+    quote: true,
+    parents: true,
+    itinerary: true,
+    dressCode: true,
+    destination: true,
+    gifts: true,
+  },
+};
+
+export const COSTA_DEMO: CostaConfig = {
+  heroLabel: 'Nuestra Boda en la Playa',
+  couple: { person1: 'Camila', person2: 'Diego' },
+  fullNames: { person1: 'Camila Torres Vega', person2: 'Diego Fernández Luna' },
+  date: { day: '14', month: 'Marzo', year: '2027' },
+  location: 'Riviera Maya, México',
+  targetDate: '2027-03-14T17:00:00',
+  monogram: 'C & D',
+  theme: {
+    accentColor: '#2AACA6',
+    displayFont: 'cormorant',
+    bodyFont: 'jost',
+  },
+  music: {
+    url: 'https://drive.google.com/uc?export=download&id=1fPImssW-Q_GTZj9AdQB3oweUYzxSgWlp',
+    title: 'Can\'t Help Falling in Love',
+    artist: 'Kina Grannis',
+  },
+  quote: {
+    text: 'Como las olas vuelven siempre a la orilla, así vuelvo yo siempre a ti.',
+    reference: 'Pablo Neruda',
+  },
+  photos: [
+    { role: 'hero', url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1600&q=85' },
+    { role: 'block', afterSection: 'parents', url: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1400&q=80' },
+    { role: 'block', afterSection: 'itinerary', url: 'https://images.unsplash.com/photo-1544378730-8b5104b18790?w=1400&q=80' },
+  ],
+  parents: {
+    person1: 'Roberto Torres & Marisol Vega de Torres',
+    person2: 'Fernando Fernández & Adriana Luna de Fernández',
+  },
+  itinerary: [
+    {
+      time: '5:00 PM',
+      name: 'Ceremonia Frente al Mar',
+      venue: 'Playa Las Palmas',
+      address: 'Riviera Maya, Q. Roo',
+      mapsUrl: 'https://maps.google.com/?q=Riviera+Maya',
+    },
+    {
+      time: '7:00 PM',
+      name: 'Recepción bajo las Estrellas',
+      venue: 'Terraza Oceanfront',
+      address: 'Hotel Las Palmas Resort',
+      mapsUrl: 'https://maps.google.com/?q=Riviera+Maya',
+    },
+  ],
+  dressCode: {
+    label: 'Elegante de Playa',
+    women: 'Vestido ligero y fresco, tonos claros. Evitar tacones finos por la arena.',
+    men: 'Guayabera o camisa de lino, pantalón claro. Sin corbata.',
+    swatches: [
+      { color: '#FBF6EC', name: 'Arena' },
+      { color: '#2AACA6', name: 'Turquesa' },
+      { color: '#E8836B', name: 'Coral' },
+    ],
+  },
+  gifts: {
+    bank: 'BBVA',
+    holder: 'Camila Torres Vega',
+    clabe: '012 180 00412345678 3',
+    giftListUrl: 'https://www.amazon.com/wedding',
+    giftListLabel: 'Mesa de Regalos Amazon',
+    envelopeMessage: 'Tu presencia es nuestro mejor regalo. Si deseas tener un detalle, agradecemos el sobre.',
+  },
+  whatsapp: { number: '5215512345678', message: 'Hola, confirmo mi asistencia a la boda de Camila & Diego. 🌊' },
+  rsvpDeadline: '1 de Febrero de 2027',
+  rsvp: {
+    maxPlusOnes: 2,
+  },
+  dietary: { enabled: true, options: ['Vegetariano', 'Vegano', 'Sin gluten', 'Sin lácteos', 'Sin mariscos', 'Otro'] },
+  destination: {
+    hotels: [
+      {
+        name: 'Las Palmas Resort & Spa',
+        category: 'Sede del evento · Todo incluido',
+        address: 'Riviera Maya, Q. Roo',
+        note: 'Tarifa especial para invitados: código CAMIDIEGO27',
+        phone: '+52 984 123 4567',
+      },
+      {
+        name: 'Hotel Costa Azul',
+        category: 'Boutique · Recomendado',
+        address: 'Playa del Carmen, Q. Roo',
+        note: 'A 10 min de la sede. Desayuno incluido.',
+        phone: '+52 984 765 4321',
+      },
+    ],
+    transport: {
+      info: 'Servicio de shuttle desde el aeropuerto de Cancún y traslados diarios a la sede del evento.',
+      schedule: [
+        { time: '4:00 PM', detail: 'Salida hacia Playa Las Palmas' },
+        { time: '1:00 AM', detail: 'Retorno a los hoteles' },
       ],
     },
   },

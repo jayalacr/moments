@@ -30,6 +30,14 @@ const TEMPLATES = [
     previewBase: '/plantillas/classic-elegance',
     style: 'light' as const,
   },
+  {
+    key: 'costa',
+    name: 'Costa',
+    tagline: 'Arena, turquesa y brisa marina.',
+    description: 'Diseño luminoso inspirado en bodas frente al mar. Paleta fresca y tipografía elegante para celebraciones en la playa.',
+    previewBase: '/plantillas/costa',
+    style: 'light' as const,
+  },
 ];
 
 const PLANS = [

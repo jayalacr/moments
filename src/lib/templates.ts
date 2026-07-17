@@ -34,6 +34,7 @@ export interface TemplateEntry {
 
 import ClassicTemplate from '@/components/templates/classic/ClassicTemplate';
 import EleganceTemplate from '@/components/templates/elegance/EleganceTemplate';
+import CostaTemplate from '@/components/templates/costa/CostaTemplate';
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'classic': {
@@ -44,6 +45,11 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'elegance': {
     component: EleganceTemplate as TemplateComponent,
     label: 'Elegance',
+  },
+
+  'costa': {
+    component: CostaTemplate as TemplateComponent,
+    label: 'Costa',
   },
 
   // ponytail: aliases de migración — borrar tras: UPDATE events SET template_type = 'classic' WHERE template_type = 'deluxe-classic'
