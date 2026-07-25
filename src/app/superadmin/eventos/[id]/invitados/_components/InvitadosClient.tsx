@@ -26,6 +26,7 @@ import {
 } from '../_actions';
 import type { GuestRow, RsvpRow, GuestWithRsvp, RsvpStats } from '@/app/admin/invitados/types';
 import { getInvitationUrl } from '@/lib/invitation';
+import { computeInvitationStats } from '@/lib/rsvpStats';
 
 const C = {
   bg: '#F8F3EC',
@@ -101,25 +102,7 @@ export default function InvitadosClient({
   const isDeluxe = event.plan === 'deluxe';
 
   // ── Stats ────────────────────────────────────────────────────────────────
-  const stats = useMemo(() => {
-    let confirmed = 0;
-    let declined = 0;
-    let pending = 0;
-    let totalConfirmedSeats = 0;
-
-    guests.forEach(g => {
-      if (g.rsvp?.status === 'confirmed') {
-        confirmed++;
-        totalConfirmedSeats += (1 + (g.rsvp.seats || 0));
-      } else if (g.rsvp?.status === 'declined') {
-        declined++;
-      } else {
-        pending++;
-      }
-    });
-
-    return { confirmed, declined, pending, totalConfirmedSeats, totalGuests: guests.length };
-  }, [guests]);
+  const stats = useMemo(() => computeInvitationStats(guests, isDeluxe), [guests, isDeluxe]);
 
   // ── Search & Filter ──────────────────────────────────────────────────────
   const filteredGuests = useMemo(() => {
@@ -309,12 +292,13 @@ export default function InvitadosClient({
       {activeTab === 'invitados' ? (
         <>
           {/* ── Dashboard de Estadísticas ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+      <p style={{ ...labelStats, marginBottom: '8px' }}>Invitaciones</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         <div style={cardStats}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <p style={labelStats}>Total Familias</p>
-              <p style={valueStats}>{stats.totalGuests}</p>
+              <p style={labelStats}>Total</p>
+              <p style={valueStats}>{stats.invitations.total}</p>
             </div>
             <Users size={20} color={C.mutedLight} strokeWidth={1.5} />
           </div>
@@ -322,9 +306,30 @@ export default function InvitadosClient({
         <div style={cardStats}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
+              <p style={labelStats}>Respondieron</p>
+              <p style={{ ...valueStats, color: C.success }}>{stats.invitations.answered}</p>
+            </div>
+            <Check size={20} color={C.success} strokeWidth={1.5} />
+          </div>
+        </div>
+        <div style={cardStats}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <p style={labelStats}>Sin responder</p>
+              <p style={{ ...valueStats, color: C.warning }}>{stats.invitations.notAnswered}</p>
+            </div>
+            <Search size={20} color={C.warning} strokeWidth={1.5} />
+          </div>
+        </div>
+      </div>
+
+      <p style={{ ...labelStats, marginBottom: '8px' }}>Personas</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+        <div style={cardStats}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
               <p style={labelStats}>Confirmados</p>
-              <p style={{ ...valueStats, color: C.success }}>{stats.confirmed}</p>
-              <p style={{ fontSize: '11px', color: C.mutedLight }}>({stats.totalConfirmedSeats} personas)</p>
+              <p style={{ ...valueStats, color: C.success }}>{stats.people.confirmed}</p>
             </div>
             <Check size={20} color={C.success} strokeWidth={1.5} />
           </div>
@@ -333,7 +338,7 @@ export default function InvitadosClient({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <p style={labelStats}>Pendientes</p>
-              <p style={{ ...valueStats, color: C.warning }}>{stats.pending}</p>
+              <p style={{ ...valueStats, color: C.warning }}>{stats.people.pending}</p>
             </div>
             <Search size={20} color={C.warning} strokeWidth={1.5} />
           </div>
@@ -342,7 +347,7 @@ export default function InvitadosClient({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <p style={labelStats}>No asistirán</p>
-              <p style={{ ...valueStats, color: C.danger }}>{stats.declined}</p>
+              <p style={{ ...valueStats, color: C.danger }}>{stats.people.declined}</p>
             </div>
             <X size={20} color={C.danger} strokeWidth={1.5} />
           </div>
