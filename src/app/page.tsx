@@ -592,7 +592,7 @@ export default function LandingPage() {
         <div className="hero__inner">
           <span className="hero__wordmark">moments</span>
           <span className="hero__eyebrow">Invitaciones digitales</span>
-          <h1 className="hero__heading">Una invitación tan única como su boda.</h1>
+          <h1 className="hero__heading">Una invitación tan única como tu boda.</h1>
           <div className="hero__ctas">
             <Link className="btn btn--gold" href="/plantillas">Ver plantillas</Link>
             <a className="btn btn--ghost" href={WA_HREF} target="_blank" rel="noopener noreferrer">

@@ -47,7 +47,7 @@ export default function SiteFooter() {
             <a href={WA_HREF} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
               <WhatsAppIcon className="sf__wa" />
             </a>
-            <a href="https://instagram.com/momentsdigital.mx" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <a href="https://www.instagram.com/code4u_mx/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
               <Instagram size={20} strokeWidth={1.5} />
             </a>
           </div>

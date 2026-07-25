@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
+import { motion, useScroll, useTransform } from 'motion/react';
 import { Cormorant_Garamond, Jost, Cinzel } from 'next/font/google';
 import { Play, Pause, Hotel, Car, UserX, ChevronDown, Check, Waves, Gift, Sailboat } from 'lucide-react';
 import type { PhotoEntry } from '@/lib/imageLayout';
@@ -84,7 +85,8 @@ interface Props {
 }
 
 // ---------------------------------------------------------------------------
-// Styles — identidad "Costa": arena, laguna turquesa, coral, sin texturas de papel
+// Styles — identidad "Costa": arena, laguna turquesa, coral, champán
+// Cada sección varía de composición (no todas son "eyebrow + bloque centrado")
 // ---------------------------------------------------------------------------
 const css = `
   :root {
@@ -109,33 +111,33 @@ const css = `
   @media (min-width: 768px) { .cs-section { padding: 7rem 4rem; } }
   .cs-section--sand { background: var(--sand); }
   .cs-section--deep { background: var(--deep); color: var(--foam); }
-  .cs-section--deep .cs-eyebrow { color: var(--champagne); }
 
   .cs-heading-block { text-align: center; margin-bottom: 3.5rem; }
   .cs-heading-block h2 { font-size: clamp(1.9rem, 4vw, 2.6rem); margin-top: 0.75rem; }
   .cs-heading-rule { width: 34px; height: 1px; background: var(--champagne); opacity: 0.55; margin: 1.1rem auto 0; }
 
-  /* ── Curva de transición entre secciones (rompe la rigidez rectangular) ── */
+  /* ── Curvas orgánicas entre secciones ── */
   .cs-curve { display: block; width: 100%; line-height: 0; margin-bottom: -1px; }
   .cs-curve svg { display: block; width: 100%; height: 38px; }
   @media (min-width: 768px) { .cs-curve svg { height: 56px; } }
-
-  /* ── Curva de la orilla bajo el hero (más pronunciada, doble cresta) ── */
   .cs-hero-curve { display: block; width: 100%; line-height: 0; margin-top: -1px; }
   .cs-hero-curve svg { display: block; width: 100%; height: 64px; }
   @media (min-width: 768px) { .cs-hero-curve svg { height: 96px; } }
 
-  /* ── Hero ── */
-  .cs-hero { position: relative; min-height: 100svh; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
-  .cs-hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .cs-hero-tint { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(14,43,51,0.15) 0%, rgba(14,43,51,0.05) 45%, rgba(14,43,51,0.75) 100%); }
-  .cs-hero-content { position: relative; z-index: 2; text-align: center; color: var(--foam); padding: 0 1.5rem 6rem; display: flex; flex-direction: column; align-items: center; gap: 1.25rem; }
-  .cs-hero-label { font-family: var(--font-jost), sans-serif; font-size: 11px; letter-spacing: 0.4em; text-transform: uppercase; opacity: 0.8; }
-  .cs-hero-names { font-family: var(--font-cormorant), serif; font-weight: 300; font-style: italic; font-size: clamp(3rem, 9vw, 6.5rem); line-height: 1; }
-  .cs-hero-amp { font-family: var(--font-cormorant), serif; color: var(--champagne); font-style: normal; padding: 0 0.4rem; }
-  .cs-hero-rule { width: 46px; height: 1px; background: var(--champagne); opacity: 0.6; margin: 0.35rem 0; }
-  .cs-hero-meta { display: flex; align-items: center; gap: 0.75rem; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.85; }
-  .cs-hero-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--champagne); }
+  /* ── Hero: pantalla dividida, no foto full-bleed con texto encima ── */
+  .cs-hero { position: relative; display: flex; flex-direction: column; min-height: 100svh; overflow: hidden; }
+  @media (min-width: 900px) { .cs-hero { flex-direction: row; } }
+  .cs-hero-photo { position: relative; flex: 1; min-height: 46svh; overflow: hidden; }
+  @media (min-width: 900px) { .cs-hero-photo { flex: 0 0 58%; min-height: 100svh; } }
+  .cs-hero-img-wrap { position: absolute; inset: -10% 0; }
+  .cs-hero-img { width: 100%; height: 120%; object-fit: cover; }
+  .cs-hero-panel { flex: 1; background: var(--deep); color: var(--foam); display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 1.1rem; padding: 3rem 2rem; text-align: left; }
+  @media (min-width: 900px) { .cs-hero-panel { flex: 0 0 42%; padding: 3rem 3.5rem; } }
+  .cs-hero-label { font-family: var(--font-jost), sans-serif; font-size: 11px; letter-spacing: 0.4em; text-transform: uppercase; opacity: 0.75; }
+  .cs-hero-names { font-family: var(--font-cormorant), serif; font-weight: 300; font-style: italic; font-size: clamp(2.4rem, 7vw, 4.2rem); line-height: 1.05; }
+  .cs-hero-amp { display: block; font-family: var(--font-cormorant), serif; color: var(--champagne); font-style: normal; }
+  .cs-hero-rule { width: 46px; height: 1px; background: var(--champagne); opacity: 0.6; }
+  .cs-hero-meta { display: flex; flex-direction: column; gap: 0.35rem; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.75; }
 
   /* ── Loader: ondas expandiéndose como en el agua ── */
   .cs-loader { position: fixed; inset: 0; background: var(--deep); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem; transition: opacity 0.6s ease, transform 0.6s ease; }
@@ -150,7 +152,7 @@ const css = `
   .cs-loader-date { color: rgba(255,255,255,0.55); font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; animation: csFadeUp 0.8s ease 0.8s both; }
   @keyframes csFadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* ── Music toggle (identidad propia: cápsula flotante estilo boya) ── */
+  /* ── Music toggle ── */
   .cs-music { position: fixed; bottom: 1.75rem; right: 1.75rem; z-index: 100; display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 1.1rem; border-radius: 100px; background: var(--deep); color: var(--foam); border: 1px solid rgba(255,255,255,0.15); cursor: pointer; font-size: 11px; letter-spacing: 0.1em; box-shadow: 0 10px 30px rgba(14,43,51,0.25); }
   .cs-music-bars { display: flex; align-items: flex-end; gap: 2px; height: 12px; }
   .cs-music-bars span { width: 2px; background: var(--lagoon); border-radius: 2px; animation: csBar 0.9s ease-in-out infinite alternate; }
@@ -158,7 +160,7 @@ const css = `
   .cs-music-bars span:nth-child(3) { animation-delay: 0.4s; }
   @keyframes csBar { from { height: 3px; } to { height: 12px; } }
 
-  /* ── Countdown: perlas en zigzag, como boyas sobre el oleaje ── */
+  /* ── Countdown ── */
   .cs-countdown { display: flex; justify-content: center; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
   .cs-cd-pill { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 84px; height: 84px; border-radius: 50%; background: var(--foam); border: 1px solid rgba(185,151,91,0.35); box-shadow: 0 12px 30px rgba(14,43,51,0.06); }
   @media (min-width: 768px) { .cs-cd-pill { width: 108px; height: 108px; } }
@@ -166,90 +168,103 @@ const css = `
   @media (min-width: 768px) { .cs-cd-num { font-size: 2rem; } }
   .cs-cd-lbl { font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5; margin-top: 0.2rem; }
 
-  /* ── Cita ── */
-  .cs-quote { max-width: 620px; margin: 0 auto; text-align: center; position: relative; }
-  .cs-quote-mark { display: block; font-family: var(--font-cormorant), serif; font-style: italic; font-size: 5rem; color: var(--champagne); opacity: 0.35; line-height: 1; transform: rotate(-6deg); margin-bottom: -1.5rem; }
-  .cs-quote p { font-family: var(--font-cormorant), serif; font-style: italic; font-size: clamp(1.3rem, 2.6vw, 1.7rem); line-height: 1.6; }
+  /* ── Cita: pull-quote a ancho completo sobre foto, no tarjeta aislada ── */
+  .cs-quote-bleed { position: relative; min-height: 68svh; display: flex; align-items: center; background-size: cover; background-position: center; }
+  .cs-quote-bleed-tint { position: absolute; inset: 0; background: linear-gradient(115deg, rgba(14,43,51,0.82) 0%, rgba(14,43,51,0.4) 55%, rgba(14,43,51,0.15) 100%); }
+  .cs-quote-bleed-content { position: relative; z-index: 2; max-width: 560px; margin: 0 8% 0 6%; color: var(--foam); padding: 2rem 0; }
+  .cs-quote-mark { display: block; font-family: var(--font-cormorant), serif; font-style: italic; font-size: 5rem; color: var(--champagne); opacity: 0.6; line-height: 1; transform: rotate(-6deg); margin-bottom: -1.5rem; }
+  .cs-quote-bleed-content p.txt { font-family: var(--font-cormorant), serif; font-style: italic; font-size: clamp(1.4rem, 3vw, 2rem); line-height: 1.5; }
+  .cs-quote-bleed-content .cs-eyebrow { color: var(--champagne); margin-top: 1.25rem; display: block; }
 
-  /* ── Padres: columnas desfasadas, no alineadas en la misma línea ── */
-  .cs-parents { display: grid; gap: 3rem; max-width: 760px; margin: 0 auto; }
-  @media (min-width: 640px) { .cs-parents { grid-template-columns: 1fr auto 1fr; align-items: center; } }
-  .cs-parents-side { text-align: center; }
-  .cs-parents-side p.role { font-family: var(--font-cormorant), serif; font-style: italic; font-size: 1.6rem; color: var(--coral); margin-bottom: 0.6rem; }
-  .cs-parents-side p.names { font-family: var(--font-jost), sans-serif; letter-spacing: 0.04em; }
-  .cs-parents-divider { display: flex; justify-content: center; opacity: 0.4; }
-  @media (min-width: 640px) {
-    .cs-parents-side:nth-child(1) { margin-top: -1.25rem; }
-    .cs-parents-side:nth-child(3) { margin-top: 1.25rem; }
-  }
+  /* ── Sección itinerario: contiene la nota flotante de los padres ── */
+  .cs-itinerary-section { position: relative; }
+  .cs-parents-note { position: absolute; top: -2.25rem; right: 1.25rem; max-width: 230px; background: var(--foam); border: 1px solid rgba(185,151,91,0.35); border-radius: 16px; padding: 1.25rem 1.5rem; box-shadow: 0 24px 44px rgba(14,43,51,0.14); transform: rotate(-2.2deg); z-index: 3; }
+  @media (min-width: 768px) { .cs-parents-note { top: -3rem; right: 4rem; max-width: 300px; padding: 1.5rem 1.75rem; } }
+  .cs-parents-note-eyebrow { font-family: var(--font-jost), sans-serif; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--champagne); margin-bottom: 0.6rem; }
+  .cs-parents-note-cols { display: flex; gap: 1.25rem; }
+  .cs-parents-note-cols .role { font-family: var(--font-cormorant), serif; font-style: italic; font-size: 1.05rem; color: var(--coral); margin-bottom: 0.15rem; }
+  .cs-parents-note-cols .names { font-size: 11px; line-height: 1.5; opacity: 0.85; }
+  .cs-parents-fallback { max-width: 640px; margin: 0 auto 3.5rem; display: grid; gap: 2rem; text-align: center; }
+  @media (min-width: 560px) { .cs-parents-fallback { grid-template-columns: 1fr auto 1fr; align-items: center; } }
 
-  /* ── Itinerario: costa/orilla con puntos, texto en zigzag ── */
-  .cs-timeline { max-width: 640px; margin: 0 auto; position: relative; padding-left: 2rem; }
-  .cs-timeline::before { content: ''; position: absolute; left: 7px; top: 0.4rem; bottom: 0.4rem; width: 1px; background: repeating-linear-gradient(to bottom, var(--lagoon) 0 6px, transparent 6px 12px); }
-  .cs-tl-item { position: relative; padding-bottom: 3rem; transition: padding-left 0.2s ease; }
+  /* ── Itinerario: vertical en móvil, recorrido horizontal en escritorio ── */
+  .cs-timeline { max-width: 640px; margin: 0 auto; position: relative; padding-left: 2rem; padding-top: 1rem; display: flex; flex-direction: column; gap: 0; }
+  .cs-timeline::before { content: ''; position: absolute; left: 7px; top: 1.4rem; bottom: 0.4rem; width: 1px; background: repeating-linear-gradient(to bottom, var(--lagoon) 0 6px, transparent 6px 12px); }
+  .cs-tl-item { position: relative; padding-bottom: 3rem; }
   .cs-tl-item:last-child { padding-bottom: 0; }
-  .cs-tl-item:nth-child(even) { padding-left: 1.75rem; }
-  @media (min-width: 640px) { .cs-tl-item:nth-child(even) { padding-left: 3rem; } }
-  .cs-tl-dot { position: absolute; left: -2rem; top: 0.2rem; width: 15px; height: 15px; border-radius: 50%; background: var(--lagoon); border: 3px solid var(--foam); box-shadow: 0 0 0 1px rgba(42,172,166,0.4); }
+  .cs-tl-item:nth-child(even) { padding-left: 1.5rem; }
+  .cs-tl-dot { position: absolute; left: -2rem; top: 1.2rem; width: 15px; height: 15px; border-radius: 50%; background: var(--lagoon); border: 3px solid var(--foam); box-shadow: 0 0 0 1px rgba(42,172,166,0.4); }
   .cs-tl-time { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--lagoon); }
   .cs-tl-name { font-family: var(--font-cormorant), serif; font-size: 1.5rem; margin: 0.2rem 0; }
   .cs-tl-venue { font-size: 13px; opacity: 0.75; }
   .cs-tl-link { display: inline-block; margin-top: 0.6rem; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--coral); text-decoration: none; border-bottom: 1px solid var(--coral); }
+  @media (min-width: 900px) {
+    .cs-timeline { flex-direction: row; max-width: 100%; padding-left: 0; overflow-x: auto; }
+    .cs-timeline::before { left: 0; right: 0; top: 1.4rem; bottom: auto; height: 1px; width: auto; background: repeating-linear-gradient(to right, var(--lagoon) 0 6px, transparent 6px 12px); }
+    .cs-tl-item { flex: 1; min-width: 200px; padding-bottom: 0; padding-top: 3rem; text-align: center; }
+    .cs-tl-item:nth-child(even) { padding-left: 0; padding-top: 5.5rem; }
+    .cs-tl-dot { left: 50%; top: 1rem; transform: translateX(-50%); }
+  }
 
-  /* ── Bloques de fotos: dispersas, no apiladas ── */
+  /* ── Fotos: una rompe el contenedor (breakout), el resto dispersas ── */
+  .cs-photo-breakout { width: 100vw; position: relative; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; aspect-ratio: 21 / 9; overflow: hidden; margin-bottom: 3rem; }
+  .cs-photo-breakout img { width: 100%; height: 100%; object-fit: cover; }
   .cs-photos-wrap { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 5rem; display: flex; flex-direction: column; gap: 3rem; }
   .cs-photo { aspect-ratio: 16 / 10; overflow: hidden; border-radius: 10px; box-shadow: 0 20px 40px rgba(14,43,51,0.12); }
   .cs-photo img { width: 100%; height: 100%; object-fit: cover; }
-  .cs-photo.reveal { transform: translateY(24px) rotate(var(--tilt, 0deg)); }
-  .cs-photo.reveal.visible { transform: translateY(0) rotate(var(--tilt, 0deg)); }
 
-  /* ── Dress code ── */
-  .cs-dress-card { max-width: 640px; margin: 0 auto; text-align: center; }
-  .cs-dress-label { display: inline-block; padding: 0.5rem 1.5rem; border: 1px solid var(--lagoon); border-radius: 100px; font-family: var(--font-cinzel), serif; font-size: 0.9rem; letter-spacing: 0.15em; margin-bottom: 2.5rem; }
-  .cs-dress-cols { display: grid; gap: 2rem; text-align: left; margin-bottom: 2.5rem; }
-  @media (min-width: 640px) { .cs-dress-cols { grid-template-columns: 1fr 1fr; } }
+  /* ── Hoteles: collage tipo revista, no grid parejo ── */
+  .cs-hotels { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
+  .cs-hotel-main { border-radius: 18px; padding: 2rem; background: var(--foam); border: 1px solid rgba(42,172,166,0.2); }
+  .cs-hotel-main .name { font-size: 1.35rem; }
+  .cs-hotel-side-row { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+  @media (min-width: 768px) { .cs-hotel-side-row { margin-top: -1.5rem; margin-left: 2.5rem; } }
+  .cs-hotel-side { flex: 1; min-width: 190px; border-radius: 14px; padding: 1.25rem; background: var(--foam); border: 1px solid rgba(42,172,166,0.15); }
+
+  /* ── Detalles: dress code + regalos + notas fusionados, columnas asimétricas ── */
+  .cs-details-grid { display: grid; gap: 2.75rem; max-width: 920px; margin: 0 auto; }
+  @media (min-width: 860px) { .cs-details-grid { grid-template-columns: 1.3fr 1fr; align-items: start; } }
+  .cs-dress-label { display: inline-block; padding: 0.5rem 1.5rem; border: 1px solid var(--lagoon); border-radius: 100px; font-family: var(--font-cinzel), serif; font-size: 0.85rem; letter-spacing: 0.15em; margin-bottom: 1.75rem; }
+  .cs-dress-cols { display: grid; gap: 1.5rem; text-align: left; margin-bottom: 2rem; }
+  @media (min-width: 480px) { .cs-dress-cols { grid-template-columns: 1fr 1fr; } }
   .cs-dress-cols h4 { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--coral); margin-bottom: 0.5rem; }
-  .cs-swatches { display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; }
+  .cs-swatches { display: flex; gap: 1.25rem; flex-wrap: wrap; }
   .cs-swatch { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
-  .cs-swatch-dot { width: 44px; height: 44px; border-radius: 50%; box-shadow: 0 6px 16px rgba(14,43,51,0.12); }
+  .cs-swatch-dot { width: 40px; height: 40px; border-radius: 50%; box-shadow: 0 6px 16px rgba(14,43,51,0.12); }
   .cs-swatch span { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.6; }
-
-  /* ── No niños ── */
-  .cs-adults { max-width: 460px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
-
-  /* ── Regalos ── */
-  .cs-gifts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; max-width: 720px; margin: 0 auto; }
-  .cs-gift-card { background: var(--foam); border: 1px solid rgba(42,172,166,0.2); border-radius: 18px; padding: 1.75rem; display: flex; flex-direction: column; gap: 0.9rem; }
-  .cs-gift-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(42,172,166,0.12); display: flex; align-items: center; justify-content: center; color: var(--lagoon); }
+  .cs-details-side { display: flex; flex-direction: column; gap: 1.75rem; }
+  .cs-gift-card { background: var(--foam); border: 1px solid rgba(42,172,166,0.2); border-radius: 16px; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
+  .cs-gift-icon { width: 32px; height: 32px; border-radius: 9px; background: rgba(42,172,166,0.12); display: flex; align-items: center; justify-content: center; color: var(--lagoon); }
   .cs-gift-row { display: flex; flex-direction: column; gap: 0.1rem; }
   .cs-gift-row span.lbl { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.5; }
   .cs-gift-row span.val { font-size: 13px; }
   .cs-gift-link { align-self: flex-start; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--coral); text-decoration: none; border-bottom: 1px solid var(--coral); }
+  .cs-notes { display: flex; flex-direction: column; gap: 1rem; }
+  .cs-note { display: flex; gap: 0.85rem; align-items: flex-start; }
+  .cs-note-mark { color: var(--coral); font-family: var(--font-cormorant), serif; font-style: italic; font-size: 1.05rem; flex-shrink: 0; }
 
-  /* ── Notas ── */
-  .cs-notes { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.25rem; }
-  .cs-note { display: flex; gap: 1rem; align-items: flex-start; }
-  .cs-note-mark { color: var(--coral); font-family: var(--font-cormorant), serif; font-style: italic; font-size: 1.1rem; flex-shrink: 0; }
+  /* ── No niños ── */
+  .cs-adults { max-width: 460px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
 
-  /* ── RSVP ── */
-  .cs-rsvp { text-align: center; }
-  .cs-btn { display: inline-block; background: var(--deep); color: white; padding: 1.1rem 3rem; border-radius: 100px; font-family: var(--font-jost), sans-serif; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; border: 1px solid var(--deep); cursor: pointer; text-decoration: none; box-shadow: 0 14px 30px rgba(14,43,51,0.18); transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease; }
-  .cs-btn:hover { background: var(--ink); border-color: var(--champagne); transform: translateY(-2px); }
+  /* ── RSVP fusionado con el footer: un solo cierre ── */
+  .cs-footer { background: var(--deep); color: var(--foam); text-align: center; padding: 6rem 1.5rem 3.5rem; }
+  .cs-footer .cs-heading-block h2 { color: var(--foam); }
+  .cs-footer-blurb { max-width: 420px; margin: -2rem auto 2.5rem; font-size: 14px; opacity: 0.7; line-height: 1.7; }
+  .cs-btn { display: inline-block; background: var(--champagne); color: var(--deep); padding: 1.1rem 3rem; border-radius: 100px; font-family: var(--font-jost), sans-serif; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; border: 1px solid var(--champagne); cursor: pointer; text-decoration: none; box-shadow: 0 14px 30px rgba(0,0,0,0.25); transition: transform 0.25s ease, background 0.25s ease; }
+  .cs-btn:hover { background: var(--foam); transform: translateY(-2px); }
   .cs-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-  .cs-rsvp-done { display: inline-flex; align-items: center; gap: 0.6rem; background: rgba(42,172,166,0.1); border: 1px solid rgba(42,172,166,0.3); color: var(--lagoon); padding: 0.85rem 1.75rem; border-radius: 100px; font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; }
-  .cs-rsvp-edit { display: block; margin-top: 0.9rem; font-size: 11px; text-decoration: underline; opacity: 0.6; cursor: pointer; background: none; border: none; }
-
-  /* ── Footer ── */
-  .cs-footer { background: var(--deep); color: var(--foam); text-align: center; padding: 3rem 1.5rem 3.5rem; }
-  .cs-footer-mono { font-family: var(--font-cormorant), serif; font-style: italic; font-size: 2.2rem; color: var(--coral); opacity: 0.7; margin-bottom: 0.4rem; }
-  .cs-footer-names { font-family: var(--font-cormorant), serif; font-size: 1.3rem; }
+  .cs-rsvp-done { display: inline-flex; align-items: center; gap: 0.6rem; background: rgba(185,151,91,0.12); border: 1px solid rgba(185,151,91,0.35); color: var(--champagne); padding: 0.85rem 1.75rem; border-radius: 100px; font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; }
+  .cs-rsvp-edit { display: block; margin-top: 0.9rem; font-size: 11px; text-decoration: underline; opacity: 0.6; cursor: pointer; background: none; border: none; color: var(--foam); }
+  .cs-footer-divider { width: 60px; height: 1px; background: rgba(255,255,255,0.15); margin: 3.5rem auto 2.25rem; }
+  .cs-footer-mono { font-family: var(--font-cormorant), serif; font-style: italic; font-size: 2rem; color: var(--coral); opacity: 0.7; margin-bottom: 0.4rem; }
+  .cs-footer-names { font-family: var(--font-cormorant), serif; font-size: 1.2rem; }
   .cs-footer-date { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5; margin-top: 0.5rem; }
   .cs-footer-powered { font-size: 9px; letter-spacing: 0.2em; opacity: 0.35; margin-top: 1.75rem; }
   .cs-footer-brand { color: var(--lagoon); }
 
   /* ── Modal RSVP ── */
   .cs-modal-backdrop { position: fixed; inset: 0; background: rgba(14,43,51,0.7); backdrop-filter: blur(6px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
-  .cs-modal { background: var(--foam); border-radius: 24px; width: 100%; max-width: 420px; max-height: 90svh; overflow-y: auto; position: relative; }
+  .cs-modal { background: var(--foam); border-radius: 24px; width: 100%; max-width: 420px; max-height: 90svh; overflow-y: auto; position: relative; color: var(--ink); }
   .cs-modal-close { position: absolute; top: 1rem; right: 1rem; width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(42,172,166,0.3); background: transparent; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .cs-modal-body { padding: 2rem; display: flex; flex-direction: column; gap: 1.25rem; }
   .cs-modal-title { font-family: var(--font-cormorant), serif; font-style: italic; font-size: 1.6rem; text-align: center; }
@@ -279,10 +294,6 @@ const css = `
   .cs-dietary-summary::-webkit-details-marker { display: none; }
   .cs-dietary-options { border: 1px solid rgba(42,172,166,0.2); border-radius: 10px; padding: 0.5rem; margin-top: 0.3rem; display: flex; flex-direction: column; gap: 2px; background: var(--sand); }
   .cs-dietary-option { display: flex; align-items: center; gap: 10px; padding: 6px 8px; font-size: 13px; cursor: pointer; }
-
-  /* ── Reveal ── */
-  .reveal { opacity: 0; transform: translateY(24px); transition: all 1s cubic-bezier(0.16,1,0.3,1); }
-  .reveal.visible { opacity: 1; transform: translateY(0); }
 `;
 
 // ---------------------------------------------------------------------------
@@ -294,8 +305,7 @@ function buildThemeCSS(theme?: CostaConfig['theme']): string {
 }
 
 // ---------------------------------------------------------------------------
-// Curvas orgánicas — identidad de "Costa": cada sección rompe con una línea
-// de orilla en vez de un corte recto (nunca la misma curva dos veces seguidas)
+// Curvas orgánicas — nunca la misma dos veces seguidas
 // ---------------------------------------------------------------------------
 const HeroCurve = ({ fill }: { fill: string }) => (
   <div className="cs-hero-curve" aria-hidden="true">
@@ -314,6 +324,11 @@ const CurveTop = ({ fill, flip = false }: { fill: string; flip?: boolean }) => (
 );
 
 const BG: Record<'sand' | 'foam' | 'deep', string> = { sand: 'var(--sand)', foam: 'var(--foam)', deep: 'var(--deep)' };
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 26 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] as const } },
+};
 
 const Section = ({
   bg = 'foam',
@@ -337,11 +352,17 @@ const Section = ({
 );
 
 const SectionHeading = ({ eyebrow, title }: { eyebrow?: string; title: string }) => (
-  <div className="cs-heading-block reveal">
+  <motion.div
+    className="cs-heading-block"
+    initial="hidden"
+    whileInView="show"
+    viewport={{ once: true, margin: '-80px' }}
+    variants={fadeUp}
+  >
     {eyebrow && <p className="cs-eyebrow">{eyebrow}</p>}
     <h2 className="cs-heading">{title}</h2>
     <span className="cs-heading-rule" />
-  </div>
+  </motion.div>
 );
 
 // ---------------------------------------------------------------------------
@@ -375,14 +396,9 @@ export default function CostaTemplate({
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
-    }, { threshold: 0.1 });
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-    return () => observer.disconnect();
-  }, [isLoaded]);
+  const heroRef = useRef<HTMLElement>(null);
+  const { scrollYProgress: heroProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
+  const heroParallaxY = useTransform(heroProgress, [0, 1], ['0%', '18%']);
 
   useEffect(() => {
     const t1 = setTimeout(() => setLoaderOut(true), 1600);
@@ -460,33 +476,59 @@ export default function CostaTemplate({
 
   const heroPhoto = config.photos?.find(p => p.role === 'hero')?.url || 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1600&q=85';
   const allowedBlockPhotos = (config.photos?.filter(p => p.role === 'block') || []).slice(0, caps.maxPhotos - 1);
+  const quoteBgPhoto = allowedBlockPhotos[0]?.url || heroPhoto;
 
   function renderBlocks(afterSection: string) {
     const blocks = allowedBlockPhotos.filter(p => p.afterSection === afterSection);
     if (!blocks.length) return null;
+    const [first, ...rest] = blocks;
     return (
-      <div className="cs-photos-wrap">
-        {blocks.map((p, i) => {
-          const odd = i % 2 === 1;
-          return (
-            <div
-              key={i}
-              className="cs-photo reveal"
-              style={{
-                width: i === 0 ? '100%' : odd ? '64%' : '78%',
-                marginLeft: odd ? 'auto' : undefined,
-                ['--tilt' as string]: i === 0 ? '0deg' : odd ? '1.3deg' : '-1deg',
-              } as React.CSSProperties}
-            >
-              <img src={p.url} alt="Costa" style={{ objectPosition: p.objectPosition || 'center' }} />
-            </div>
-          );
-        })}
-      </div>
+      <>
+        <motion.div
+          className="cs-photo-breakout"
+          initial={{ opacity: 0, scale: 1.04 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <img src={first.url} alt="Costa" style={{ objectPosition: first.objectPosition || 'center' }} />
+        </motion.div>
+        {!!rest.length && (
+          <div className="cs-photos-wrap">
+            {rest.map((p, i) => {
+              const odd = i % 2 === 1;
+              return (
+                <motion.div
+                  key={i}
+                  className="cs-photo"
+                  style={{ width: odd ? '64%' : '78%', marginLeft: odd ? 'auto' : undefined }}
+                  initial={{ opacity: 0, x: odd ? 40 : -40, rotate: odd ? 1.3 : -1 }}
+                  whileInView={{ opacity: 1, x: 0, rotate: odd ? 1.3 : -1 }}
+                  viewport={{ once: true, margin: '-60px' }}
+                  transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <img src={p.url} alt="Costa" style={{ objectPosition: p.objectPosition || 'center' }} />
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </>
     );
   }
 
   const themeCSS = buildThemeCSS(config.theme);
+  const showParentsNote = config.sections?.parents !== false;
+  const showItinerary = config.sections?.itinerary !== false && !!config.itinerary?.length;
+
+  const gt = config.gifts?.giftTypes ?? [];
+  const showTransfer = gt.includes('transfer') || (!gt.length && !!config.gifts?.bank);
+  const showList = gt.includes('list') || (!gt.length && !!config.gifts?.giftListUrl);
+  const showEnvelope = gt.includes('envelope');
+  const hasGifts = config.sections?.gifts !== false && !!config.gifts && (showTransfer || showList || showEnvelope);
+  const hasNotes = config.sections?.notes !== false && !!config.notes?.filter(n => n?.trim()).length;
+  const hasDressCode = config.sections?.dressCode !== false && !!config.dressCode;
+  const hasDetails = hasDressCode || hasGifts || hasNotes;
 
   if (!isLoaded && caps.loader) {
     return (
@@ -527,19 +569,21 @@ export default function CostaTemplate({
             </button>
           )}
 
-          {/* ── HERO ── */}
-          <section className="cs-hero">
-            <img src={heroPhoto} alt="Hero" className="cs-hero-img" />
-            <div className="cs-hero-tint" />
-            <div className="cs-hero-content">
+          {/* ── HERO: pantalla dividida con parallax ── */}
+          <section className="cs-hero" ref={heroRef as React.RefObject<HTMLElement>}>
+            <div className="cs-hero-photo">
+              <motion.div className="cs-hero-img-wrap" style={{ y: heroParallaxY }}>
+                <img src={heroPhoto} alt="Hero" className="cs-hero-img" />
+              </motion.div>
+            </div>
+            <div className="cs-hero-panel">
               <span className="cs-hero-label">{config.heroLabel || 'Boda frente al mar'}</span>
               <h1 className="cs-hero-names">
-                {config.couple?.person1}<span className="cs-hero-amp">&</span>{config.couple?.person2}
+                {config.couple?.person1}<span className="cs-hero-amp">&amp; {config.couple?.person2}</span>
               </h1>
               <span className="cs-hero-rule" />
               <div className="cs-hero-meta">
                 <span>{config.date?.day} · {config.date?.month} · {config.date?.year}</span>
-                <span className="cs-hero-dot" />
                 <span>{config.location}</span>
               </div>
             </div>
@@ -557,86 +601,137 @@ export default function CostaTemplate({
                   { v: timeLeft.minutes, l: 'Min' },
                   { v: timeLeft.seconds, l: 'Seg' },
                 ].map((u, i) => (
-                  <div key={i} className="cs-cd-pill reveal" style={{ transitionDelay: `${i * 120}ms`, marginTop: i % 2 === 1 ? 22 : 0 }}>
+                  <motion.div
+                    key={i}
+                    className="cs-cd-pill"
+                    style={{ marginTop: i % 2 === 1 ? 22 : 0 }}
+                    animate={{ y: [0, -8, 0] }}
+                    transition={{ duration: 3 + i * 0.4, repeat: Infinity, ease: 'easeInOut' }}
+                  >
                     <span className="cs-cd-num">{String(u.v).padStart(2, '0')}</span>
                     <span className="cs-cd-lbl">{u.l}</span>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </Section>
           )}
 
-          {/* ── CITA ── */}
+          {/* ── CITA: pull-quote a ancho completo sobre foto ── */}
           {config.sections?.quote !== false && config.quote?.text && (
-            <Section bg="foam" style={{ paddingTop: caps.countdown ? '0' : undefined }}>
-              <SectionHeading eyebrow="Nuestra historia" title="Un mensaje especial" />
-              <div className="cs-quote reveal">
+            <section className="cs-quote-bleed" style={{ backgroundImage: `url(${quoteBgPhoto})` }}>
+              <div className="cs-quote-bleed-tint" />
+              <motion.div
+                className="cs-quote-bleed-content"
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: '-100px' }}
+                transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+              >
                 <span className="cs-quote-mark" aria-hidden="true">&ldquo;</span>
-                <p>{config.quote.text}</p>
-                {config.quote.reference && <p className="cs-eyebrow" style={{ marginTop: '1.25rem' }}>— {config.quote.reference}</p>}
-              </div>
-            </Section>
+                <p className="txt">{config.quote.text}</p>
+                {config.quote.reference && <span className="cs-eyebrow">— {config.quote.reference}</span>}
+              </motion.div>
+            </section>
           )}
 
-          {/* ── PADRES ── */}
-          {config.sections?.parents !== false && (
-            <Section bg="deep" flip>
-              <SectionHeading eyebrow="Con la bendición de" title="Nuestras familias" />
-              <div className="cs-parents reveal">
-                <div className="cs-parents-side">
-                  <p className="role">Ella</p>
-                  <p className="names">{config.parents?.person1 || 'Sus padres'}</p>
-                </div>
-                <div className="cs-parents-divider"><Sailboat size={22} /></div>
-                <div className="cs-parents-side">
-                  <p className="role">Él</p>
-                  <p className="names">{config.parents?.person2 || 'Sus padres'}</p>
-                </div>
-              </div>
-            </Section>
-          )}
-
-          {renderBlocks('parents')}
-
-          {/* ── ITINERARIO ── */}
-          {config.sections?.itinerary !== false && !!config.itinerary?.length && (
-            <Section bg="sand" flip>
+          {/* ── ITINERARIO (con la nota de los padres flotando encima) ── */}
+          {showItinerary ? (
+            <Section bg="sand" flip className="cs-itinerary-section">
+              {showParentsNote && (
+                <motion.div
+                  className="cs-parents-note"
+                  initial={{ opacity: 0, y: -16, rotate: -8 }}
+                  whileInView={{ opacity: 1, y: 0, rotate: -2.2 }}
+                  viewport={{ once: true, margin: '-40px' }}
+                  transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <p className="cs-parents-note-eyebrow">Con la bendición de</p>
+                  <div className="cs-parents-note-cols">
+                    <div>
+                      <p className="role">Ella</p>
+                      <p className="names">{config.parents?.person1 || 'Sus padres'}</p>
+                    </div>
+                    <div>
+                      <p className="role">Él</p>
+                      <p className="names">{config.parents?.person2 || 'Sus padres'}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
               <SectionHeading eyebrow="El gran día" title="Itinerario" />
-              <div className="cs-timeline reveal">
-                {config.itinerary.map((item, idx) => (
-                  <div key={idx} className="cs-tl-item">
+              <div className="cs-timeline">
+                {config.itinerary!.map((item, idx) => (
+                  <motion.div
+                    key={idx}
+                    className="cs-tl-item"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-60px' }}
+                    transition={{ duration: 0.8, delay: idx * 0.12, ease: [0.16, 1, 0.3, 1] }}
+                  >
                     <span className="cs-tl-dot" />
                     <p className="cs-tl-time">{item.time}</p>
                     <h3 className="cs-tl-name">{item.name}</h3>
                     <p className="cs-tl-venue">{item.venue}{item.address ? ` · ${item.address}` : ''}</p>
                     {item.mapsUrl && <a href={item.mapsUrl} target="_blank" rel="noopener noreferrer" className="cs-tl-link">Ver ubicación</a>}
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </Section>
+          ) : (
+            showParentsNote && (
+              <Section bg="deep" flip>
+                <SectionHeading eyebrow="Con la bendición de" title="Nuestras familias" />
+                <div className="cs-parents-fallback">
+                  <div>
+                    <p className="cs-display" style={{ fontStyle: 'italic', fontSize: '1.4rem', color: 'var(--coral)', marginBottom: '0.4rem' }}>Ella</p>
+                    <p>{config.parents?.person1 || 'Sus padres'}</p>
+                  </div>
+                  <Sailboat size={22} style={{ opacity: 0.4 }} />
+                  <div>
+                    <p className="cs-display" style={{ fontStyle: 'italic', fontSize: '1.4rem', color: 'var(--coral)', marginBottom: '0.4rem' }}>Él</p>
+                    <p>{config.parents?.person2 || 'Sus padres'}</p>
+                  </div>
+                </div>
+              </Section>
+            )
           )}
 
           {renderBlocks('itinerary')}
 
-          {/* ── DESTINO ── */}
+          {/* ── DESTINO: collage de hoteles, no grid parejo ── */}
           {config.sections?.destination !== false && config.destination && (config.destination.hotels?.length || config.destination.transport?.info) && (
             <Section bg="foam">
               <SectionHeading eyebrow="Viaje" title="Hospedaje y transporte" />
-              <div className="reveal" style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+              <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '3.5rem' }}>
                 {!!config.destination.hotels?.length && (
-                  <div style={{ display: 'grid', gap: '1.25rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+                  <div className="cs-hotels">
                     {config.destination.hotels.map((h, i) => (
-                      <div key={i} style={{ border: '1px solid rgba(42,172,166,0.2)', borderRadius: 16, padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', transform: i % 2 === 1 ? 'translateY(14px)' : undefined }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
-                          <p className="cs-display" style={{ fontSize: '1.15rem' }}>{h.name}</p>
-                          <Hotel size={16} style={{ color: 'var(--lagoon)', flexShrink: 0, marginTop: 2 }} />
+                      i === 0 ? (
+                        <div key={i} className="cs-hotel-main">
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                            <p className="cs-display name">{h.name}</p>
+                            <Hotel size={18} style={{ color: 'var(--lagoon)', flexShrink: 0, marginTop: 2 }} />
+                          </div>
+                          {h.category && <p className="cs-eyebrow" style={{ fontSize: 9 }}>{h.category}</p>}
+                          {h.address && <p style={{ fontSize: 13, opacity: 0.7, marginTop: 6 }}>{h.address}</p>}
+                          {h.note && <p style={{ fontSize: 12, opacity: 0.6, fontStyle: 'italic', marginTop: 4 }}>{h.note}</p>}
+                          {h.phone && <a href={`tel:${h.phone.replace(/\s/g, '')}`} className="cs-eyebrow" style={{ fontSize: 9, marginTop: 8, display: 'inline-block' }}>{h.phone}</a>}
                         </div>
-                        {h.category && <p className="cs-eyebrow" style={{ fontSize: 9 }}>{h.category}</p>}
-                        {h.address && <p style={{ fontSize: 12, opacity: 0.7 }}>{h.address}</p>}
-                        {h.note && <p style={{ fontSize: 12, opacity: 0.6, fontStyle: 'italic' }}>{h.note}</p>}
-                        {h.phone && <a href={`tel:${h.phone.replace(/\s/g, '')}`} className="cs-eyebrow" style={{ fontSize: 9, marginTop: 4 }}>{h.phone}</a>}
-                      </div>
+                      ) : null
                     ))}
+                    {config.destination.hotels.length > 1 && (
+                      <div className="cs-hotel-side-row">
+                        {config.destination.hotels.slice(1).map((h, i) => (
+                          <div key={i} className="cs-hotel-side">
+                            <p className="cs-display" style={{ fontSize: '1.05rem' }}>{h.name}</p>
+                            {h.category && <p className="cs-eyebrow" style={{ fontSize: 8 }}>{h.category}</p>}
+                            {h.address && <p style={{ fontSize: 12, opacity: 0.65, marginTop: 4 }}>{h.address}</p>}
+                            {h.phone && <a href={`tel:${h.phone.replace(/\s/g, '')}`} className="cs-eyebrow" style={{ fontSize: 8, marginTop: 6, display: 'inline-block' }}>{h.phone}</a>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
                 {config.destination.transport?.info && (
@@ -659,24 +754,82 @@ export default function CostaTemplate({
             </Section>
           )}
 
-          {/* ── DRESS CODE ── */}
-          {config.sections?.dressCode !== false && config.dressCode && (
+          {/* ── DETALLES: dress code + regalos + notas fusionados, columnas asimétricas ── */}
+          {hasDetails && (
             <Section bg="sand">
-              <SectionHeading eyebrow="Importante" title="Código de vestimenta" />
-              <div className="cs-dress-card reveal">
-                <span className="cs-dress-label">{config.dressCode.label}</span>
-                <div className="cs-dress-cols">
-                  <div><h4>Ellas</h4><p style={{ fontSize: 14, opacity: 0.8, lineHeight: 1.6 }}>{config.dressCode.women}</p></div>
-                  <div style={{ marginTop: '1.5rem' }}><h4>Ellos</h4><p style={{ fontSize: 14, opacity: 0.8, lineHeight: 1.6 }}>{config.dressCode.men}</p></div>
-                </div>
-                {!!config.dressCode.swatches?.length && (
-                  <div className="cs-swatches">
-                    {config.dressCode.swatches.map((s, i) => (
-                      <div key={i} className="cs-swatch" style={{ marginTop: i % 2 === 1 ? 10 : 0 }}>
-                        <div className="cs-swatch-dot" style={{ backgroundColor: s.color }} />
-                        <span>{s.name}</span>
+              <SectionHeading eyebrow="Importante" title="Detalles para el gran día" />
+              <div className="cs-details-grid">
+                {hasDressCode && (
+                  <div>
+                    <span className="cs-dress-label">{config.dressCode!.label}</span>
+                    <div className="cs-dress-cols">
+                      <div><h4>Ellas</h4><p style={{ fontSize: 14, opacity: 0.8, lineHeight: 1.6 }}>{config.dressCode!.women}</p></div>
+                      <div><h4>Ellos</h4><p style={{ fontSize: 14, opacity: 0.8, lineHeight: 1.6 }}>{config.dressCode!.men}</p></div>
+                    </div>
+                    {!!config.dressCode!.swatches?.length && (
+                      <div className="cs-swatches">
+                        {config.dressCode!.swatches!.map((s, i) => (
+                          <div key={i} className="cs-swatch">
+                            <div className="cs-swatch-dot" style={{ backgroundColor: s.color }} />
+                            <span>{s.name}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
+                  </div>
+                )}
+
+                {(hasGifts || hasNotes) && (
+                  <div className="cs-details-side">
+                    {hasGifts && (() => {
+                      const gifts = config.gifts!;
+                      return (
+                        <>
+                          {showTransfer && gifts.bank && (
+                            <div className="cs-gift-card">
+                              <div className="cs-gift-icon"><Waves size={15} /></div>
+                              {[
+                                { label: 'Banco', value: gifts.bank },
+                                { label: 'Nombre', value: gifts.holder },
+                                { label: 'Cuenta', value: gifts.account },
+                                { label: 'CLABE', value: gifts.clabe },
+                              ].filter(r => r.value).map(r => (
+                                <div key={r.label} className="cs-gift-row">
+                                  <span className="lbl">{r.label}</span>
+                                  <span className="val">{r.value}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {showList && gifts.giftListUrl && (
+                            <div className="cs-gift-card">
+                              <div className="cs-gift-icon"><Gift size={15} /></div>
+                              <p className="cs-display" style={{ fontSize: '1.05rem', fontStyle: 'italic' }}>Mesa de regalos</p>
+                              {gifts.giftListLabel && <p style={{ fontSize: 12, opacity: 0.65 }}>{gifts.giftListLabel}</p>}
+                              <a href={gifts.giftListUrl} target="_blank" rel="noopener noreferrer" className="cs-gift-link">Ver lista →</a>
+                            </div>
+                          )}
+                          {showEnvelope && (
+                            <div className="cs-gift-card">
+                              <div className="cs-gift-icon"><Gift size={15} /></div>
+                              <p className="cs-display" style={{ fontSize: '1.05rem', fontStyle: 'italic' }}>Sobre de regalo</p>
+                              <p style={{ fontSize: 12, opacity: 0.65 }}>{gifts.envelopeMessage || 'Con gusto recibimos sobres el día del evento'}</p>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+
+                    {hasNotes && (
+                      <div className="cs-notes">
+                        {config.notes!.filter(n => n?.trim()).map((note, i) => (
+                          <div key={i} className="cs-note">
+                            <span className="cs-note-mark">{String(i + 1).padStart(2, '0')}</span>
+                            <p style={{ fontSize: 13, opacity: 0.75, lineHeight: 1.6 }}>{note}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -686,7 +839,7 @@ export default function CostaTemplate({
           {/* ── NO NIÑOS ── */}
           {config.noChildren && (
             <Section bg="deep" flip>
-              <div className="cs-adults reveal">
+              <div className="cs-adults">
                 <UserX size={26} style={{ color: 'var(--coral)' }} />
                 <p className="cs-heading" style={{ fontSize: 18 }}>Evento para adultos</p>
                 <p style={{ fontSize: 13, opacity: 0.7, lineHeight: 1.7 }}>
@@ -696,97 +849,31 @@ export default function CostaTemplate({
             </Section>
           )}
 
-          {/* ── REGALOS ── */}
-          {config.sections?.gifts !== false && (() => {
-            const gt = config.gifts?.giftTypes ?? [];
-            const showTransfer = gt.includes('transfer') || (!gt.length && !!config.gifts?.bank);
-            const showList = gt.includes('list') || (!gt.length && !!config.gifts?.giftListUrl);
-            const showEnvelope = gt.includes('envelope');
-            if (!config.gifts || (!showTransfer && !showList && !showEnvelope)) return null;
-            const gifts = config.gifts;
-            return (
-              <Section bg="foam">
-                <SectionHeading eyebrow="Obsequios" title="Mesa de regalos" />
-                <div className="cs-gifts-grid reveal">
-                  {showTransfer && gifts.bank && (
-                    <div className="cs-gift-card">
-                      <div className="cs-gift-icon"><Waves size={16} /></div>
-                      {[
-                        { label: 'Banco', value: gifts.bank },
-                        { label: 'Nombre', value: gifts.holder },
-                        { label: 'Cuenta', value: gifts.account },
-                        { label: 'CLABE', value: gifts.clabe },
-                      ].filter(r => r.value).map(r => (
-                        <div key={r.label} className="cs-gift-row">
-                          <span className="lbl">{r.label}</span>
-                          <span className="val">{r.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {showList && gifts.giftListUrl && (
-                    <div className="cs-gift-card" style={{ textAlign: 'center', alignItems: 'center' }}>
-                      <div className="cs-gift-icon"><Gift size={16} /></div>
-                      <p className="cs-display" style={{ fontSize: '1.2rem', fontStyle: 'italic' }}>Mesa de regalos</p>
-                      {gifts.giftListLabel && <p style={{ fontSize: 12, opacity: 0.65 }}>{gifts.giftListLabel}</p>}
-                      <a href={gifts.giftListUrl} target="_blank" rel="noopener noreferrer" className="cs-gift-link">Ver lista →</a>
-                    </div>
-                  )}
-                  {showEnvelope && (
-                    <div className="cs-gift-card" style={{ textAlign: 'center', alignItems: 'center' }}>
-                      <div className="cs-gift-icon"><Gift size={16} /></div>
-                      <p className="cs-display" style={{ fontSize: '1.2rem', fontStyle: 'italic' }}>Sobre de regalo</p>
-                      <p style={{ fontSize: 12, opacity: 0.65 }}>{gifts.envelopeMessage || 'Con gusto recibimos sobres el día del evento'}</p>
-                    </div>
-                  )}
-                </div>
-              </Section>
-            );
-          })()}
-
-          {/* ── NOTAS ── */}
-          {config.sections?.notes !== false && !!config.notes?.filter(n => n?.trim()).length && (
-            <Section bg="sand">
-              <SectionHeading eyebrow="Importante" title="Notas adicionales" />
-              <div className="cs-notes reveal">
-                {config.notes.filter(n => n?.trim()).map((note, i) => (
-                  <div key={i} className="cs-note" style={{ marginLeft: i % 2 === 1 ? 18 : 0 }}>
-                    <span className="cs-note-mark">{String(i + 1).padStart(2, '0')}</span>
-                    <p style={{ fontSize: 14, opacity: 0.75, lineHeight: 1.6 }}>{note}</p>
-                  </div>
-                ))}
-              </div>
-            </Section>
-          )}
-
-          {/* ── RSVP ── */}
-          <CurveTop fill="var(--foam)" flip />
-          <section className="cs-section cs-rsvp">
+          {/* ── RSVP fusionado con el footer: un solo cierre ── */}
+          <CurveTop fill="var(--deep)" />
+          <footer className="cs-footer">
             <SectionHeading eyebrow="RSVP" title="¿Nos acompañas en la orilla?" />
-            <p style={{ maxWidth: 420, margin: '-2rem auto 2.5rem', fontSize: 14, opacity: 0.75, lineHeight: 1.7 }}>
+            <p className="cs-footer-blurb">
               Será un verdadero honor celebrar este inicio contigo. Por favor confirma tu asistencia.
             </p>
             {!rsvpDone ? (
               caps.rsvpMode === 'whatsapp' && config.whatsapp?.number ? (
-                <a href={`https://wa.me/${config.whatsapp.number}?text=${encodeURIComponent(config.whatsapp.message ?? '')}`} target="_blank" rel="noopener noreferrer" className="cs-btn reveal">
+                <a href={`https://wa.me/${config.whatsapp.number}?text=${encodeURIComponent(config.whatsapp.message ?? '')}`} target="_blank" rel="noopener noreferrer" className="cs-btn">
                   Confirmar por WhatsApp
                 </a>
               ) : (
-                <button className="cs-btn reveal" onClick={() => setIsRsvpOpen(true)}>Confirmar asistencia</button>
+                <button className="cs-btn" onClick={() => setIsRsvpOpen(true)}>Confirmar asistencia</button>
               )
             ) : (
-              <div className="reveal">
+              <div>
                 <span className="cs-rsvp-done"><Check size={16} /> {guestConfirmed === false ? 'No asistiré' : '¡Confirmado!'}</span>
                 <button className="cs-rsvp-edit" onClick={() => { setRsvpDone(false); setGuestConfirmed(null); setIsRsvpOpen(true); }}>
                   Actualizar respuesta
                 </button>
               </div>
             )}
-          </section>
 
-          {/* ── FOOTER ── */}
-          <CurveTop fill="var(--deep)" />
-          <footer className="cs-footer">
+            <div className="cs-footer-divider" />
             <p className="cs-footer-mono">{config.couple?.person1?.[0]} &amp; {config.couple?.person2?.[0]}</p>
             <p className="cs-footer-names">{config.couple?.person1} &amp; {config.couple?.person2}</p>
             <p className="cs-footer-date">{config.date?.day} · {config.date?.month} · {config.date?.year}{config.location ? ` · ${config.location}` : ''}</p>
