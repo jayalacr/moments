@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 
 // Acepta el config como string JSON para evitar problemas de serialización
 // con objetos complejos (NaN, undefined, objetos no-serializables) en React Server Actions.
-export async function updateEventConfig(eventId: string, configJson: string) {
+export async function updateEventConfig(eventId: string, configJson: string, rsvpDeadline?: string | null) {
   let config: unknown;
   try {
     config = JSON.parse(configJson);
@@ -20,7 +20,7 @@ export async function updateEventConfig(eventId: string, configJson: string) {
 
   const { error } = await supabase
     .from('events')
-    .update({ config })
+    .update({ config, rsvp_deadline: rsvpDeadline || null })
     .eq('id', eventId);
 
   if (error) throw new Error(error.message);

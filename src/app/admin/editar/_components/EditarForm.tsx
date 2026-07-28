@@ -42,6 +42,7 @@ interface EventConfig {
   noChildren: boolean;
   noChildrenMessage: string;
   rsvpDeadline: string;
+  rsvpDeadlineBlock: boolean;
   rsvp: { maxPlusOnes: number; deadline: string };
   dietary: { enabled: boolean; options: string[] };
   theme: {
@@ -89,6 +90,7 @@ const DEFAULT: EventConfig = {
   noChildren: false,
   noChildrenMessage: '',
   rsvpDeadline: '',
+  rsvpDeadlineBlock: false,
   rsvp: { maxPlusOnes: 2, deadline: '' },
   dietary: { enabled: false, options: ['Vegetariano', 'Vegano', 'Sin gluten', 'Sin lácteos', 'Sin mariscos', 'Otro'] },
   sections: {
@@ -182,6 +184,11 @@ const useMobile = () => useContext(MobileCtx);
 // ---------------------------------------------------------------------------
 // Style factories (depend on colors + viewport)
 // ---------------------------------------------------------------------------
+function formatDeadline(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
 function makeStyles(C: Colors, isMobile = false) {
   const input: React.CSSProperties = {
     width: '100%',
@@ -242,7 +249,7 @@ function makeStyles(C: Colors, isMobile = false) {
 // Sub-components
 // ---------------------------------------------------------------------------
 function Section({
-  title, C, children, visible, onVisibilityChange, summary, defaultOpen = false,
+  title, C, children, visible, onVisibilityChange, summary, description, defaultOpen = false,
 }: {
   title: string;
   C: Colors;
@@ -250,6 +257,7 @@ function Section({
   visible?: boolean;
   onVisibilityChange?: (v: boolean) => void;
   summary?: string;
+  description?: string;
   defaultOpen?: boolean;
 }) {
   const isMobile = useMobile();
@@ -357,6 +365,11 @@ function Section({
           pointerEvents: hasToggle && !visible ? 'none' : undefined,
           transition: 'opacity 0.2s',
         }}>
+          {description && (
+            <p style={{ fontSize: '12px', color: C.mutedLight, fontFamily: C.font, lineHeight: 1.5, margin: 0, marginTop: '-6px' }}>
+              {description}
+            </p>
+          )}
           {children}
         </div>
       )}
@@ -608,12 +621,14 @@ export default function EditarForm({
   eventId,
   eventSlug,
   initialConfig,
+  initialRsvpDeadline = null,
   plan = 'essential',
   theme = 'light',
 }: {
   eventId: string;
   eventSlug: string;
   initialConfig: Partial<EventConfig>;
+  initialRsvpDeadline?: string | null;
   plan?: 'essential' | 'plus' | 'deluxe';
   theme?: 'light' | 'dark';
 }) {
@@ -677,6 +692,7 @@ export default function EditarForm({
     sections:  { ...DEFAULT.sections, ...(initialConfig as Partial<EventConfig>).sections },
   }));
 
+  const [rsvpDeadlineDate, setRsvpDeadlineDate] = useState(initialRsvpDeadline ?? '');
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [photosOpen, setPhotosOpen] = useState(false);
@@ -698,7 +714,8 @@ export default function EditarForm({
 
   function handleSave() {
     startTransition(async () => {
-      await updateEventConfig(eventId, JSON.stringify(cfg));
+      const cfgToSave = { ...cfg, rsvpDeadline: rsvpDeadlineDate ? formatDeadline(rsvpDeadlineDate) : '' };
+      await updateEventConfig(eventId, JSON.stringify(cfgToSave), rsvpDeadlineDate || null);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     });
@@ -767,7 +784,7 @@ export default function EditarForm({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
 
           {/* ── 1. Portada ── */}
-          <Section title="Portada" C={C} defaultOpen={true}
+          <Section title="Portada" C={C} description="Lo primero que ven tus invitados: nombres, fecha y frase de bienvenida." defaultOpen={true}
             summary={cfg.couple.person1 && cfg.couple.person2 ? `${cfg.couple.person1} & ${cfg.couple.person2}` : cfg.couple.person1 || cfg.couple.person2 || '—'}
           >
             <Field label="Frase de introducción (aparece encima de los nombres)" C={C}>
@@ -837,7 +854,7 @@ export default function EditarForm({
             const total = cfg.photos.length;
             const atLimit = photoLimit !== null && total >= photoLimit;
             return (
-              <Section title="Fotos" C={C}
+              <Section title="Fotos" C={C} description="Sube las fotos que se usarán en la invitación (foto principal y galería)."
                 summary={total > 0 ? `${total} foto${total !== 1 ? 's' : ''}` : '—'}
               >
                 {/* Thumbnail strip */}
@@ -881,7 +898,7 @@ export default function EditarForm({
               ? `Portada ✓${blocks > 0 ? ` · ${blocks} en bloques` : ''}`
               : `Sin portada${blocks > 0 ? ` · ${blocks} en bloques` : ''}`;
             return (
-              <Section title="Layout de Fotos" C={C} summary={summary}>
+              <Section title="Layout de Fotos" C={C} description="Define en qué orden y con qué diseño aparecen las fotos dentro de la invitación." summary={summary}>
                 <ImageLayoutEditor
                   photos={cfg.photos}
                   onChange={photos => set('photos', photos)}
@@ -903,7 +920,7 @@ export default function EditarForm({
           })()}
 
           {/* ── 3. Cita ── */}
-          <Section title="Cita o frase" C={C}
+          <Section title="Cita o frase" C={C} description="Una frase, verso o dedicatoria especial que se muestra en la invitación."
             visible={cfg.sections.quote}
             onVisibilityChange={v => set('sections', { ...cfg.sections, quote: v })}
             summary={cfg.quote.text ? `${cfg.quote.text.slice(0, 45)}${cfg.quote.text.length > 45 ? '…' : ''}` : '—'}
@@ -927,7 +944,7 @@ export default function EditarForm({
             const p1 = splitParts(cfg.parents.person1);
             const p2 = splitParts(cfg.parents.person2);
             return (
-              <Section title="Padres" C={C}
+              <Section title="Padres" C={C} description="Nombres de los padres, se muestran como parte de la tradición de la invitación."
                 visible={cfg.sections.parents}
                 onVisibilityChange={v => set('sections', { ...cfg.sections, parents: v })}
                 summary={p1.dad || p2.dad ? `${p1.dad || '—'} · ${p2.dad || '—'}` : '—'}
@@ -949,7 +966,7 @@ export default function EditarForm({
           })()}
 
           {/* ── 5. Itinerario ── */}
-          <Section title="Itinerario" C={C}
+          <Section title="Itinerario" C={C} description="Los eventos del día (ceremonia, recepción, etc.) con su hora y ubicación."
             visible={cfg.sections.itinerary}
             onVisibilityChange={v => set('sections', { ...cfg.sections, itinerary: v })}
             summary={(() => { const n = cfg.itinerary.filter(i => i.name.trim()).length; return n > 0 ? `${n} evento${n !== 1 ? 's' : ''}` : '—'; })()}
@@ -1022,7 +1039,7 @@ export default function EditarForm({
           </Section>
 
           {/* ── 6. Dress Code ── */}
-          <Section title="Dress Code" C={C}
+          <Section title="Dress Code" C={C} description="Indicaciones de vestimenta y paleta de colores sugerida para tus invitados."
             visible={cfg.sections.dressCode}
             onVisibilityChange={v => set('sections', { ...cfg.sections, dressCode: v })}
             summary={cfg.dressCode.label || '—'}
@@ -1103,15 +1120,37 @@ export default function EditarForm({
           </Section>
 
           {/* ── 7. Notas ── */}
-          <Section title="Notas adicionales" C={C}
+          <Section title="Notas adicionales" C={C} description="Mensajes o avisos extra que quieras comunicar a tus invitados."
             visible={cfg.sections.notes}
             onVisibilityChange={v => set('sections', { ...cfg.sections, notes: v })}
             summary={(() => { const n = cfg.notes.filter(x => x.trim()).length; return n > 0 ? `${n} nota${n !== 1 ? 's' : ''}` : '—'; })()}
           >
+            <div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', marginBottom: cfg.noChildren ? '12px' : 0 }}>
+                <input
+                  type="checkbox"
+                  checked={cfg.noChildren}
+                  onChange={e => set('noChildren', e.target.checked)}
+                  style={{ width: isMobile ? '20px' : '16px', height: isMobile ? '20px' : '16px', accentColor: C.accent, cursor: 'pointer', flexShrink: 0 }}
+                />
+                <span style={{ fontSize: isMobile ? '15px' : '14px', color: C.text }}>Evento para adultos (mostrar aviso de &quot;no niños&quot;)</span>
+              </label>
+              {cfg.noChildren && (
+                <Field label="Mensaje personalizado (opcional)" C={C}>
+                  <textarea
+                    style={S.textarea}
+                    value={cfg.noChildrenMessage}
+                    onChange={e => set('noChildrenMessage', e.target.value)}
+                    placeholder="Con todo nuestro cariño, les pedimos que esta celebración sea exclusiva para adultos. Agradecemos su comprensión."
+                  />
+                </Field>
+              )}
+            </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {cfg.notes.map((note, i) => (
                 <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <input style={{ ...S.input, flex: 1 }} value={note} onChange={e => { const n = [...cfg.notes]; n[i] = e.target.value; set('notes', n); }} placeholder="Evento para adultos — no se permiten niños." />
+                  <input style={{ ...S.input, flex: 1 }} value={note} onChange={e => { const n = [...cfg.notes]; n[i] = e.target.value; set('notes', n); }} placeholder="Nota adicional para tus invitados." />
                   {cfg.notes.length > 1 && (
                     <button style={S.removeBtn} onClick={() => set('notes', cfg.notes.filter((_, j) => j !== i))}>×</button>
                   )}
@@ -1136,7 +1175,7 @@ export default function EditarForm({
               ? giftTypes.map(t => t === 'transfer' ? 'Transferencia' : t === 'list' ? 'Mesa de regalos' : 'Sobres').join(' · ')
               : '—';
             return (
-              <Section title="Regalos" C={C}
+              <Section title="Regalos" C={C} description="Datos bancarios o mesa de regalos para quienes deseen obsequiarles algo."
                 visible={cfg.sections.gifts}
                 onVisibilityChange={v => set('sections', { ...cfg.sections, gifts: v })}
                 summary={summary}
@@ -1217,7 +1256,7 @@ export default function EditarForm({
 
           {/* ── Plus: Boda Destino ── */}
           {isPlus && (
-            <Section title="Boda Destino (hospedaje y transporte)" C={C}
+            <Section title="Boda Destino (hospedaje y transporte)" C={C} description="Información de hospedaje y transporte para invitados foráneos."
               visible={cfg.sections.destination}
               onVisibilityChange={v => set('sections', { ...cfg.sections, destination: v })}
               summary={(() => { const n = cfg.destination.hotels.length; return n > 0 ? `${n} hotel${n !== 1 ? 'es' : ''}` : '—'; })()}
@@ -1297,7 +1336,7 @@ export default function EditarForm({
 
           {/* ── Deluxe: Música ── */}
           {isDeluxe && (
-            <Section title="Música de fondo" C={C}
+            <Section title="Música de fondo" C={C} description="Canción que se reproduce automáticamente al abrir la invitación."
               summary={cfg.music.title ? `${cfg.music.title}${cfg.music.artist ? ` · ${cfg.music.artist}` : ''}` : '—'}
             >
               <AudioUpload
@@ -1312,7 +1351,7 @@ export default function EditarForm({
           )}
 
           {/* ── 0. Diseño ── */}
-          <Section title="Diseño" C={C}
+          <Section title="Diseño" C={C} description="Colores y tipografías que definen el estilo visual de tu invitación."
             summary={`${DISPLAY_FONT_LABEL[cfg.theme.displayFont] ?? '—'} · ${cfg.theme.accentColor}`}
           >
             <Row>
@@ -1390,92 +1429,86 @@ export default function EditarForm({
           </Section>
 
           {/* ── 9. Confirmación ── */}
-          <Section title="Confirmación de asistencia" C={C}
-            summary={!isPlus
+          <Section title="Confirmación de asistencia" C={C} description="Configura el límite de acompañantes y la fecha límite para confirmar."
+            summary={rsvpDeadlineDate ? `Límite · ${formatDeadline(rsvpDeadlineDate)}` : (!isPlus
               ? (cfg.whatsapp.number ? `WhatsApp · ${cfg.whatsapp.number}` : 'WhatsApp')
-              : (cfg.rsvp.deadline ? `RSVP · ${cfg.rsvp.deadline}` : 'RSVP')}
+              : 'RSVP')}
           >
+            <Field label="Fecha límite de confirmación" C={C}>
+              <input type="date" style={S.input} value={rsvpDeadlineDate} onChange={e => setRsvpDeadlineDate(e.target.value)} />
+              {rsvpDeadlineDate && (
+                <p style={{ fontSize: '12px', color: C.muted, marginTop: '6px' }}>
+                  Se mostrará a los invitados como: &quot;{formatDeadline(rsvpDeadlineDate)}&quot;
+                </p>
+              )}
+              {rsvpDeadlineDate && (
+                <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', marginTop: '12px' }}>
+                  <input
+                    type="checkbox"
+                    checked={cfg.rsvpDeadlineBlock}
+                    onChange={e => set('rsvpDeadlineBlock', e.target.checked)}
+                    style={{ width: isMobile ? '20px' : '16px', height: isMobile ? '20px' : '16px', accentColor: C.accent, cursor: 'pointer', flexShrink: 0 }}
+                  />
+                  <span style={{ fontSize: isMobile ? '15px' : '14px', color: C.text }}>Bloquear la invitación a partir de esa fecha (solo para invitados sin respuesta)</span>
+                </label>
+              )}
+            </Field>
             {!isPlus ? (
               /* Essential: WhatsApp */
               <>
-                <Row>
-                  <Field label="Número de WhatsApp (con código de país, sin +)" C={C}>
-                    <input style={S.input} value={cfg.whatsapp.number} onChange={e => set('whatsapp', { ...cfg.whatsapp, number: e.target.value })} placeholder="5215512345678" />
-                  </Field>
-                  <Field label="Fecha límite de confirmación" C={C}>
-                    <input style={S.input} value={cfg.rsvpDeadline} onChange={e => set('rsvpDeadline', e.target.value)} placeholder="30 de septiembre" />
-                  </Field>
-                </Row>
+                <Field label="Número de WhatsApp (con código de país, sin +)" C={C}>
+                  <input style={S.input} value={cfg.whatsapp.number} onChange={e => set('whatsapp', { ...cfg.whatsapp, number: e.target.value })} placeholder="5215512345678" />
+                </Field>
                 <Field label="Mensaje pre-escrito de WhatsApp" C={C}>
                   <textarea style={S.textarea} value={cfg.whatsapp.message} onChange={e => set('whatsapp', { ...cfg.whatsapp, message: e.target.value })} placeholder="Hola, confirmo mi asistencia a la boda de Sofía & Mateo el 18 de octubre. 🤍" />
                 </Field>
               </>
             ) : (
               /* Plus / Deluxe: RSVP modal */
-              <>
-                <Field label="Fecha límite de confirmación" C={C}>
-                  <input style={S.input} value={cfg.rsvp.deadline} onChange={e => set('rsvp', { ...cfg.rsvp, deadline: e.target.value })} placeholder="15 de mayo de 2026" />
-                </Field>
-                {isDeluxe && (
-                  <div style={{ padding: '12px 16px', backgroundColor: C.accentLight, borderRadius: '8px', border: `1px solid ${C.border}` }}>
-                    <p style={{ fontSize: '13px', color: C.accent, margin: 0, lineHeight: '1.6', fontFamily: C.font }}>
-                      <strong>Plan Deluxe:</strong> La gestión de cupos individuales se realiza en la sección de <a href={`/admin/invitados`} style={{ color: C.accent, fontWeight: 700 }}>Invitados</a>.
-                    </p>
-                  </div>
-                )}
-                <div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', marginBottom: '12px' }}>
-                    <input
-                      type="checkbox"
-                      checked={cfg.dietary.enabled}
-                      onChange={e => set('dietary', { ...cfg.dietary, enabled: e.target.checked })}
-                      style={{ width: isMobile ? '20px' : '16px', height: isMobile ? '20px' : '16px', accentColor: C.accent, cursor: 'pointer', flexShrink: 0 }}
-                    />
-                    <span style={{ fontSize: isMobile ? '15px' : '14px', color: C.text }}>Mostrar sección de restricciones alimentarias</span>
-                  </label>
-                  {cfg.dietary.enabled && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {cfg.dietary.options.map((opt, i) => (
-                        <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          <input
-                            style={{ ...S.input, flex: 1 }}
-                            value={opt}
-                            onChange={e => { const d = [...cfg.dietary.options]; d[i] = e.target.value; set('dietary', { ...cfg.dietary, options: d }); }}
-                            placeholder="Vegetariano"
-                          />
-                          {cfg.dietary.options.length > 1 && (
-                            <button style={S.removeBtn} onClick={() => set('dietary', { ...cfg.dietary, options: cfg.dietary.options.filter((_, j) => j !== i) })}>×</button>
-                          )}
-                        </div>
-                      ))}
-                      <button style={S.addBtn} onClick={() => set('dietary', { ...cfg.dietary, options: [...cfg.dietary.options, ''] })}>+ Opción</button>
-                    </div>
-                  )}
+              isDeluxe && (
+                <div style={{ padding: '12px 16px', backgroundColor: C.accentLight, borderRadius: '8px', border: `1px solid ${C.border}` }}>
+                  <p style={{ fontSize: '13px', color: C.accent, margin: 0, lineHeight: '1.6', fontFamily: C.font }}>
+                    <strong>Plan Deluxe:</strong> La gestión de cupos individuales se realiza en la sección de <a href={`/admin/invitados`} style={{ color: C.accent, fontWeight: 700 }}>Invitados</a>.
+                  </p>
                 </div>
-              </>
-            )}
-
-            {/* No niños — aplica a todos los planes */}
-            <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={cfg.noChildren}
-                onChange={e => set('noChildren', e.target.checked)}
-                style={{ width: isMobile ? '20px' : '16px', height: isMobile ? '20px' : '16px', accentColor: C.accent, cursor: 'pointer', flexShrink: 0 }}
-              />
-              <span style={{ fontSize: isMobile ? '15px' : '14px', color: C.text }}>Evento para adultos (mostrar aviso de &quot;no niños&quot;)</span>
-            </label>
-            {cfg.noChildren && (
-              <Field label="Mensaje personalizado (opcional)" C={C}>
-                <textarea
-                  style={S.textarea}
-                  value={cfg.noChildrenMessage}
-                  onChange={e => set('noChildrenMessage', e.target.value)}
-                  placeholder="Con todo nuestro cariño, les pedimos que esta celebración sea exclusiva para adultos. Agradecemos su comprensión."
-                />
-              </Field>
+              )
             )}
           </Section>
+
+          {/* ── 10. Restricciones alimentarias ── */}
+          {isPlus && (
+            <Section title="Restricciones alimentarias" C={C} description="Permite a tus invitados indicar alergias o preferencias de comida al confirmar."
+              summary={cfg.dietary.enabled ? `${cfg.dietary.options.filter(o => o.trim()).length} opción(es)` : 'Oculto'}
+            >
+              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={cfg.dietary.enabled}
+                  onChange={e => set('dietary', { ...cfg.dietary, enabled: e.target.checked })}
+                  style={{ width: isMobile ? '20px' : '16px', height: isMobile ? '20px' : '16px', accentColor: C.accent, cursor: 'pointer', flexShrink: 0 }}
+                />
+                <span style={{ fontSize: isMobile ? '15px' : '14px', color: C.text }}>Mostrar sección de restricciones alimentarias</span>
+              </label>
+              {cfg.dietary.enabled && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {cfg.dietary.options.map((opt, i) => (
+                    <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <input
+                        style={{ ...S.input, flex: 1 }}
+                        value={opt}
+                        onChange={e => { const d = [...cfg.dietary.options]; d[i] = e.target.value; set('dietary', { ...cfg.dietary, options: d }); }}
+                        placeholder="Vegetariano"
+                      />
+                      {cfg.dietary.options.length > 1 && (
+                        <button style={S.removeBtn} onClick={() => set('dietary', { ...cfg.dietary, options: cfg.dietary.options.filter((_, j) => j !== i) })}>×</button>
+                      )}
+                    </div>
+                  ))}
+                  <button style={S.addBtn} onClick={() => set('dietary', { ...cfg.dietary, options: [...cfg.dietary.options, ''] })}>+ Opción</button>
+                </div>
+              )}
+            </Section>
+          )}
 
         </div>
 

@@ -63,7 +63,7 @@ export default async function InvitacionPage({ params, searchParams }: Props) {
 
   const { data: event } = await supabase
     .from('events')
-    .select('id, title, template_type, config, plan, status, payment_status, expires_at')
+    .select('id, title, template_type, config, plan, status, payment_status, expires_at, rsvp_deadline')
     .eq('event_type', type)
     .eq('slug', slug)
     .single();
@@ -199,6 +199,11 @@ export default async function InvitacionPage({ params, searchParams }: Props) {
   const requiereToken = event.plan === 'plus' || event.plan === 'deluxe';
   if (requiereToken && (!guestToken || invalidToken)) {
     return <NotReady message={'Esta invitación es personal.\nÁbrela desde el link que te compartieron.'} />;
+  }
+
+  const rsvpDeadlineBlock = (event.config as { rsvpDeadlineBlock?: boolean } | null)?.rsvpDeadlineBlock;
+  if (rsvpDeadlineBlock && event.rsvp_deadline && !hasExistingRsvp && new Date() > new Date(`${event.rsvp_deadline}T23:59:59`)) {
+    return <NotReady message={'La fecha límite de confirmación ya pasó.\nContacta a los organizadores si necesitas ayuda.'} />;
   }
 
   const Template = entry.component;

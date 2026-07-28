@@ -83,7 +83,7 @@ export default function AdminLayoutClient({ children, profile, events }: AdminLa
             if (pathname !== href) setIsNavigating(true);
           }}
         />
-        <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', transition: 'margin-left 0.3s ease', position: 'relative' }}>
+        <main className={!isPreview && isSidebarHidden ? 'admin-main-sidebar-hidden' : ''} style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', transition: 'margin-left 0.3s ease', position: 'relative' }}>
           {isNavigating && (
             <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#F8F3EC]/80 backdrop-blur-sm animate-in fade-in duration-300">
               <Loader2 className="w-10 h-10 animate-spin" style={{ color: '#C9A87C' }} />
@@ -122,6 +122,10 @@ export default function AdminLayoutClient({ children, profile, events }: AdminLa
         }
         @media (max-width: 768px) {
           .sidebar-toggle-desktop { display: none; }
+          .admin-main-sidebar-hidden { padding-top: 0 !important; }
+        }
+        @media (min-width: 769px) {
+          .admin-main-sidebar-hidden { padding-top: 56px; }
         }
         .admin-mobile-header {
           display: none;

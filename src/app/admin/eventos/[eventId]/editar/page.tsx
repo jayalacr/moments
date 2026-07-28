@@ -33,7 +33,7 @@ export default async function EditarPage({ params }: Props) {
 
   const { data: event } = await supabase
     .from('events')
-    .select('id, title, slug, plan, config')
+    .select('id, title, slug, plan, config, rsvp_deadline')
     .eq('id', eventId)
     .single();
 
@@ -44,7 +44,8 @@ export default async function EditarPage({ params }: Props) {
       <style>{`
         .admin-editar-container {
           padding: 40px 48px;
-          max-width: 760px;
+          width: 100%;
+          box-sizing: border-box;
         }
         @media (max-width: 768px) {
           .admin-editar-container {
@@ -74,6 +75,7 @@ export default async function EditarPage({ params }: Props) {
         eventId={event.id}
         eventSlug={event.slug}
         initialConfig={event.config ?? {}}
+        initialRsvpDeadline={event.rsvp_deadline}
         plan={event.plan as 'essential' | 'plus' | 'deluxe'}
       />
     </div>

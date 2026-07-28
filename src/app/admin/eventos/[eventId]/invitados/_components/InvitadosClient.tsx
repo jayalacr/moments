@@ -20,6 +20,7 @@ import {
   FileText,
   AlertCircle
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import Spinner from '@/components/ui/Spinner';
 import {
   createGuest,
@@ -195,6 +196,11 @@ export default function InvitadosClient({
   const isDeluxe = event.plan === 'deluxe';
   const [expandedGuests, setExpandedGuests] = useState<Set<string>>(new Set());
 
+  // ── Confirmaciones: búsqueda y filtros ─────────────────────────────────────
+  const [confSearch, setConfSearch] = useState('');
+  const [confFilter, setConfFilter] = useState<'all' | 'confirmed' | 'declined' | 'pending'>('all');
+  const [confDietaryOnly, setConfDietaryOnly] = useState(false);
+
   function toggleExpanded(guestId: string) {
     setExpandedGuests(prev => {
       const next = new Set(prev);
@@ -237,38 +243,53 @@ export default function InvitadosClient({
     setCsvFileName(file.name);
     setCsvResult(null);
 
-    Papa.parse<string[]>(file, {
-      header: false,
-      skipEmptyLines: true,
-      complete: (results) => {
-        // Skip header row (index 0); access columns by index to avoid encoding issues with special chars
-        const dataRows = results.data.slice(1);
-        const existingPhones = new Set(guests.map(g => g.phone?.replace(/\D/g, '')).filter(Boolean));
-        const seenPhones = new Set<string>();
-        const parsed: CsvRow[] = dataRows.map((row) => {
-          const errors: string[] = [];
-          const name = (row[0] ?? '').trim();
-          const phone = (row[1] ?? '').trim();
-          const cupoRaw = (row[2] ?? '').trim();
-          const companions = isDeluxe ? (row[3] ?? '').trim() : '';
+    const reader = new FileReader();
+    reader.onload = () => {
+      const buffer = reader.result as ArrayBuffer;
+      // Excel suele exportar CSV en Windows-1252 (ANSI), no UTF-8: si la
+      // decodificación estricta en UTF-8 falla, cae a Windows-1252 para no
+      // corromper acentos/ñ como "�".
+      let text: string;
+      try {
+        text = new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+      } catch {
+        text = new TextDecoder('windows-1252').decode(buffer);
+      }
 
-          if (!name) errors.push('Nombre requerido');
-          const normalizedPhone = phone.replace(/\D/g, '');
-          if (!phone) errors.push('Teléfono requerido');
-          if (normalizedPhone && existingPhones.has(normalizedPhone)) errors.push('Teléfono ya registrado');
-          if (normalizedPhone && seenPhones.has(normalizedPhone)) errors.push('Teléfono duplicado en el archivo');
-          if (normalizedPhone) seenPhones.add(normalizedPhone);
+      Papa.parse<string[]>(text, {
+        header: false,
+        skipEmptyLines: true,
+        complete: (results) => {
+          // Skip header row (index 0); access columns by index to avoid encoding issues with special chars
+          const dataRows = results.data.slice(1);
+          const existingPhones = new Set(guests.map(g => g.phone?.replace(/\D/g, '')).filter(Boolean));
+          const seenPhones = new Set<string>();
+          const parsed: CsvRow[] = dataRows.map((row) => {
+            const errors: string[] = [];
+            const name = (row[0] ?? '').trim();
+            const phone = (row[1] ?? '').trim();
+            const cupoRaw = (row[2] ?? '').trim();
+            const companions = isDeluxe ? (row[3] ?? '').trim() : '';
 
-          const max_companions = parseInt(cupoRaw) || 0;
-          const companion_names = companions
-            ? companions.split(',').map(s => s.trim()).filter(Boolean)
-            : [];
+            if (!name) errors.push('Nombre requerido');
+            const normalizedPhone = phone.replace(/\D/g, '');
+            if (!phone) errors.push('Teléfono requerido');
+            if (normalizedPhone && existingPhones.has(normalizedPhone)) errors.push('Teléfono ya registrado');
+            if (normalizedPhone && seenPhones.has(normalizedPhone)) errors.push('Teléfono duplicado en el archivo');
+            if (normalizedPhone) seenPhones.add(normalizedPhone);
 
-          return { name, phone, max_companions, companion_names, _errors: errors };
-        });
-        setCsvRows(parsed);
-      },
-    });
+            const max_companions = parseInt(cupoRaw) || 0;
+            const companion_names = companions
+              ? companions.split(',').map(s => s.trim()).filter(Boolean)
+              : [];
+
+            return { name, phone, max_companions, companion_names, _errors: errors };
+          });
+          setCsvRows(parsed);
+        },
+      });
+    };
+    reader.readAsArrayBuffer(file);
   }
 
   function handleCsvImport() {
@@ -311,6 +332,18 @@ export default function InvitadosClient({
       return matchSearch && matchFilter;
     });
   }, [guests, search, filter]);
+
+  // ── Confirmaciones: búsqueda y filtros ──────────────────────────────────────
+  const filteredGuestsWithRsvp = useMemo(() => {
+    return guestsWithRsvp.filter(g => {
+      const matchSearch = g.name.toLowerCase().includes(confSearch.toLowerCase());
+      const status = g.rsvp?.status ?? 'pending';
+      const matchFilter = confFilter === 'all' ? true : status === confFilter;
+      const hasDietary = !!g.rsvp?.dietary || Object.keys(g.rsvp?.dietary_per_person ?? {}).length > 0;
+      const matchDietary = confDietaryOnly ? hasDietary : true;
+      return matchSearch && matchFilter && matchDietary;
+    });
+  }, [guestsWithRsvp, confSearch, confFilter, confDietaryOnly]);
 
   // ── Actions ──────────────────────────────────────────────────────────────
 
@@ -520,65 +553,19 @@ export default function InvitadosClient({
       {activeTab === 'invitados' ? (
         <>
           {/* ── Dashboard de Estadísticas ── */}
-      <p style={{ ...labelStats, marginBottom: '8px' }}>Invitaciones</p>
-      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        <div style={cardStats}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <p style={labelStats}>Total</p>
-              <p style={valueStats}>{stats.invitations.total}</p>
-            </div>
-            <Users size={20} color={C.mutedLight} strokeWidth={1.5} />
-          </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <p style={{ ...labelStats, marginBottom: '0' }}>Invitaciones</p>
+        <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px' }}>
+          <StatCard label="Total" value={stats.invitations.total} icon={<Users size={16} strokeWidth={1.5} />} />
+          <StatCard label="Respondieron" value={stats.invitations.answered} color={C.success} icon={<Check size={16} strokeWidth={1.5} />} />
+          <StatCard label="Sin responder" value={stats.invitations.notAnswered} color={C.warning} icon={<Search size={16} strokeWidth={1.5} />} />
         </div>
-        <div style={cardStats}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <p style={labelStats}>Respondieron</p>
-              <p style={{ ...valueStats, color: C.success }}>{stats.invitations.answered}</p>
-            </div>
-            <Check size={20} color={C.success} strokeWidth={1.5} />
-          </div>
-        </div>
-        <div style={cardStats}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <p style={labelStats}>Sin responder</p>
-              <p style={{ ...valueStats, color: C.warning }}>{stats.invitations.notAnswered}</p>
-            </div>
-            <Search size={20} color={C.warning} strokeWidth={1.5} />
-          </div>
-        </div>
-      </div>
 
-      <p style={{ ...labelStats, marginBottom: '8px' }}>Personas</p>
-      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-        <div style={cardStats}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <p style={labelStats}>Confirmados</p>
-              <p style={{ ...valueStats, color: C.success }}>{stats.people.confirmed}</p>
-            </div>
-            <Check size={20} color={C.success} strokeWidth={1.5} />
-          </div>
-        </div>
-        <div style={cardStats}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <p style={labelStats}>Pendientes</p>
-              <p style={{ ...valueStats, color: C.warning }}>{stats.people.pending}</p>
-            </div>
-            <Search size={20} color={C.warning} strokeWidth={1.5} />
-          </div>
-        </div>
-        <div style={cardStats}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <p style={labelStats}>No asistirán</p>
-              <p style={{ ...valueStats, color: C.danger }}>{stats.people.declined}</p>
-            </div>
-            <X size={20} color={C.danger} strokeWidth={1.5} />
-          </div>
+        <p style={{ ...labelStats, marginBottom: '0' }}>Personas</p>
+        <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px' }}>
+          <StatCard label="Confirmados" value={stats.people.confirmed} color={C.success} icon={<Check size={16} strokeWidth={1.5} />} />
+          <StatCard label="Pendientes" value={stats.people.pending} color={C.warning} icon={<Search size={16} strokeWidth={1.5} />} />
+          <StatCard label="No asistirán" value={stats.people.declined} color={C.danger} icon={<X size={16} strokeWidth={1.5} />} />
         </div>
       </div>
 
@@ -1081,6 +1068,52 @@ export default function InvitadosClient({
         )}
       </div>
 
+      {/* ── Barra de búsqueda y filtros ── */}
+      <div className="toolbar-container" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        <div className="search-input-wrap" style={{ flex: 1, position: 'relative', minWidth: '260px' }}>
+          <input
+            style={{ ...inputStyle, paddingLeft: '40px' }}
+            placeholder="Buscar por nombre..."
+            value={confSearch}
+            onChange={e => setConfSearch(e.target.value)}
+          />
+          <Search size={16} color={C.muted} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} strokeWidth={1.5} />
+        </div>
+        <div className="filter-tabs" style={{ display: 'flex', gap: '4px', background: C.border, padding: '2px', borderRadius: '10px' }}>
+          {(['all', 'confirmed', 'pending', 'declined'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setConfFilter(tab)}
+              style={{
+                padding: '8px 16px', fontSize: '12px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                backgroundColor: confFilter === tab ? C.white : 'transparent',
+                color: confFilter === tab ? C.text : C.muted,
+                fontWeight: confFilter === tab ? 600 : 400,
+                transition: 'all 0.2s',
+              }}
+            >
+              {tab === 'all' ? 'Todos' : tab === 'pending' ? 'Pendientes' : tab === 'confirmed' ? 'Confirmaron' : 'No asistirán'}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setConfDietaryOnly(v => !v)}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '8px',
+            padding: '10px 16px', fontSize: '12px', borderRadius: '10px',
+            border: `1px solid ${confDietaryOnly ? C.accent : C.border}`,
+            backgroundColor: confDietaryOnly ? C.accentLight : 'transparent',
+            color: confDietaryOnly ? C.accent : C.muted,
+            fontWeight: confDietaryOnly ? 600 : 400,
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <AlertCircle size={14} />
+          Con restricción alimenticia
+        </button>
+      </div>
+
       {/* ── Tabla de Familias / Confirmaciones ── */}
       <div className="table-container" style={{ backgroundColor: C.white, border: `1px solid ${C.border}`, borderRadius: '20px', overflow: 'hidden' }}>
         {/* Header — solo desktop */}
@@ -1094,12 +1127,12 @@ export default function InvitadosClient({
           ))}
         </div>
 
-        {guestsWithRsvp.length === 0 ? (
+        {filteredGuestsWithRsvp.length === 0 ? (
           <div style={{ padding: '60px', textAlign: 'center', color: C.mutedLight }}>
-            Aún no hay invitados registrados.
+            {guestsWithRsvp.length === 0 ? 'Aún no hay invitados registrados.' : 'Sin coincidencias con los filtros actuales.'}
           </div>
         ) : (
-          guestsWithRsvp.map((guest, gi) => {
+          filteredGuestsWithRsvp.map((guest, gi) => {
             const rsvp = guest.rsvp;
             const titularStatus = rsvp?.status ?? 'pending';
             const confirmedSet = new Set<string>(rsvp?.companion_names ?? []);
@@ -1109,7 +1142,7 @@ export default function InvitadosClient({
             const titularMeta = statusMetaConf[titularStatus];
             const dMap = rsvp?.dietary_per_person ?? {};
             const hasDetailedDietary = Object.keys(dMap).length > 0;
-            const isLastGuest = gi === guestsWithRsvp.length - 1;
+            const isLastGuest = gi === filteredGuestsWithRsvp.length - 1;
 
             const companionRows = allCompanions.map(name => ({
               name,
@@ -1173,9 +1206,12 @@ export default function InvitadosClient({
                         )}
                       </div>
                     ) : rsvp?.dietary ? (
-                      <p style={{ margin: 0, color: C.accent }}>{rsvp.dietary}</p>
+                      <span style={{
+                        display: 'inline-block', fontSize: '11px', padding: '3px 10px',
+                        backgroundColor: C.accentLight, color: C.accent, borderRadius: '20px', fontWeight: 500,
+                      }}>{rsvp.dietary}</span>
                     ) : (
-                      <span style={{ color: C.mutedLight }}>N/A</span>
+                      <span style={{ color: C.mutedLight, fontSize: '12px' }}>—</span>
                     )}
                   </div>
                   <p style={{ margin: 0, fontSize: '12px', color: C.mutedLight }}>
@@ -1305,13 +1341,6 @@ export default function InvitadosClient({
     </div>
   )}
 
-      <style jsx>{`
-        .guest-row-hover:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 24px rgba(0,0,0,0.04);
-          border-color: ${C.accent} !important;
-        }
-      `}</style>
     </div>
   );
 }
@@ -1341,16 +1370,45 @@ const modalContent: React.CSSProperties = {
   boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
 };
 
-const cardStats: React.CSSProperties = {
-  backgroundColor: '#FFFFFF',
-  border: `1px solid #EDE5D8`,
-  borderRadius: '20px',
-  padding: '24px',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '4px',
-  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
-};
+function StatCard({
+  label,
+  value,
+  icon,
+  color = '#1C1611',
+}: {
+  label: string;
+  value: number;
+  icon: React.ReactNode;
+  color?: string;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{
+        backgroundColor: '#FFFFFF',
+        border: '1px solid #EDE5D8',
+        borderRadius: '14px',
+        padding: '12px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '10px',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+        <span style={{ color, opacity: 0.8, flexShrink: 0, display: 'flex' }}>{icon}</span>
+        <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#9C8E82', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {label}
+        </p>
+      </div>
+      <p style={{ fontSize: '22px', fontFamily: 'var(--font-cormorant)', fontWeight: 500, color, margin: 0, lineHeight: 1, flexShrink: 0 }}>
+        {value}
+      </p>
+    </motion.div>
+  );
+}
 
 const labelStats: React.CSSProperties = {
   fontSize: '11px',

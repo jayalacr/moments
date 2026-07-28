@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { Calendar, Users } from 'lucide-react';
+import { computeInvitationStats, type GuestStatsInput } from '@/lib/rsvpStats';
 
 export const metadata: Metadata = { title: 'Mis Eventos' };
 
@@ -80,12 +82,35 @@ export default async function AdminPage() {
     redirect(`/admin/eventos/${events[0].id}/invitados`);
   }
 
+  // Confirmados/total por evento (solo aplica a planes con módulo de invitados)
+  const statsByEvent: Record<string, ReturnType<typeof computeInvitationStats>> = {};
+  const eventIdsWithGuests = (events ?? []).filter(e => e.plan !== 'essential').map(e => e.id);
+  if (eventIdsWithGuests.length) {
+    const { data: guestData } = await supabase
+      .from('guests')
+      .select('event_id, companion_names, rsvps(status, seats, companion_names)')
+      .in('event_id', eventIdsWithGuests);
+
+    for (const eventId of eventIdsWithGuests) {
+      const event = events!.find(e => e.id === eventId);
+      const guests: GuestStatsInput[] = (guestData ?? [])
+        .filter(g => g.event_id === eventId)
+        .map(g => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const rsvpArr = (g as any).rsvps;
+          return { companion_names: g.companion_names ?? [], rsvp: rsvpArr?.[0] ?? null };
+        });
+      statsByEvent[eventId] = computeInvitationStats(guests, event?.plan === 'deluxe');
+    }
+  }
+
   return (
     <div className="admin-dashboard-container">
       <style>{`
         .admin-dashboard-container {
           padding: 40px 48px;
-          max-width: 860px;
+          width: 100%;
+          box-sizing: border-box;
         }
         @media (max-width: 768px) {
           .admin-dashboard-container {
@@ -159,6 +184,9 @@ export default async function AdminPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {events.map(event => {
             const s = STATUS_LABELS[event.status] ?? STATUS_LABELS.draft;
+            const eventDate = event.config?.date;
+            const stats = statsByEvent[event.id];
+            const totalPeople = stats ? stats.people.confirmed + stats.people.declined + stats.people.pending : 0;
             return (
               <Link key={event.id} href={`/admin/eventos/${event.id}`} className="event-card">
                 {/* Franja decorativa */}
@@ -207,6 +235,20 @@ export default async function AdminPage() {
                       {event.title}
                     </p>
 
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginTop: '6px' }}>
+                      {eventDate?.day && (
+                        <p style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: C.muted, margin: 0 }}>
+                          <Calendar size={13} />
+                          {eventDate.day} de {eventDate.month} {eventDate.year}
+                        </p>
+                      )}
+                      {stats && (
+                        <p style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: C.muted, margin: 0 }}>
+                          <Users size={13} />
+                          {stats.people.confirmed}/{totalPeople} confirmados
+                        </p>
+                      )}
+                    </div>
                     <p style={{ fontSize: '12px', color: C.mutedLight, marginTop: '6px' }}>
                       Creado el {new Date(event.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}
                     </p>

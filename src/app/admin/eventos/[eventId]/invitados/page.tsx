@@ -25,7 +25,6 @@ export default async function InvitadosPage({ params }: Props) {
         .admin-invitados-container {
           padding: 40px 48px;
           width: 100%;
-          max-width: 1200px;
           box-sizing: border-box;
         }
         @media (max-width: 768px) {
