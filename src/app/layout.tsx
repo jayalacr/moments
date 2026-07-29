@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from '@vercel/analytics/next';
+import MetaPixel from '@/components/MetaPixel';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,12 +14,30 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
+const TITLE = "Moments — Invitaciones Digitales Premium";
+const DESCRIPTION = "Crea experiencias inolvidables con nuestras invitaciones digitales premium. RSVP inteligente, itinerarios animados y diseño exclusivo para tu gran día.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(BASE_URL),
   title: {
-    default: "Moments — Invitaciones Digitales Premium",
+    default: TITLE,
     template: "%s | Moments",
   },
-  description: "Crea experiencias inolvidables con nuestras invitaciones digitales premium. RSVP inteligente, itinerarios animados y diseño exclusivo para tu gran día.",
+  description: DESCRIPTION,
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    type: 'website',
+    url: BASE_URL,
+    images: [{ url: '/og-default.jpg', width: 1200, height: 630, alt: TITLE }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ['/og-default.jpg'],
+  },
 };
 
 export default function RootLayout({
@@ -30,7 +50,11 @@ export default function RootLayout({
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <Analytics />
+        <MetaPixel />
+      </body>
     </html>
   );
 }

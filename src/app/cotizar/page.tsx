@@ -17,7 +17,7 @@ import {
   type Plan,
   type DesignType,
 } from '@/lib/pricing';
-import { waLink } from '@/lib/contact';
+import { waLink, trackWhatsAppClick } from '@/lib/contact';
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
@@ -558,6 +558,7 @@ export default function CotizarPage() {
               target="_blank"
               rel="noopener noreferrer"
               className="q-cta"
+              onClick={() => trackWhatsAppClick('cotizador')}
             >
               Pedir informes por WhatsApp →
             </a>

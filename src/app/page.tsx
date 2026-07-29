@@ -6,8 +6,8 @@ import { Cormorant_Garamond, Jost, Montserrat } from 'next/font/google';
 import { Instagram } from 'lucide-react';
 import SiteHeader from '@/components/site/SiteHeader';
 import SiteFooter from '@/components/site/SiteFooter';
-import { BASE_PRICES } from '@/lib/pricing';
-import { waLink } from '@/lib/contact';
+import { BASE_PRICES, formatMXN } from '@/lib/pricing';
+import { waLink, trackWhatsAppClick } from '@/lib/contact';
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
@@ -593,10 +593,11 @@ export default function LandingPage() {
           <span className="hero__wordmark">moments</span>
           <span className="hero__eyebrow">Invitaciones digitales</span>
           <h1 className="hero__heading">Una invitación tan única como tu boda.</h1>
+          <p className="hero__sub">Con confirmación de asistencia y panel de control. Desde {formatMXN(BASE_PRICES.essential)} MXN, lista en 5 días.</p>
           <div className="hero__ctas">
             <Link className="btn btn--gold" href="/plantillas">Ver plantillas</Link>
             {WA_HREF && (
-              <a className="btn btn--ghost" href={WA_HREF} target="_blank" rel="noopener noreferrer">
+              <a className="btn btn--ghost" href={WA_HREF} target="_blank" rel="noopener noreferrer" onClick={() => trackWhatsAppClick('hero')}>
                 <WhatsAppIcon className="wa-icon" />
                 Cotizar por WhatsApp
               </a>
@@ -703,7 +704,7 @@ export default function LandingPage() {
                 <li>Costo adicional según complejidad</li>
               </ul>
               {WA_HREF && (
-                <a href={WA_HREF} target="_blank" rel="noopener noreferrer" className="btn btn--gold">Cotizar diseño a medida</a>
+                <a href={WA_HREF} target="_blank" rel="noopener noreferrer" className="btn btn--gold" onClick={() => trackWhatsAppClick('diseno-a-medida')}>Cotizar diseño a medida</a>
               )}
             </div>
           </div>
@@ -741,6 +742,7 @@ export default function LandingPage() {
                     href={WA_HREF}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => trackWhatsAppClick(`plan-${plan.name.toLowerCase()}`)}
                   >
                     {plan.cta}
                   </a>
@@ -832,7 +834,7 @@ export default function LandingPage() {
             <p>Cuéntanos de tu boda y te enviamos una cotización sin compromiso, hoy mismo.</p>
             <div className="ctaband__ctas">
               {WA_HREF && (
-                <a className="btn btn--gold" href={WA_HREF} target="_blank" rel="noopener noreferrer">
+                <a className="btn btn--gold" href={WA_HREF} target="_blank" rel="noopener noreferrer" onClick={() => trackWhatsAppClick('cta-band')}>
                   <WhatsAppIcon className="wa-icon" />
                   Solicitar diseño
                 </a>

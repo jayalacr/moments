@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Montserrat, Jost } from 'next/font/google';
 import { Instagram } from 'lucide-react';
 import { waLink } from '@/lib/contact';
@@ -21,7 +22,9 @@ const css = `
     max-width: 1100px; margin: 0 auto; padding: 0 24px;
     display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
   }
-  .sf__copy { font-family: var(--font-jost), system-ui, sans-serif; font-size: 11px; font-weight: 300; color: rgba(250,247,242,0.2); justify-self: start; }
+  .sf__copy { font-family: var(--font-jost), system-ui, sans-serif; font-size: 11px; font-weight: 300; color: rgba(250,247,242,0.2); justify-self: start; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .sf__copy a { color: rgba(250,247,242,0.3); text-decoration: none; transition: color 0.18s; }
+  .sf__copy a:hover { color: #B8965A; }
   .sf__wordmark { font-family: var(--font-montserrat), 'Montserrat', system-ui, sans-serif; font-size: 16px; font-weight: 300; letter-spacing: 0.26em; color: rgba(250,247,242,0.4); }
   .sf__links { display: flex; align-items: center; gap: 24px; justify-self: end; }
   .sf__links a { color: rgba(250,247,242,0.35); text-decoration: none; display: flex; transition: color 0.18s; }
@@ -41,7 +44,11 @@ export default function SiteFooter() {
       <style suppressHydrationWarning>{css}</style>
       <footer className="sf">
         <div className="sf__inner">
-          <span className="sf__copy">© 2026 Powered by code4u</span>
+          <span className="sf__copy">
+            © 2026 Powered by code4u
+            <Link href="/aviso-de-privacidad">Aviso de privacidad</Link>
+            <Link href="/terminos">Términos</Link>
+          </span>
           <span className="sf__wordmark">moments</span>
           <div className="sf__links">
             {WA_HREF && (

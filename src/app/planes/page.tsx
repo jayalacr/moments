@@ -180,6 +180,14 @@ const sections: Section[] = [
   },
 ];
 
+// Rota cada plan a una colección de plantilla distinta — el plan no define el diseño,
+// así que el "Ver demo" de cada uno debe mostrar una plantilla diferente.
+const DEMO_COLLECTION: Record<PlanKey, string> = {
+  essential: 'classic-elegance',
+  plus: 'costa',
+  deluxe: 'deluxe',
+};
+
 const PLAN_DATA = [
   {
     key: 'essential' as PlanKey,
@@ -201,7 +209,7 @@ const PLAN_DATA = [
     tagline: 'Experiencia completa',
     Icon: Star,
     accentColor: '#B8965A',
-    popular: false,
+    popular: true,
     highlights: [
       'Todo lo del plan Essential',
       'Cuenta regresiva al gran evento',
@@ -215,7 +223,7 @@ const PLAN_DATA = [
     tagline: 'Premium e inmersivo',
     Icon: Crown,
     accentColor: '#8B6030',
-    popular: true,
+    popular: false,
     highlights: [
       'Todo lo del plan Plus',
       'Loader animado y música de fondo',
@@ -766,7 +774,7 @@ export default function PlanesPage() {
                   </li>
                 ))}
               </ul>
-              <Link href={`/plantillas/deluxe?plan=${key}`} className="plan-card-cta" target="_blank">
+              <Link href={`/plantillas/${DEMO_COLLECTION[key]}?plan=${key}`} className="plan-card-cta" target="_blank">
                 Ver demo
               </Link>
             </div>
@@ -845,20 +853,20 @@ export default function PlanesPage() {
               <div className="ph-icon-wrap e"><Sparkles size={16} color="#9B8B78" strokeWidth={1.5} /></div>
               <p className="ph-name">Essential</p>
               <p className="ph-desc">Sencillo y elegante</p>
-              <a href="/plantillas/deluxe?plan=essential" target="_blank" className="btn-example">Ver demo</a>
+              <a href={`/plantillas/${DEMO_COLLECTION.essential}?plan=essential`} target="_blank" className="btn-example">Ver demo</a>
             </div>
             <div className="ph-plan p">
+              <div className="ph-badge">Más popular</div>
               <div className="ph-icon-wrap p"><Star size={16} color="#B8965A" strokeWidth={1.5} /></div>
               <p className="ph-name">Plus</p>
               <p className="ph-desc">Experiencia completa</p>
-              <a href="/plantillas/deluxe?plan=plus" target="_blank" className="btn-example">Ver demo</a>
+              <a href={`/plantillas/${DEMO_COLLECTION.plus}?plan=plus`} target="_blank" className="btn-example">Ver demo</a>
             </div>
             <div className="ph-plan d">
-              <div className="ph-badge">Más popular</div>
               <div className="ph-icon-wrap d"><Crown size={16} color="#8B6030" strokeWidth={1.5} /></div>
               <p className="ph-name">Deluxe</p>
               <p className="ph-desc">Premium e inmersivo</p>
-              <a href="/plantillas/deluxe?plan=deluxe" target="_blank" className="btn-example">Ver demo</a>
+              <a href={`/plantillas/${DEMO_COLLECTION.deluxe}?plan=deluxe`} target="_blank" className="btn-example">Ver demo</a>
             </div>
           </div>
 
