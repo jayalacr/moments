@@ -220,16 +220,13 @@ importante, es una decisión de negocio, no de redacción.
 
 ---
 
-## A8 · Reemplazar los previews falsos de plantillas `P1` ⛔ depende de **B8**
+## A8 · Reemplazar los previews falsos de plantillas — cerrado
 
-**Archivo:** `src/app/plantillas/page.tsx:180-190`
-
-Las tres cards renderizan el mismo bloque CSS genérico con "Sofía & Mateo". Classic, Elegance y Costa se ven prácticamente idénticas; el cliente no puede distinguirlas sin abrir cada demo, y la mayoría no lo hará.
-
-**Es el cambio de mayor impacto por esfuerzo invertido de toda la lista.**
-
-- Sustituir el mockup CSS por las capturas reales usando `next/image`.
-- Mantener el marco de celular y el badge de nombre.
+Las capturas se generaron automáticamente con Playwright (headless, viewport
+móvil) directamente desde las demos reales — no hizo falta que Juan las tomara a
+mano. Rediseño sin marco de celular: imagen a sangre completa dentro de la card,
+estilo editorial (encaja mejor con la tipografía Cormorant del resto del sitio).
+Recorte 3:5 para que el nombre de la pareja quede visible en las tres.
 
 ---
 
@@ -351,10 +348,12 @@ de la primera versión entregada, sin reembolso después.
 - [ ] Revisión legal (abogado o al menos revisión personal de Juan) antes de publicarlo como definitivo
 - [ ] Quitar `robots: { index: false }` de ambas páginas una vez confirmado el contenido
 
-### B8 · Capturar screenshots de las plantillas `P1` → desbloquea **A8**
+### B8 · Screenshots de las plantillas — cerrado, no requirió a Juan
 
-- [ ] Capturar Classic, Elegance y Costa en viewport móvil (390×844)
-- [ ] Exportar optimizadas a `public/templates/`
+Generadas automáticamente (ver A8). Único pendiente opcional: si algún día se
+quiere una captura distinta (otro encuadre, otra pareja demo), avisar para
+regenerarlas — el script queda documentado en el historial de commits, no vive en
+el repo de forma permanente (es una herramienta de un solo uso).
 
 ### B9 · Decisiones de negocio — cerrado
 
@@ -415,7 +414,7 @@ Revisado y correcto, no hay que tocarlo:
 | **1** | A0 completo, A2, A5, A12 | B1, B2, B3 |
 | **2** | A1, A3 | B4, B5, B6 |
 | **3** | A4, A6, A7, A9, A10 | B7, B8 |
-| **4** | A8 (cuando esté B8) | — |
+| **4** | — (A8 ya cerrado) | — |
 | **5** | A13 | **B12** |
 
 A11 (captura de leads) descartado por ahora — decisión de Juan. B11 (Instagram) cerrado, `@code4u_mx` es correcto.
