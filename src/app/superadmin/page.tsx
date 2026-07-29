@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { toggleEventStatus } from './_actions';
+import { parseWeddingDate, PURGE_GRACE_DAYS } from '@/lib/eventDate';
 
 export const metadata: Metadata = { title: 'Superadmin | Eventos' };
 
@@ -49,6 +50,38 @@ const TYPE_MAP: Record<string, string> = {
   boda: 'Boda', xv: 'XV Años', bautizo: 'Bautizo', graduacion: 'Graduación',
 };
 
+function formatEventDate(config: unknown): string {
+  const weddingDate = parseWeddingDate(config);
+  if (!weddingDate) return '—';
+  return weddingDate.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+const PURGE_GRACE_MS = PURGE_GRACE_DAYS * 24 * 60 * 60 * 1000;
+
+/** Cuenta eventos cuya invitación expiró (fecha de boda) hace más de PURGE_GRACE_DAYS — ya se pueden depurar de BD + Cloudinary. */
+function countReadyToPurge(events: { expires_at: string | null }[]): number {
+  const now = Date.now();
+  return events.filter(e => e.expires_at && new Date(e.expires_at).getTime() + PURGE_GRACE_MS < now).length;
+}
+
+function expiryInfo(expiresAt: string | null): { label: string; color: string } {
+  if (!expiresAt) return { label: '—', color: C.mutedLight };
+  const expiresAtMs = new Date(expiresAt).getTime();
+  const now = Date.now();
+
+  if (now > expiresAtMs + PURGE_GRACE_MS) return { label: 'Lista para depurar', color: C.red };
+  if (now > expiresAtMs) {
+    const daysInGrace = Math.floor((now - expiresAtMs) / (1000 * 60 * 60 * 24));
+    return { label: `Inactiva (día ${daysInGrace}/${PURGE_GRACE_DAYS})`, color: C.amber };
+  }
+
+  const days = Math.ceil((expiresAtMs - now) / (1000 * 60 * 60 * 24));
+  if (days === 0) return { label: 'Hoy', color: C.red };
+  if (days <= 7) return { label: `${days} día${days !== 1 ? 's' : ''}`, color: C.red };
+  if (days <= 30) return { label: `${days} días`, color: C.amber };
+  return { label: `${days} días`, color: C.muted };
+}
+
 export default async function SuperadminPage() {
   const supabase = await createClient();
 
@@ -75,6 +108,7 @@ export default async function SuperadminPage() {
   const total = events?.length ?? 0;
   const live = events?.filter(e => e.status === 'published').length ?? 0;
   const draft = events?.filter(e => e.status === 'draft').length ?? 0;
+  const readyToPurge = countReadyToPurge(events ?? []);
 
   return (
     <div className="sa-page-container">
@@ -93,7 +127,7 @@ export default async function SuperadminPage() {
         }
         .sa-stats-grid {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: repeat(4, 1fr);
           gap: 12px;
           margin-bottom: 32px;
         }
@@ -106,7 +140,7 @@ export default async function SuperadminPage() {
         @media (max-width: 768px) {
           .sa-page-container { padding: 24px 20px; }
           .sa-header { flex-direction: column; }
-          .sa-stats-grid { grid-template-columns: repeat(3, 1fr); }
+          .sa-stats-grid { grid-template-columns: repeat(2, 1fr); }
           .sa-table-wrapper { display: none; }
           .sa-cards-list { display: flex !important; }
         }
@@ -176,6 +210,7 @@ export default async function SuperadminPage() {
           { label: 'Total de eventos', value: total, color: C.text },
           { label: 'Publicados', value: live, color: C.green },
           { label: 'En borrador', value: draft, color: C.muted },
+          { label: 'Listas para depurar', value: readyToPurge, color: C.red },
         ].map(stat => (
           <div
             key={stat.label}
@@ -201,7 +236,7 @@ export default async function SuperadminPage() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
           <thead>
             <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-              {['Evento', 'Tipo', 'Plan', 'Organizador', 'Estado', 'Pago', 'Creado', ''].map(h => (
+              {['Evento', 'Tipo', 'Plan', 'Organizador', 'Fecha del evento', 'Estado', 'Vence en', 'Pago', 'Creado', ''].map(h => (
                 <th
                   key={h}
                   style={{
@@ -224,7 +259,7 @@ export default async function SuperadminPage() {
           <tbody>
             {!events?.length && (
               <tr>
-                <td colSpan={8} style={{ padding: '48px 16px', textAlign: 'center', fontSize: '13px', color: C.muted, fontStyle: 'italic' }}>
+                <td colSpan={10} style={{ padding: '48px 16px', textAlign: 'center', fontSize: '13px', color: C.muted, fontStyle: 'italic' }}>
                   Aún no hay eventos.
                 </td>
               </tr>
@@ -235,6 +270,8 @@ export default async function SuperadminPage() {
               const payment = PAYMENT_MAP[event.payment_status ?? 'pending'] ?? PAYMENT_MAP.pending;
               const org = profileMap[event.owner_id] as { full_name?: string; email?: string } | undefined;
               const createdAt = new Date(event.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: '2-digit' });
+              const eventDate = formatEventDate(event.config);
+              const expiry = expiryInfo(event.expires_at);
 
               return (
                 <tr
@@ -282,6 +319,13 @@ export default async function SuperadminPage() {
                     </p>
                   </td>
 
+                  {/* Fecha del evento */}
+                  <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '12px', color: C.text }}>
+                      {eventDate}
+                    </span>
+                  </td>
+
                   {/* Estado */}
                   <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '20px', backgroundColor: status.bg }}>
@@ -292,6 +336,13 @@ export default async function SuperadminPage() {
                       <span style={{ fontSize: '10px', color: status.color, letterSpacing: '0.02em', fontWeight: 500 }}>
                         {status.label}
                       </span>
+                    </span>
+                  </td>
+
+                  {/* Vence en */}
+                  <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '11.5px', color: expiry.color, fontWeight: 500 }}>
+                      {expiry.label}
                     </span>
                   </td>
 
@@ -353,6 +404,8 @@ export default async function SuperadminPage() {
           const payment = PAYMENT_MAP[event.payment_status ?? 'pending'] ?? PAYMENT_MAP.pending;
           const org = profileMap[event.owner_id] as { full_name?: string; email?: string } | undefined;
           const createdAt = new Date(event.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: '2-digit' });
+          const eventDate = formatEventDate(event.config);
+          const expiry = expiryInfo(event.expires_at);
           return (
             <div
               key={event.id}
@@ -393,10 +446,16 @@ export default async function SuperadminPage() {
 
               {/* Organizador */}
               {org && (
-                <p style={{ fontSize: '11px', color: C.muted, marginBottom: '12px' }}>
+                <p style={{ fontSize: '11px', color: C.muted, marginBottom: '4px' }}>
                   {org.full_name || org.email}
                 </p>
               )}
+
+              {/* Fecha del evento + vencimiento */}
+              <p style={{ fontSize: '11px', color: C.muted, marginBottom: '12px' }}>
+                Evento: <span style={{ color: C.text }}>{eventDate}</span>
+                {' · '}Vence: <span style={{ color: expiry.color, fontWeight: 500 }}>{expiry.label}</span>
+              </p>
 
               {/* Acciones */}
               <div style={{ display: 'flex', gap: '8px' }}>

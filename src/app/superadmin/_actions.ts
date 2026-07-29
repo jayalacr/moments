@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import type { DesignType, ExtensionKey } from '@/lib/pricing';
+import type { DesignType } from '@/lib/pricing';
 
 export async function updateTemplateType(eventId: string, templateType: string) {
   const supabase = await createClient();
@@ -82,16 +82,17 @@ export async function updateEventPlan(
 
 interface PricingPayload {
   designType: DesignType;
-  extensionKey: ExtensionKey;
+  extensionMonths: number;
   customDesignFeeMxn: number;
 }
 
 export async function updateEventPricing(eventId: string, payload: PricingPayload) {
   const VALID_DESIGN: DesignType[] = ['template', 'custom'];
-  const VALID_EXT: ExtensionKey[] = ['none', '1m', '3m'];
 
   if (!VALID_DESIGN.includes(payload.designType)) throw new Error('design_type inválido');
-  if (!VALID_EXT.includes(payload.extensionKey)) throw new Error('extension_key inválido');
+  if (!Number.isInteger(payload.extensionMonths) || payload.extensionMonths < 0) {
+    throw new Error('extension_months inválido');
+  }
   if (!Number.isFinite(payload.customDesignFeeMxn) || payload.customDesignFeeMxn < 0) {
     throw new Error('custom_design_fee_mxn inválido');
   }
@@ -103,11 +104,12 @@ export async function updateEventPricing(eventId: string, payload: PricingPayloa
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (profile?.role !== 'superadmin') throw new Error('Sin permisos');
 
+  // NOTA: requiere la columna events.extension_months (ver LANZAMIENTO.md — B4, migración manual pendiente en Supabase).
   const { error } = await supabase
     .from('events')
     .update({
       design_type: payload.designType,
-      extension_key: payload.extensionKey,
+      extension_months: payload.extensionMonths,
       custom_design_fee_mxn: Math.round(payload.designType === 'custom' ? payload.customDesignFeeMxn : 0),
     })
     .eq('id', eventId);

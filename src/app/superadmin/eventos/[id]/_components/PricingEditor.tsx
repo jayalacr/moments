@@ -3,13 +3,13 @@
 import { useMemo, useState, useTransition } from 'react';
 import { updateEventPricing, updatePaymentStatus } from '@/app/superadmin/_actions';
 import {
-  EXTENSION_LABEL,
+  INCLUDED_MONTHS,
+  EXTRA_MONTH_PRICE_BY_PLAN,
   DESIGN_LABEL,
   calcularTotal,
   formatMXN,
   isSubdomainAvailable,
   type Plan,
-  type ExtensionKey,
   type DesignType,
 } from '@/lib/pricing';
 
@@ -47,15 +47,15 @@ const PAYMENT_COLOR: Record<PaymentStatus, string> = {
   expired:  C.muted,
 };
 
-const EXTENSIONS: ExtensionKey[] = ['none', '1m', '3m'];
 const DESIGNS: DesignType[] = ['template', 'custom'];
+const MAX_EXTRA_MONTHS = 11;
 
 interface Props {
   eventId: string;
   plan: Plan;
   initial: {
     designType: DesignType;
-    extensionKey: ExtensionKey;
+    extensionMonths: number;
     customDesignFeeMxn: number;
     paymentStatus: PaymentStatus;
     paymentNotes: string | null;
@@ -64,7 +64,7 @@ interface Props {
 
 export default function PricingEditor({ eventId, plan, initial }: Props) {
   const [designType, setDesignType] = useState<DesignType>(initial.designType);
-  const [extensionKey, setExtensionKey] = useState<ExtensionKey>(initial.extensionKey);
+  const [extensionMonths, setExtensionMonths] = useState<number>(initial.extensionMonths);
   const [customDesignFeeMxn, setCustomDesignFeeMxn] = useState<number>(initial.customDesignFeeMxn);
   const [snapshot, setSnapshot] = useState(initial);
   const [isPending, startTransition] = useTransition();
@@ -83,13 +83,13 @@ export default function PricingEditor({ eventId, plan, initial }: Props) {
     paymentNotes !== paymentSnapshot.paymentNotes;
 
   const breakdown = useMemo(
-    () => calcularTotal({ plan, designType, extensionKey, customDesignFeeMxn }),
-    [plan, designType, extensionKey, customDesignFeeMxn],
+    () => calcularTotal({ plan, designType, extensionMonths, customDesignFeeMxn }),
+    [plan, designType, extensionMonths, customDesignFeeMxn],
   );
 
   const isDirty =
     designType !== snapshot.designType ||
-    extensionKey !== snapshot.extensionKey ||
+    extensionMonths !== snapshot.extensionMonths ||
     customDesignFeeMxn !== snapshot.customDesignFeeMxn
 
   function handleSave() {
@@ -100,12 +100,12 @@ export default function PricingEditor({ eventId, plan, initial }: Props) {
       try {
         await updateEventPricing(eventId, {
           designType,
-          extensionKey,
+          extensionMonths,
           customDesignFeeMxn: appliedFee
         });
         setSnapshot({
           designType,
-          extensionKey,
+          extensionMonths,
           customDesignFeeMxn: appliedFee,
           paymentStatus: paymentSnapshot.paymentStatus,
           paymentNotes: paymentSnapshot.paymentNotes,
@@ -172,18 +172,37 @@ export default function PricingEditor({ eventId, plan, initial }: Props) {
         </div>
 
         <div>
-          <label style={labelStyle}>Extensión</label>
-          <select
-            value={extensionKey}
-            onChange={(e) => setExtensionKey(e.target.value as ExtensionKey)}
-            style={inputStyle}
-          >
-            {EXTENSIONS.map((k) => (
-              <option key={k} value={k} style={{ background: '#FFFFFF' }}>
-                {EXTENSION_LABEL[k]}
-              </option>
-            ))}
-          </select>
+          <label style={labelStyle}>Meses adicionales ({INCLUDED_MONTHS} incluidos + extensión)</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0', border: `1px solid ${C.borderBright}`, borderRadius: '6px', overflow: 'hidden', width: 'fit-content' }}>
+            <button
+              type="button"
+              onClick={() => setExtensionMonths(m => Math.max(0, m - 1))}
+              disabled={extensionMonths === 0}
+              style={{
+                width: '32px', height: '36px', border: 'none',
+                background: 'transparent',
+                color: extensionMonths === 0 ? C.muted : C.text,
+                fontSize: '16px', cursor: extensionMonths === 0 ? 'not-allowed' : 'pointer',
+              }}
+            >−</button>
+            <div style={{ minWidth: '48px', textAlign: 'center', fontSize: '13px', color: C.text }}>
+              +{extensionMonths}
+            </div>
+            <button
+              type="button"
+              onClick={() => setExtensionMonths(m => Math.min(MAX_EXTRA_MONTHS, m + 1))}
+              disabled={extensionMonths === MAX_EXTRA_MONTHS}
+              style={{
+                width: '32px', height: '36px', border: 'none',
+                background: 'transparent',
+                color: C.text,
+                fontSize: '16px', cursor: extensionMonths === MAX_EXTRA_MONTHS ? 'not-allowed' : 'pointer',
+              }}
+            >+</button>
+          </div>
+          <p style={{ marginTop: '6px', fontSize: '10px', color: C.muted }}>
+            {formatMXN(EXTRA_MONTH_PRICE_BY_PLAN[plan])} por mes adicional en {plan}
+          </p>
         </div>
 
         {designType === 'custom' && (

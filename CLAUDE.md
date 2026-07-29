@@ -79,24 +79,28 @@ Para que sea mas clara la diferencia entre planes te puedes guíar por el archiv
 - **Dominio**: ~$12 USD/año (~$1 USD/mes)
 - **Total estimado**: $21 – $41 USD/mes
 
-### Precios Base por Plan (incluye 1 mes gratis de publicación)
+### Precios Base por Plan (incluye 2 meses de publicación)
 | Plan | Precio único (MXN) | ~USD |
 |------|-------------------|------|
 | **Essential** | $699 | ~$35 |
-| **Plus** | $1,799 | ~$90 |
-| **Deluxe** | $2,999 | ~$150 |
+| **Plus** | $1,199 | ~$60 |
+| **Deluxe** | $1,499 | ~$75 |
 
-Todos los planes incluyen **1 mes gratuito** de publicación. A partir del segundo mes se cobra extensión.
+> Fuente de verdad: `src/lib/pricing.ts` (`BASE_PRICES`). Si cambian los precios, actualizar primero ahí y luego este documento.
 
-### Extensiones de Tiempo (a partir del mes 2)
-Los precios varían por plan debido al consumo diferenciado de recursos (imágenes, consultas al dashboard, emails de reenvío, etc.):
+Todos los planes incluyen **2 meses de publicación** contados a partir de la fecha del evento. A partir del tercer mes se cobra extensión.
 
-| Extensión | Essential | Plus | Deluxe |
-|-----------|-----------|------|--------|
-| +1 mes | $99 | $149 | $199 |
-| +3 meses | $249 (~$83/mes) | $379 (~$126/mes) | $499 (~$166/mes) |
-| +6 meses | $449 (~$75/mes) | $649 (~$108/mes) | $899 (~$150/mes) |
-| Permanente | $699 | $999 | $1,499 |
+### Extensiones de Tiempo (a partir del mes 3)
+El cliente elige **cuántos meses adicionales** quiere mediante un contador (+1). El precio es **por mes** y varía por plan, debido al consumo diferenciado de recursos (imágenes, consultas al dashboard, emails de reenvío, etc.):
+
+| Concepto | Essential | Plus | Deluxe |
+|----------|-----------|------|--------|
+| Meses incluidos en el plan | 2 | 2 | 2 |
+| Precio por mes adicional | $99 | $149 | $199 |
+
+No hay paquetes con descuento: cada mes adicional se cobra al mismo precio unitario. El total de extensión es `mesesExtra × precioPorMes[plan]`.
+
+> Fuente de verdad: `src/lib/pricing.ts` (`INCLUDED_MONTHS`, `EXTRA_MONTH_PRICE_BY_PLAN`). El cotizador público (`/cotizar`) y el panel de superadmin deben consumir **la misma** función `calcularTotal()`.
 
 ### Dominio Personalizado (Add-on)
 - **Subdominio de Moments** (ej. `juan-y-maria.moments.mx`): Gratis en Plus y Deluxe, no disponible en Essential.

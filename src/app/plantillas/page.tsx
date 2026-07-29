@@ -9,7 +9,7 @@ const jost = Jost({ subsets: ['latin'], weight: ['300', '400', '500'], variable:
 const montserrat = Montserrat({ subsets: ['latin'], weight: ['300', '400'], variable: '--font-montserrat' });
 
 export const metadata = {
-  title: 'Plantillas · Moments',
+  title: 'Plantillas',
   description: 'Explora los diseños disponibles para tu invitación digital. Todos los estilos funcionan con cualquier plan.',
 };
 

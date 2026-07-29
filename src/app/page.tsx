@@ -518,7 +518,7 @@ export default function LandingPage() {
     },
     {
       q: '¿Cuánto tiempo está disponible mi invitación?',
-      a: 'Todos los planes incluyen 1 mes gratis de publicación a partir de la fecha de tu evento. Después puedes extenderla por meses adicionales o de forma permanente a precios accesibles.',
+      a: 'Todos los planes incluyen 2 meses de publicación antes de la fecha de tu evento. Si necesitas publicarla con más anticipación, puedes agregar meses adicionales a precios accesibles.',
     },
     {
       q: '¿Puedo agregar mesa de regalos y datos bancarios?',
@@ -556,7 +556,7 @@ export default function LandingPage() {
         'Control de cupo máximo global',
       ],
       cta: 'Elegir Plus',
-      featured: false,
+      featured: true,
     },
     {
       name: 'Deluxe',
@@ -573,7 +573,7 @@ export default function LandingPage() {
         'Botón para agendar en Google Calendar',
       ],
       cta: 'Elegir Deluxe',
-      featured: true,
+      featured: false,
     },
   ];
 
@@ -712,7 +712,7 @@ export default function LandingPage() {
           <div className="section-head centered reveal">
             <span className="eyebrow centered">Planes y precios</span>
             <h2>Un precio claro. Pago único.</h2>
-            <p className="lede">El plan no define tu diseño — cualquier colección funciona en cualquier plan. Lo que cambia son las funciones. Todos incluyen <strong style={{ color: 'rgba(250,247,242,0.7)' }}>1 mes gratis de publicación</strong>.</p>
+            <p className="lede">El plan no define tu diseño — cualquier colección funciona en cualquier plan. Lo que cambia son las funciones. Todos incluyen <strong style={{ color: 'rgba(250,247,242,0.7)' }}>2 meses de publicación incluidos</strong>.</p>
           </div>
           <div className="plans">
             {plans.map((plan, i) => (
@@ -725,7 +725,7 @@ export default function LandingPage() {
                   <span className="amt">{plan.price.toLocaleString('es-MX')}</span>
                   <span className="period">&nbsp;MXN</span>
                 </div>
-                <span className="plan__free">Incluye 1 mes gratis de publicación</span>
+                <span className="plan__free">Incluye 2 meses de publicación</span>
                 <ul className="plan__feats">
                   {plan.feats.map((f) => (
                     <li key={f}><CheckIcon />{f}</li>

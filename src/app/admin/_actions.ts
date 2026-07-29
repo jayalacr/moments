@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { computeExpiresAt } from '@/lib/eventDate';
 
 // Acepta el config como string JSON para evitar problemas de serialización
 // con objetos complejos (NaN, undefined, objetos no-serializables) en React Server Actions.
@@ -18,9 +19,16 @@ export async function updateEventConfig(eventId: string, configJson: string, rsv
   const { data: me } = await supabase.auth.getUser();
   if (!me.user) throw new Error('No autenticado.');
 
+  // expires_at siempre debe caer después de la fecha de la boda (se usa para depurar BD + Cloudinary)
+  const expiresAt = computeExpiresAt(config);
+
   const { error } = await supabase
     .from('events')
-    .update({ config, rsvp_deadline: rsvpDeadline || null })
+    .update({
+      config,
+      rsvp_deadline: rsvpDeadline || null,
+      ...(expiresAt ? { expires_at: expiresAt } : {}),
+    })
     .eq('id', eventId);
 
   if (error) throw new Error(error.message);

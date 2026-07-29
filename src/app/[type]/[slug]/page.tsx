@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Pick<Props, 'params'>) {
     .eq('slug', slug)
     .single();
 
-  if (!event) return { title: 'Invitación | Moments' };
+  if (!event) return { title: 'Invitación | Moments', robots: { index: false, follow: false } };
 
   const config = event.config || {};
   const photos = config.photos as any[];
@@ -41,6 +41,7 @@ export async function generateMetadata({ params }: Pick<Props, 'params'>) {
   return {
     title,
     description,
+    robots: { index: false, follow: false },
     openGraph: {
       title,
       description,

@@ -8,9 +8,11 @@ import SiteFooter from '@/components/site/SiteFooter';
 import { Sparkles, Star, Crown } from 'lucide-react';
 import {
   BASE_PRICES,
-  EXTRA_MONTH_PRICE,
+  INCLUDED_MONTHS,
+  EXTRA_MONTH_PRICE_BY_PLAN,
   PLAN_LABEL,
   PLAN_TAGLINE,
+  calcularTotal,
   formatMXN,
   type Plan,
   type DesignType,
@@ -56,20 +58,18 @@ export default function CotizarPage() {
   const [designType, setDesignType] = useState<DesignType>('template');
   const [extraMonths, setExtraMonths] = useState(0);
 
-  const extensionCost = extraMonths * EXTRA_MONTH_PRICE;
-  const totalMonths = 1 + extraMonths;
+  const totalMonths = INCLUDED_MONTHS + extraMonths;
   const hasCustomDesign = designType === 'custom';
 
-  const breakdown = useMemo(() => {
-    const base = BASE_PRICES[plan];
-    const total = base + extensionCost;
-    return { base, extensionCost, total };
-  }, [plan, extensionCost]);
+  const breakdown = useMemo(
+    () => calcularTotal({ plan, designType, extensionMonths: extraMonths }),
+    [plan, designType, extraMonths],
+  );
 
   const whatsappMessage = useMemo(() => {
-    const totalLabel = totalMonths === 1
-      ? '1 mes (incluido)'
-      : `${totalMonths} meses (1 incluido + ${extraMonths} adicional${extraMonths > 1 ? 'es' : ''})`;
+    const totalLabel = extraMonths === 0
+      ? `${INCLUDED_MONTHS} meses (incluidos)`
+      : `${totalMonths} meses (${INCLUDED_MONTHS} incluidos + ${extraMonths} adicional${extraMonths > 1 ? 'es' : ''})`;
     const lines: string[] = [
       `Hola! Me interesa más información sobre moments.`,
       ``,
@@ -460,7 +460,7 @@ export default function CotizarPage() {
           {/* Extension */}
           <div className="q-section">
             <h2 className="q-section-title">Tiempo de publicación</h2>
-            <p className="q-section-hint">El primer mes está incluido en tu plan. Agrega los meses extra que necesites a <strong>{formatMXN(EXTRA_MONTH_PRICE)}</strong> c/u.</p>
+            <p className="q-section-hint">Los primeros {INCLUDED_MONTHS} meses están incluidos en tu plan. Agrega los meses extra que necesites a <strong>{formatMXN(EXTRA_MONTH_PRICE_BY_PLAN[plan])}</strong> c/u.</p>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginTop: '16px', flexWrap: 'wrap' }}>
               {/* Stepper */}
@@ -508,10 +508,10 @@ export default function CotizarPage() {
 
               {/* Desglose */}
               <div style={{ fontFamily: 'var(--font-jost)', fontSize: '13px', color: 'var(--muted-fg)', lineHeight: 1.6 }}>
-                <span style={{ color: 'var(--charcoal)' }}>1 mes incluido</span>
+                <span style={{ color: 'var(--charcoal)' }}>{INCLUDED_MONTHS} meses incluidos</span>
                 {extraMonths > 0 && (
                   <> + <span style={{ color: 'var(--charcoal)' }}>{extraMonths} mes{extraMonths > 1 ? 'es' : ''} adicional{extraMonths > 1 ? 'es' : ''}</span>
-                  {' '}({formatMXN(extensionCost)})</>
+                  {' '}({formatMXN(breakdown.extension)})</>
                 )}
               </div>
             </div>
@@ -524,33 +524,21 @@ export default function CotizarPage() {
           <h2 className="q-summary-title">Tu cotización</h2>
           <p className="q-summary-sub">Actualizada en tiempo real</p>
 
-          <div className="q-line">
-            <div style={{ flex: 1 }}>
-              <p className="q-line-label">Plan {PLAN_LABEL[plan]}</p>
-              <p className="q-line-detail">Pago único · 1 mes de publicación incluido</p>
-            </div>
-            <span className="q-line-amount">{formatMXN(breakdown.base)}</span>
-          </div>
-
-          {extraMonths > 0 && (
-            <div className="q-line">
+          {breakdown.lineItems.map((li, idx) => (
+            <div className="q-line" key={li.label}>
               <div style={{ flex: 1 }}>
-                <p className="q-line-label">Meses adicionales</p>
-                <p className="q-line-detail">{extraMonths} mes{extraMonths > 1 ? 'es' : ''} × {formatMXN(EXTRA_MONTH_PRICE)}</p>
+                <p className="q-line-label">{li.label}</p>
+                {li.detail && <p className="q-line-detail">{li.detail}</p>}
               </div>
-              <span className="q-line-amount">+{formatMXN(breakdown.extensionCost)}</span>
+              {li.isEstimate ? (
+                <span className="q-line-estimate">A cotizar</span>
+              ) : (
+                <span className="q-line-amount">
+                  {idx === 0 ? formatMXN(li.amount) : `+${formatMXN(li.amount)}`}
+                </span>
+              )}
             </div>
-          )}
-
-          {hasCustomDesign && (
-            <div className="q-line">
-              <div style={{ flex: 1 }}>
-                <p className="q-line-label">Diseño personalizado</p>
-                <p className="q-line-detail">Se define según el alcance de las modificaciones</p>
-              </div>
-              <span className="q-line-estimate">A cotizar</span>
-            </div>
-          )}
+          ))}
 
           <div className="q-total">
             <span className="q-total-label">{hasCustomDesign ? 'Desde' : 'Total'}</span>

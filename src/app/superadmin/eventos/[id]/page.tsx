@@ -14,7 +14,7 @@ import TemplateSelector from './_components/TemplateSelector';
 import PlanChanger from './_components/PlanChanger';
 import PricingEditor from './_components/PricingEditor';
 import OrganizersEditor from './_components/OrganizersEditor';
-import type { DesignType, ExtensionKey, Plan } from '@/lib/pricing';
+import type { DesignType, Plan } from '@/lib/pricing';
 import type { OrganizerRow } from './_components/OrganizersEditor';
 
 const C = {
@@ -291,7 +291,7 @@ export default async function EventoDetailPage({ params }: Props) {
           plan={event.plan as Plan}
           initial={{
             designType: (event.design_type as DesignType) ?? 'template',
-            extensionKey: (event.extension_key as ExtensionKey) ?? 'none',
+            extensionMonths: (event as { extension_months?: number }).extension_months ?? 0,
             customDesignFeeMxn: event.custom_design_fee_mxn ?? 0,
             paymentStatus: (event.payment_status as 'pending' | 'partial' | 'paid' | 'refunded' | 'expired') ?? 'pending',
             paymentNotes: event.payment_notes ?? null,

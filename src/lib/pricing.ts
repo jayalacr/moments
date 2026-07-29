@@ -1,6 +1,4 @@
 export type Plan = 'essential' | 'plus' | 'deluxe';
-export type ExtensionKey = 'none' | '1m' | '3m';
-//export type DomainOption = 'none' | 'subdomain' | 'custom_purchase' | 'custom_config';
 export type DesignType = 'template' | 'custom';
 
 export const BASE_PRICES: Record<Plan, number> = {
@@ -9,20 +7,14 @@ export const BASE_PRICES: Record<Plan, number> = {
   deluxe: 1499,
 };
 
-export const EXTRA_MONTH_PRICE = 99;
+/** Meses de publicación incluidos en el precio base, contados desde la fecha del evento hacia atrás (cuánto antes de la boda se puede publicar sin pagar extra). */
+export const INCLUDED_MONTHS = 2;
 
-export const EXTENSION_PRICES: Record<Plan, Record<ExtensionKey, number>> = {
-  essential: { none: 0, '1m': 99, '3m': 249},
-  plus:      { none: 0, '1m': 149, '3m': 379 },
-  deluxe:    { none: 0, '1m': 199, '3m': 499 },
+export const EXTRA_MONTH_PRICE_BY_PLAN: Record<Plan, number> = {
+  essential: 99,
+  plus: 149,
+  deluxe: 199,
 };
-
-/* export const DOMAIN_PRICES: Record<DomainOption, number> = {
-  none: 0,
-  subdomain: 0,
-  custom_purchase: 798,
-  custom_config: 499,
-}; */
 
 export const PLAN_LABEL: Record<Plan, string> = {
   essential: 'Essential',
@@ -35,19 +27,6 @@ export const PLAN_TAGLINE: Record<Plan, string> = {
   plus: 'Experiencia completa',
   deluxe: 'Premium e inmersivo',
 };
-
-export const EXTENSION_LABEL: Record<ExtensionKey, string> = {
-  none: '1 mes (incluido)',
-  '1m': '+1 mes adicional',
-  '3m': '+3 meses'
-};
-
-/* export const DOMAIN_LABEL: Record<DomainOption, string> = {
-  none: 'Sin dominio personalizado',
-  subdomain: 'Subdominio Moments (nombre.moments.mx)',
-  custom_purchase: 'Dominio propio (Moments lo compra)',
-  custom_config: 'Dominio propio (solo configuración)',
-}; */
 
 export const DESIGN_LABEL: Record<DesignType, string> = {
   template: 'Plantilla prediseñada',
@@ -70,8 +49,7 @@ export function formatMXN(n: number): string {
 export interface QuoteInput {
   plan: Plan;
   designType: DesignType;
-  extensionKey: ExtensionKey;
-  //domainOption: DomainOption;
+  extensionMonths: number;
   customDesignFeeMxn?: number;
 }
 
@@ -92,40 +70,28 @@ export interface QuoteBreakdown {
 }
 
 export function calcularTotal(input: QuoteInput): QuoteBreakdown {
-  const { plan, designType, extensionKey,  customDesignFeeMxn = 0 } = input;
+  const { plan, designType, extensionMonths, customDesignFeeMxn = 0 } = input;
 
   const base = BASE_PRICES[plan];
-  const extension = EXTENSION_PRICES[plan][extensionKey];
-/*   const domainEligible = domainOption === 'subdomain' && !isSubdomainAvailable(plan)
-    ? 'none'
-    : domainOption;
-  const domain = DOMAIN_PRICES[domainEligible]; */
+  const extension = extensionMonths * EXTRA_MONTH_PRICE_BY_PLAN[plan];
   const customDesign = designType === 'custom' ? Math.max(0, customDesignFeeMxn) : 0;
   const hasCustomDesignEstimate = designType === 'custom' && customDesign === 0;
 
   const lineItems: LineItem[] = [
     {
       label: `Plan ${PLAN_LABEL[plan]}`,
-      detail: 'Pago único · 1 mes de publicación incluido',
+      detail: `Pago único · ${INCLUDED_MONTHS} meses de publicación incluidos`,
       amount: base,
     },
   ];
 
-  if (extensionKey !== 'none') {
+  if (extensionMonths > 0) {
     lineItems.push({
       label: 'Extensión de publicación',
-      detail: EXTENSION_LABEL[extensionKey],
+      detail: `${extensionMonths} mes${extensionMonths !== 1 ? 'es' : ''} adicional${extensionMonths !== 1 ? 'es' : ''} × ${formatMXN(EXTRA_MONTH_PRICE_BY_PLAN[plan])}`,
       amount: extension,
     });
   }
-
-/*   if (domainEligible !== 'none') {
-    lineItems.push({
-      label: 'Dominio personalizado',
-      detail: DOMAIN_LABEL[domainEligible],
-      amount: domain,
-    });
-  } */
 
   if (designType === 'custom') {
     lineItems.push({
