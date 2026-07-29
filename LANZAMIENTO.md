@@ -342,14 +342,14 @@ UPDATE events SET extension_months = CASE extension_key
 Vercel Analytics ya está instalado y activo (A6), no requiere cuenta adicional —
 usa el mismo proyecto de Vercel. Meta Pixel descartado por decisión de Juan.
 
-### B7 · Revisar los textos legales `P0` → desbloquea el cierre de **A7**
+### B7 · Revisar los textos legales `P0`
 
-Borrador ya redactado (ver A7). Falta que Juan:
+Borrador redactado con datos reales (ver A7): identificador "code4u", jurisdicción
+Monterrey N.L., contacto por WhatsApp (sin correo dedicado), reembolso 100% antes
+de la primera versión entregada, sin reembolso después.
 
-- [ ] Revise el borrador con un abogado (o al menos personalmente) antes de publicarlo como definitivo
-- [ ] Complete los placeholders: razón social, domicilio fiscal, correo de contacto
-- [ ] Defina la política de cancelaciones y reembolsos
-- [ ] Quite `robots: { index: false }` de ambas páginas una vez el contenido sea final
+- [ ] Revisión legal (abogado o al menos revisión personal de Juan) antes de publicarlo como definitivo
+- [ ] Quitar `robots: { index: false }` de ambas páginas una vez confirmado el contenido
 
 ### B8 · Capturar screenshots de las plantillas `P1` → desbloquea **A8**
 
