@@ -35,25 +35,45 @@ export default async function EventoConfigPage({ params }: Props) {
   if (!event) redirect('/superadmin');
 
   return (
-    <div style={{ padding: '32px 40px', maxWidth: '760px' }}>
+    <div className="sa-config-container">
+      <style>{`
+        .sa-config-container {
+          padding: 40px 48px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        @media (max-width: 768px) {
+          .sa-config-container { padding: 24px 20px; }
+        }
+      `}</style>
+
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '28px' }}>
-        <Link href="/superadmin" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#7A90A8', textDecoration: 'none' }}>
-          /eventos
+        <Link href="/superadmin" style={{ fontSize: '11px', color: '#9C8E82', textDecoration: 'none' }}>
+          Eventos
         </Link>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#7A90A8' }}>/</span>
-        <Link href={`/superadmin/eventos/${id}`} style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#7A90A8', textDecoration: 'none' }}>
+        <span style={{ fontSize: '11px', color: '#C5B9B0' }}>/</span>
+        <Link href={`/superadmin/eventos/${id}`} style={{ fontSize: '11px', color: '#9C8E82', textDecoration: 'none' }}>
           {event.slug}
         </Link>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#7A90A8' }}>/</span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#2DD4BF' }}>config</span>
+        <span style={{ fontSize: '11px', color: '#C5B9B0' }}>/</span>
+        <span style={{ fontSize: '11px', color: '#C9A87C' }}>Datos</span>
       </div>
 
       <div style={{ marginBottom: '36px' }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '3px', color: '#7A90A8', marginBottom: '8px' }}>
-          EDITANDO CONTENIDO
+        <p style={{ fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', color: '#C9A87C', marginBottom: '8px' }}>
+          Editando contenido
         </p>
-        <h1 style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', fontWeight: 400, color: '#EAF0FB' }}>
+        <h1
+          style={{
+            fontFamily: 'var(--font-cormorant)',
+            fontSize: '32px',
+            fontWeight: 300,
+            fontStyle: 'italic',
+            color: '#1C1611',
+            lineHeight: 1.1,
+          }}
+        >
           {event.title}
         </h1>
       </div>
@@ -64,7 +84,6 @@ export default async function EventoConfigPage({ params }: Props) {
         initialConfig={event.config ?? {}}
         initialRsvpDeadline={event.rsvp_deadline}
         plan={event.plan as 'essential' | 'plus' | 'deluxe'}
-        theme="dark"
       />
     </div>
   );

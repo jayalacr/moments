@@ -9,13 +9,13 @@ import {
 } from '@/app/superadmin/_actions';
 
 const C = {
-  border: '#222D3F',
-  borderBright: '#2D3F57',
-  accent: '#2DD4BF',
-  accentDim: 'rgba(45,212,191,0.1)',
-  text: '#EAF0FB',
-  muted: '#7A90A8',
-  red: '#F87171',
+  border: '#EDE5D8',
+  borderBright: '#D8CBB8',
+  accent: '#C9A87C',
+  accentDim: 'rgba(201,168,124,0.12)',
+  text: '#1C1611',
+  muted: '#9C8E82',
+  red: '#C0392B',
 };
 
 export interface OrganizerRow {
@@ -31,7 +31,6 @@ interface Props {
 }
 
 const labelStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-mono)',
   fontSize: '9px',
   color: C.muted,
   letterSpacing: '2px',
@@ -47,7 +46,6 @@ const inputStyle: React.CSSProperties = {
   border: `1px solid ${C.borderBright}`,
   borderRadius: '6px',
   color: C.text,
-  fontFamily: 'var(--font-mono)',
   fontSize: '12px',
   outline: 'none',
 };
@@ -109,7 +107,7 @@ export default function OrganizersEditor({ eventId, initialOrganizers }: Props) 
       {/* Lista actual */}
       <div style={{ border: `1px solid ${C.border}`, borderRadius: '8px', overflow: 'hidden' }}>
         {organizers.length === 0 ? (
-          <p style={{ padding: '16px', fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.muted }}>
+          <p style={{ padding: '16px', fontSize: '11px', color: C.muted }}>
             Sin organizadores
           </p>
         ) : (
@@ -126,10 +124,10 @@ export default function OrganizersEditor({ eventId, initialOrganizers }: Props) 
             >
               {/* Info */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: C.text, marginBottom: '2px' }}>
+                <p style={{ fontSize: '12px', color: C.text, marginBottom: '2px' }}>
                   {org.fullName || '—'}
                 </p>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <p style={{ fontSize: '10px', color: C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {org.email}
                 </p>
               </div>
@@ -142,7 +140,6 @@ export default function OrganizersEditor({ eventId, initialOrganizers }: Props) 
                 style={{
                   padding: '5px 10px',
                   borderRadius: '4px',
-                  fontFamily: 'var(--font-mono)',
                   fontSize: '10px',
                   cursor: removingId === org.profileId ? 'not-allowed' : 'pointer',
                   border: `1px solid ${C.border}`,
@@ -180,7 +177,6 @@ export default function OrganizersEditor({ eventId, initialOrganizers }: Props) 
             style={{
               padding: '9px 16px',
               borderRadius: '6px',
-              fontFamily: 'var(--font-mono)',
               fontSize: '11px',
               cursor: !searchQuery.trim() || isSearching ? 'not-allowed' : 'pointer',
               border: `1px solid ${!searchQuery.trim() || isSearching ? C.border : C.accent}`,
@@ -209,10 +205,10 @@ export default function OrganizersEditor({ eventId, initialOrganizers }: Props) 
                 }}
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: C.text, marginBottom: '2px' }}>
+                  <p style={{ fontSize: '12px', color: C.text, marginBottom: '2px' }}>
                     {r.full_name || '—'}
                   </p>
-                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted }}>
+                  <p style={{ fontSize: '10px', color: C.muted }}>
                     {r.email}
                   </p>
                 </div>
@@ -223,7 +219,6 @@ export default function OrganizersEditor({ eventId, initialOrganizers }: Props) 
                   style={{
                     padding: '5px 12px',
                     borderRadius: '4px',
-                    fontFamily: 'var(--font-mono)',
                     fontSize: '10px',
                     cursor: addingId === r.id ? 'not-allowed' : 'pointer',
                     border: `1px solid ${C.accent}`,
@@ -241,7 +236,7 @@ export default function OrganizersEditor({ eventId, initialOrganizers }: Props) 
         )}
 
         {searchResults.length === 0 && searchQuery && !isSearching && (
-          <p style={{ marginTop: '8px', fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted }}>
+          <p style={{ marginTop: '8px', fontSize: '10px', color: C.muted }}>
             Sin resultados para &ldquo;{searchQuery}&rdquo;
           </p>
         )}
@@ -249,7 +244,7 @@ export default function OrganizersEditor({ eventId, initialOrganizers }: Props) 
 
       {/* Error global */}
       {error && (
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.red }}>
+        <p style={{ fontSize: '11px', color: C.red }}>
           ✗ {error}
         </p>
       )}

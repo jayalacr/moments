@@ -10,9 +10,10 @@ interface AdminLayoutClientProps {
   children: React.ReactNode;
   profile: { full_name: string | null; email: string | null; role: string } | null;
   events: any[];
+  basePath?: string;
 }
 
-export default function AdminLayoutClient({ children, profile, events }: AdminLayoutClientProps) {
+export default function AdminLayoutClient({ children, profile, events, basePath = '/admin' }: AdminLayoutClientProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarHidden, setIsSidebarHidden] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
@@ -72,10 +73,11 @@ export default function AdminLayoutClient({ children, profile, events }: AdminLa
       )}
 
       <div style={{ display: 'flex', flex: 1, minHeight: 0, position: 'relative' }}>
-        <AdminSidebar 
-          profile={profile} 
-          events={events} 
-          isOpen={isMobileMenuOpen} 
+        <AdminSidebar
+          profile={profile}
+          events={events}
+          basePath={basePath}
+          isOpen={isMobileMenuOpen}
           isHidden={isSidebarHidden}
           onToggleCollapse={() => setIsSidebarHidden(!isSidebarHidden)}
           onClose={() => setIsMobileMenuOpen(false)} 

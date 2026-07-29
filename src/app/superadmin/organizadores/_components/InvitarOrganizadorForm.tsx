@@ -4,10 +4,11 @@ import { useState, useTransition } from 'react';
 import { inviteOrganizador } from '../_actions';
 
 const C = {
-  border: '#222D3F', borderBright: '#2D3F57',
-  accent: '#2DD4BF', accentDim: 'rgba(45,212,191,0.1)',
-  text: '#EAF0FB', muted: '#7A90A8',
-  bg: '#0D1117',
+  border: '#EDE5D8', borderBright: '#D8CBB8',
+  accent: '#C9A87C',
+  text: '#1C1611', muted: '#9C8E82',
+  card: '#FFFFFF',
+  red: '#C0392B', green: '#5A7A5A',
 };
 
 export function InvitarOrganizadorForm() {
@@ -36,12 +37,13 @@ export function InvitarOrganizadorForm() {
     <div style={{
       padding: '24px',
       border: `1px solid ${C.border}`,
-      borderRadius: '10px',
+      borderRadius: '12px',
+      backgroundColor: C.card,
       marginBottom: '32px',
     }}>
       <p style={{
-        fontFamily: 'var(--font-mono)', fontSize: '9px',
-        letterSpacing: '3px', color: C.accent,
+        fontSize: '11px',
+        letterSpacing: '1.5px', color: C.accent,
         marginBottom: '16px', textTransform: 'uppercase',
       }}>
         Invitar usuario
@@ -54,11 +56,10 @@ export function InvitarOrganizadorForm() {
           required
           style={{
             padding: '10px 14px',
-            border: `1px solid ${C.border}`,
+            border: `1px solid ${C.borderBright}`,
             borderRadius: '6px',
-            backgroundColor: C.bg,
+            backgroundColor: '#FDFCFB',
             color: C.text,
-            fontFamily: 'var(--font-mono)',
             fontSize: '13px',
             outline: 'none',
           }}
@@ -70,11 +71,10 @@ export function InvitarOrganizadorForm() {
           required
           style={{
             padding: '10px 14px',
-            border: `1px solid ${C.border}`,
+            border: `1px solid ${C.borderBright}`,
             borderRadius: '6px',
-            backgroundColor: C.bg,
+            backgroundColor: '#FDFCFB',
             color: C.text,
-            fontFamily: 'var(--font-mono)',
             fontSize: '13px',
             outline: 'none',
           }}
@@ -84,11 +84,10 @@ export function InvitarOrganizadorForm() {
           defaultValue="organizador"
           style={{
             padding: '10px 14px',
-            border: `1px solid ${C.border}`,
+            border: `1px solid ${C.borderBright}`,
             borderRadius: '6px',
-            backgroundColor: C.bg,
+            backgroundColor: '#FDFCFB',
             color: C.text,
-            fontFamily: 'var(--font-mono)',
             fontSize: '13px',
             outline: 'none',
           }}
@@ -98,13 +97,13 @@ export function InvitarOrganizadorForm() {
         </select>
 
         {error && (
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#F87171' }}>
+          <p style={{ fontSize: '11px', color: C.red }}>
             {error}
           </p>
         )}
 
         {success && (
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#4ADE80' }}>
+          <p style={{ fontSize: '11px', color: C.green }}>
             Invitación enviada correctamente.
           </p>
         )}
@@ -114,15 +113,13 @@ export function InvitarOrganizadorForm() {
           disabled={isPending}
           style={{
             padding: '10px 20px',
-            backgroundColor: C.accent,
-            color: C.bg,
+            backgroundColor: '#1C1611',
+            color: '#F8F3EC',
             border: 'none',
             borderRadius: '6px',
-            fontFamily: 'var(--font-mono)',
             fontSize: '11px',
-            letterSpacing: '2px',
-            textTransform: 'uppercase',
-            fontWeight: 700,
+            letterSpacing: '0.05em',
+            fontWeight: 500,
             cursor: isPending ? 'not-allowed' : 'pointer',
             opacity: isPending ? 0.6 : 1,
             alignSelf: 'flex-start',

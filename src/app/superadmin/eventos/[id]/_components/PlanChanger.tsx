@@ -4,22 +4,22 @@ import { useState } from 'react';
 import { updateEventPlan } from '@/app/superadmin/_actions';
 
 const C = {
-  bg: '#0D1117',
-  border: '#222D3F',
-  borderBright: '#2D3F57',
-  accent: '#2DD4BF',
-  accentDim: 'rgba(45,212,191,0.1)',
-  text: '#EAF0FB',
-  muted: '#7A90A8',
-  mutedMid: '#9DB2C8',
-  green: '#4ADE80',
-  greenDim: 'rgba(74,222,128,0.12)',
-  amber: '#FBBF24',
-  amberDim: 'rgba(251,191,36,0.12)',
-  red: '#F87171',
-  redDim: 'rgba(248,113,113,0.12)',
-  sidebar: '#161B26',
-  purple: '#A78BFA',
+  bg: '#FFFFFF',
+  border: '#EDE5D8',
+  borderBright: '#D8CBB8',
+  accent: '#C9A87C',
+  accentDim: 'rgba(201,168,124,0.12)',
+  text: '#1C1611',
+  muted: '#9C8E82',
+  mutedMid: '#7A6F63',
+  green: '#5A7A5A',
+  greenDim: 'rgba(90,122,90,0.12)',
+  amber: '#8B6914',
+  amberDim: 'rgba(139,105,20,0.12)',
+  red: '#C0392B',
+  redDim: 'rgba(192,57,41,0.12)',
+  sidebar: '#FFFFFF',
+  purple: '#8B5FBF',
 };
 
 type EventPlan = 'essential' | 'plus' | 'deluxe';
@@ -85,12 +85,11 @@ export default function PlanChanger({ eventId, currentPlan }: Props) {
             padding: '14px 16px',
             border: `1px solid ${C.border}`,
             borderRadius: '8px',
-            backgroundColor: 'rgba(255,255,255,0.02)',
+            backgroundColor: 'rgba(0,0,0,0.015)',
           }}
         >
           <p
             style={{
-              fontFamily: 'var(--font-mono)',
               fontSize: '9px',
               color: C.muted,
               letterSpacing: '2px',
@@ -111,7 +110,6 @@ export default function PlanChanger({ eventId, currentPlan }: Props) {
             />
             <span
               style={{
-                fontFamily: 'var(--font-mono)',
                 fontSize: '12px',
                 color: PLAN_COLOR[currentPlan],
                 letterSpacing: '0.05em',
@@ -126,7 +124,6 @@ export default function PlanChanger({ eventId, currentPlan }: Props) {
         <div>
           <p
             style={{
-              fontFamily: 'var(--font-mono)',
               fontSize: '9px',
               color: C.muted,
               letterSpacing: '2px',
@@ -152,7 +149,6 @@ export default function PlanChanger({ eventId, currentPlan }: Props) {
                       ? `${PLAN_COLOR[plan]}18`
                       : C.sidebar,
                     color: isSelected ? PLAN_COLOR[plan] : isCurrent ? C.muted : C.mutedMid,
-                    fontFamily: 'var(--font-mono)',
                     fontSize: '11px',
                     letterSpacing: '0.08em',
                     cursor: 'pointer',
@@ -188,10 +184,9 @@ export default function PlanChanger({ eventId, currentPlan }: Props) {
             style={{
               padding: '10px 20px',
               backgroundColor: selectedPlan === currentPlan ? 'transparent' : C.amber,
-              color: selectedPlan === currentPlan ? C.muted : '#07090F',
+              color: selectedPlan === currentPlan ? C.muted : '#F8F3EC',
               border: `1px solid ${selectedPlan === currentPlan ? C.border : C.amber}`,
               borderRadius: '6px',
-              fontFamily: 'var(--font-mono)',
               fontSize: '11px',
               fontWeight: 600,
               letterSpacing: '0.08em',
@@ -204,12 +199,12 @@ export default function PlanChanger({ eventId, currentPlan }: Props) {
           </button>
 
           {result?.success && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.green }}>
+            <span style={{ fontSize: '11px', color: C.green }}>
               ✓ Plan actualizado correctamente
             </span>
           )}
           {error && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.red }}>
+            <span style={{ fontSize: '11px', color: C.red }}>
               ✗ {error}
             </span>
           )}
@@ -233,7 +228,7 @@ export default function PlanChanger({ eventId, currentPlan }: Props) {
         >
           <div
             style={{
-              backgroundColor: '#0D1117',
+              backgroundColor: '#FFFFFF',
               border: `1px solid ${C.borderBright}`,
               borderRadius: '12px',
               maxWidth: '480px',
@@ -249,7 +244,6 @@ export default function PlanChanger({ eventId, currentPlan }: Props) {
               <div>
                 <p
                   style={{
-                    fontFamily: 'var(--font-mono)',
                     fontSize: '9px',
                     color: C.muted,
                     letterSpacing: '2px',
@@ -261,7 +255,6 @@ export default function PlanChanger({ eventId, currentPlan }: Props) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span
                     style={{
-                      fontFamily: 'var(--font-mono)',
                       fontSize: '13px',
                       color: PLAN_COLOR[currentPlan],
                       fontWeight: 600,
@@ -269,10 +262,9 @@ export default function PlanChanger({ eventId, currentPlan }: Props) {
                   >
                     {currentPlan.toUpperCase()}
                   </span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: C.muted }}>→</span>
+                  <span style={{ fontSize: '12px', color: C.muted }}>→</span>
                   <span
                     style={{
-                      fontFamily: 'var(--font-mono)',
                       fontSize: '13px',
                       color: PLAN_COLOR[selectedPlan],
                       fontWeight: 600,
@@ -282,7 +274,6 @@ export default function PlanChanger({ eventId, currentPlan }: Props) {
                   </span>
                   <span
                     style={{
-                      fontFamily: 'var(--font-mono)',
                       fontSize: '9px',
                       letterSpacing: '1px',
                       padding: '2px 8px',
@@ -318,12 +309,11 @@ export default function PlanChanger({ eventId, currentPlan }: Props) {
                 padding: '14px 16px',
                 border: `1px solid ${C.border}`,
                 borderRadius: '8px',
-                backgroundColor: 'rgba(255,255,255,0.02)',
+                backgroundColor: 'rgba(0,0,0,0.015)',
               }}
             >
               <p
                 style={{
-                  fontFamily: 'var(--font-mono)',
                   fontSize: '11px',
                   color: C.mutedMid,
                   lineHeight: 1.7,
@@ -364,7 +354,6 @@ export default function PlanChanger({ eventId, currentPlan }: Props) {
               />
               <span
                 style={{
-                  fontFamily: 'var(--font-mono)',
                   fontSize: '11px',
                   color: C.mutedMid,
                   lineHeight: 1.5,
@@ -376,7 +365,7 @@ export default function PlanChanger({ eventId, currentPlan }: Props) {
 
             {/* Error dentro del modal */}
             {error && (
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.red }}>
+              <p style={{ fontSize: '11px', color: C.red }}>
                 ✗ {error}
               </p>
             )}
@@ -392,7 +381,6 @@ export default function PlanChanger({ eventId, currentPlan }: Props) {
                   color: C.mutedMid,
                   border: `1px solid ${C.borderBright}`,
                   borderRadius: '6px',
-                  fontFamily: 'var(--font-mono)',
                   fontSize: '11px',
                   cursor: isPending ? 'not-allowed' : 'pointer',
                   opacity: isPending ? 0.5 : 1,
@@ -406,10 +394,9 @@ export default function PlanChanger({ eventId, currentPlan }: Props) {
                 style={{
                   padding: '10px 18px',
                   backgroundColor: !isConfirmed || isPending ? 'transparent' : C.amber,
-                  color: !isConfirmed || isPending ? C.muted : '#07090F',
+                  color: !isConfirmed || isPending ? C.muted : '#F8F3EC',
                   border: `1px solid ${!isConfirmed || isPending ? C.border : C.amber}`,
                   borderRadius: '6px',
-                  fontFamily: 'var(--font-mono)',
                   fontSize: '11px',
                   fontWeight: 600,
                   letterSpacing: '0.05em',

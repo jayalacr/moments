@@ -14,19 +14,19 @@ import {
 } from '@/lib/pricing';
 
 const C = {
-  border: '#222D3F',
-  borderBright: '#2D3F57',
-  accent: '#2DD4BF',
-  accentDim: 'rgba(45,212,191,0.1)',
-  text: '#EAF0FB',
-  muted: '#7A90A8',
-  mutedMid: '#9DB2C8',
-  green: '#4ADE80',
-  greenDim: 'rgba(74,222,128,0.12)',
-  amber: '#FBBF24',
-  amberDim: 'rgba(251,191,36,0.12)',
-  red: '#F87171',
-  redDim: 'rgba(248,113,113,0.12)',
+  border: '#EDE5D8',
+  borderBright: '#D8CBB8',
+  accent: '#C9A87C',
+  accentDim: 'rgba(201,168,124,0.12)',
+  text: '#1C1611',
+  muted: '#9C8E82',
+  mutedMid: '#7A6F63',
+  green: '#5A7A5A',
+  greenDim: 'rgba(90,122,90,0.12)',
+  amber: '#8B6914',
+  amberDim: 'rgba(139,105,20,0.12)',
+  red: '#C0392B',
+  redDim: 'rgba(192,57,41,0.12)',
 };
 
 type PaymentStatus = 'pending' | 'partial' | 'paid' | 'refunded' | 'expired';
@@ -139,13 +139,11 @@ export default function PricingEditor({ eventId, plan, initial }: Props) {
     border: `1px solid ${C.borderBright}`,
     borderRadius: '6px',
     color: C.text,
-    fontFamily: 'var(--font-mono)',
     fontSize: '12px',
     outline: 'none',
   };
 
   const labelStyle: React.CSSProperties = {
-    fontFamily: 'var(--font-mono)',
     fontSize: '9px',
     color: C.muted,
     letterSpacing: '2px',
@@ -166,7 +164,7 @@ export default function PricingEditor({ eventId, plan, initial }: Props) {
             style={inputStyle}
           >
             {DESIGNS.map((d) => (
-              <option key={d} value={d} style={{ background: '#0D1117' }}>
+              <option key={d} value={d} style={{ background: '#FFFFFF' }}>
                 {DESIGN_LABEL[d]}
               </option>
             ))}
@@ -181,7 +179,7 @@ export default function PricingEditor({ eventId, plan, initial }: Props) {
             style={inputStyle}
           >
             {EXTENSIONS.map((k) => (
-              <option key={k} value={k} style={{ background: '#0D1117' }}>
+              <option key={k} value={k} style={{ background: '#FFFFFF' }}>
                 {EXTENSION_LABEL[k]}
               </option>
             ))}
@@ -209,7 +207,7 @@ export default function PricingEditor({ eventId, plan, initial }: Props) {
         border: `1px solid ${C.border}`,
         borderRadius: '8px',
         padding: '16px',
-        background: 'rgba(45,212,191,0.03)',
+        background: 'rgba(201,168,124,0.05)',
       }}>
         {breakdown.lineItems.map((li, idx) => (
           <div
@@ -224,17 +222,16 @@ export default function PricingEditor({ eventId, plan, initial }: Props) {
             }}
           >
             <div style={{ flex: 1 }}>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: C.text }}>
+              <p style={{ fontSize: '12px', color: C.text }}>
                 {li.label}
               </p>
               {li.detail && (
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted, marginTop: '2px' }}>
+                <p style={{ fontSize: '10px', color: C.muted, marginTop: '2px' }}>
                   {li.detail}
                 </p>
               )}
             </div>
             <span style={{
-              fontFamily: 'var(--font-mono)',
               fontSize: '12px',
               color: li.isEstimate ? C.amber : C.accent,
               whiteSpace: 'nowrap',
@@ -254,7 +251,6 @@ export default function PricingEditor({ eventId, plan, initial }: Props) {
           alignItems: 'baseline',
         }}>
           <span style={{
-            fontFamily: 'var(--font-mono)',
             fontSize: '10px',
             color: C.muted,
             letterSpacing: '2px',
@@ -263,7 +259,6 @@ export default function PricingEditor({ eventId, plan, initial }: Props) {
             {breakdown.hasCustomDesignEstimate ? 'Total (desde)' : 'Total'}
           </span>
           <span style={{
-            fontFamily: 'var(--font-mono)',
             fontSize: '18px',
             color: C.green,
             fontWeight: 500,
@@ -275,7 +270,6 @@ export default function PricingEditor({ eventId, plan, initial }: Props) {
         {breakdown.hasCustomDesignEstimate && (
           <p style={{
             marginTop: '8px',
-            fontFamily: 'var(--font-mono)',
             fontSize: '10px',
             color: C.amber,
             lineHeight: 1.5,
@@ -294,7 +288,6 @@ export default function PricingEditor({ eventId, plan, initial }: Props) {
           style={{
             padding: '9px 18px',
             borderRadius: '6px',
-            fontFamily: 'var(--font-mono)',
             fontSize: '11px',
             cursor: !isDirty || isPending ? 'not-allowed' : 'pointer',
             border: `1px solid ${!isDirty || isPending ? C.border : C.accent}`,
@@ -306,12 +299,12 @@ export default function PricingEditor({ eventId, plan, initial }: Props) {
           {isPending ? 'guardando…' : 'guardar cambios'}
         </button>
         {saved && !isDirty && (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.green }}>
+          <span style={{ fontSize: '11px', color: C.green }}>
             ✓ guardado
           </span>
         )}
         {error && (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.red }}>
+          <span style={{ fontSize: '11px', color: C.red }}>
             ✗ {error}
           </span>
         )}
@@ -338,7 +331,7 @@ export default function PricingEditor({ eventId, plan, initial }: Props) {
                 ? C.amberDim
                 : paymentStatus === 'pending'
                   ? C.redDim
-                  : 'rgba(255,255,255,0.04)',
+                  : 'rgba(0,0,0,0.03)',
           }}>
             <span style={{
               display: 'inline-block',
@@ -349,7 +342,6 @@ export default function PricingEditor({ eventId, plan, initial }: Props) {
               flexShrink: 0,
             }} />
             <span style={{
-              fontFamily: 'var(--font-mono)',
               fontSize: '10px',
               color: PAYMENT_COLOR[paymentStatus],
               letterSpacing: '0.05em',
@@ -368,7 +360,7 @@ export default function PricingEditor({ eventId, plan, initial }: Props) {
               style={inputStyle}
             >
               {PAYMENT_OPTIONS.map(o => (
-                <option key={o.value} value={o.value} style={{ background: '#0D1117' }}>
+                <option key={o.value} value={o.value} style={{ background: '#FFFFFF' }}>
                   {o.label}
                 </option>
               ))}
@@ -396,7 +388,6 @@ export default function PricingEditor({ eventId, plan, initial }: Props) {
             style={{
               padding: '9px 18px',
               borderRadius: '6px',
-              fontFamily: 'var(--font-mono)',
               fontSize: '11px',
               cursor: !isPaymentDirty || isPaymentPending ? 'not-allowed' : 'pointer',
               border: `1px solid ${!isPaymentDirty || isPaymentPending ? C.border : C.accent}`,
@@ -408,12 +399,12 @@ export default function PricingEditor({ eventId, plan, initial }: Props) {
             {isPaymentPending ? 'guardando…' : 'guardar pago'}
           </button>
           {paymentSaved && !isPaymentDirty && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.green }}>
+            <span style={{ fontSize: '11px', color: C.green }}>
               ✓ guardado
             </span>
           )}
           {paymentError && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.red }}>
+            <span style={{ fontSize: '11px', color: C.red }}>
               ✗ {paymentError}
             </span>
           )}

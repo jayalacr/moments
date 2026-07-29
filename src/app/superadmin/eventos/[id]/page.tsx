@@ -18,25 +18,24 @@ import type { DesignType, ExtensionKey, Plan } from '@/lib/pricing';
 import type { OrganizerRow } from './_components/OrganizersEditor';
 
 const C = {
-  bg: '#0D1117',
-  border: '#222D3F',
-  borderBright: '#2D3F57',
-  accent: '#2DD4BF',
-  accentDim: 'rgba(45,212,191,0.1)',
-  text: '#EAF0FB',
-  muted: '#7A90A8',
-  mutedMid: '#9DB2C8',
-  green: '#4ADE80',
-  greenDim: 'rgba(74,222,128,0.12)',
-  amber: '#FBBF24',
+  bg: '#F8F3EC',
+  card: '#FFFFFF',
+  border: '#EDE5D8',
+  accent: '#C9A87C',
+  accentLight: 'rgba(201,168,124,0.12)',
+  text: '#1C1611',
+  muted: '#9C8E82',
+  mutedLight: '#C5B9B0',
+  green: '#5A7A5A',
+  amber: '#8B6914',
 };
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  published: { label: 'live',      color: C.green },
-  draft:     { label: 'draft',     color: C.muted },
-  setup:     { label: 'setup',     color: C.accent },
-  paused:    { label: 'paused',    color: C.amber },
-  finished:  { label: 'finished',  color: C.muted },
+  published: { label: 'Publicado',  color: C.green },
+  draft:     { label: 'Borrador',   color: C.muted },
+  setup:     { label: 'En edición', color: C.accent },
+  paused:    { label: 'Pausado',    color: C.amber },
+  finished:  { label: 'Finalizado', color: C.mutedLight },
 };
 
 interface Props {
@@ -89,8 +88,9 @@ export default async function EventoDetailPage({ params }: Props) {
     <div className="sa-detail-container">
       <style>{`
         .sa-detail-container {
-          padding: 32px 40px;
-          max-width: 680px;
+          padding: 40px 48px;
+          width: 100%;
+          box-sizing: border-box;
         }
         .sa-header-flex {
           display: flex;
@@ -106,58 +106,54 @@ export default async function EventoDetailPage({ params }: Props) {
           margin-bottom: 32px;
         }
         @media (max-width: 768px) {
-          .sa-detail-container {
-            padding: 20px 16px;
-          }
-          .sa-header-flex {
-            flex-direction: column;
-          }
-          .sa-header-actions {
-            flex-wrap: wrap;
-            width: 100%;
-          }
-          .sa-header-actions form {
-            flex: 1;
-          }
-          .sa-header-actions form button {
-            width: 100%;
-          }
-          .sa-info-grid {
-            grid-template-columns: 1fr;
-          }
+          .sa-detail-container { padding: 24px 20px; }
+          .sa-header-flex { flex-direction: column; }
+          .sa-header-actions { flex-wrap: wrap; width: 100%; }
+          .sa-header-actions form { flex: 1; }
+          .sa-header-actions form button { width: 100%; }
+          .sa-info-grid { grid-template-columns: 1fr; }
         }
         @keyframes pulse-dot { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
         .live-dot { animation: pulse-dot 2s ease-in-out infinite; }
         .toggle-btn {
-          padding: 9px 18px; border-radius: 6px;
-          font-family: var(--font-mono); font-size: 11px;
+          padding: 9px 18px; border-radius: 8px;
+          font-size: 12px;
           cursor: pointer; transition: background 0.15s, border-color 0.15s;
-          border: 1px solid ${C.borderBright}; background: transparent; color: ${C.mutedMid};
+          border: 1px solid ${C.border}; background: transparent; color: ${C.muted};
         }
-        .toggle-btn:hover { border-color: ${C.accent}; color: ${C.accent}; background: ${C.accentDim}; }
+        .toggle-btn:hover { border-color: ${C.accent}; color: ${C.accent}; background: ${C.accentLight}; }
         .ghost-link {
           display: inline-flex; align-items: center; gap: 8px;
-          padding: 9px 18px; border-radius: 6px;
-          font-family: var(--font-mono); font-size: 11px;
-          border: 1px solid ${C.borderBright}; color: ${C.mutedMid};
+          padding: 9px 18px; border-radius: 8px;
+          font-size: 12px;
+          border: 1px solid ${C.border}; color: ${C.text};
           text-decoration: none; transition: border-color 0.15s, color 0.15s, background 0.15s;
         }
-        .ghost-link:hover { border-color: ${C.accent}; color: ${C.accent}; background: ${C.accentDim}; }
+        .ghost-link:hover { border-color: ${C.accent}; color: ${C.accent}; background: ${C.accentLight}; }
       `}</style>
 
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '28px' }}>
-        <Link href="/superadmin" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted, textDecoration: 'none' }}>
-          /eventos
+        <Link href="/superadmin" style={{ fontSize: '11px', color: C.muted, textDecoration: 'none' }}>
+          Eventos
         </Link>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted }}>/</span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.accent }}>{event.slug}</span>
+        <span style={{ fontSize: '11px', color: C.mutedLight }}>/</span>
+        <span style={{ fontSize: '11px', color: C.accent }}>{event.slug}</span>
       </div>
 
       {/* Header */}
       <div className="sa-header-flex">
         <div>
-          <h1 style={{ fontSize: '20px', fontWeight: 400, color: C.text, marginBottom: '6px' }}>
+          <h1
+            style={{
+              fontFamily: 'var(--font-cormorant)',
+              fontSize: '28px',
+              fontWeight: 300,
+              fontStyle: 'italic',
+              color: C.text,
+              marginBottom: '8px',
+            }}
+          >
             {event.title}
           </h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -165,11 +161,11 @@ export default async function EventoDetailPage({ params }: Props) {
               className={event.status === 'published' ? 'live-dot' : ''}
               style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: status.color }}
             />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: status.color }}>
+            <span style={{ fontSize: '12px', color: status.color, fontWeight: 500 }}>
               {status.label}
             </span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted }}>·</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.muted }}>
+            <span style={{ fontSize: '11px', color: C.mutedLight }}>·</span>
+            <span style={{ fontSize: '12px', color: C.muted, textTransform: 'capitalize' }}>
               {event.plan} · {event.event_type}
             </span>
           </div>
@@ -179,14 +175,14 @@ export default async function EventoDetailPage({ params }: Props) {
           {(event.status === 'published' || event.status === 'paused' || event.status === 'draft' || event.status === 'setup') && (
             <form action={toggleEventStatus.bind(null, event.id, event.status)}>
               <button type="submit" className="toggle-btn">
-                {event.status === 'published' ? 'pause' : 'publish'}
+                {event.status === 'published' ? 'Pausar' : 'Publicar'}
               </button>
             </form>
           )}
           {event.status !== 'draft' && (
             <form action={setEventDraft.bind(null, event.id)}>
               <button type="submit" className="toggle-btn">
-                → draft
+                → Borrador
               </button>
             </form>
           )}
@@ -196,16 +192,16 @@ export default async function EventoDetailPage({ params }: Props) {
       {/* Info del evento */}
       <div className="sa-info-grid">
         {[
-          { label: 'slug', value: `/${event.event_type}/${event.slug}` },
-          { label: 'organizador', value: ownerProfile?.full_name || ownerProfile?.email || '—' },
-          { label: 'creado', value: new Date(event.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) },
-          { label: 'actualizado', value: new Date(event.updated_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) },
+          { label: 'Slug', value: `/${event.event_type}/${event.slug}` },
+          { label: 'Organizador', value: ownerProfile?.full_name || ownerProfile?.email || '—' },
+          { label: 'Creado', value: new Date(event.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) },
+          { label: 'Actualizado', value: new Date(event.updated_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) },
         ].map(item => (
-          <div key={item.label} style={{ padding: '12px 16px', border: `1px solid ${C.border}`, borderRadius: '8px' }}>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: C.muted, letterSpacing: '2px', marginBottom: '6px' }}>
-              {item.label.toUpperCase()}
+          <div key={item.label} style={{ padding: '14px 16px', border: `1px solid ${C.border}`, borderRadius: '10px', backgroundColor: C.card }}>
+            <p style={{ fontSize: '10px', color: C.muted, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
+              {item.label}
             </p>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: C.text, wordBreak: 'break-all' }}>
+            <p style={{ fontSize: '13px', color: C.text, wordBreak: 'break-all' }}>
               {item.value}
             </p>
           </div>
@@ -217,24 +213,24 @@ export default async function EventoDetailPage({ params }: Props) {
 
       {/* Editar contenido */}
       <div style={{ marginBottom: '28px' }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: C.muted, letterSpacing: '2px', marginBottom: '12px' }}>
-          CONTENIDO
+        <p style={{ fontSize: '11px', color: C.muted, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '12px' }}>
+          Contenido
         </p>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <Link href={`/superadmin/eventos/${event.id}/config`} className="ghost-link">
-            editar datos →
+            Editar datos →
           </Link>
           <Link href={`/superadmin/eventos/${event.id}/editar`} className="ghost-link">
-            editar invitación →
+            Editar invitación →
           </Link>
           {(event.plan === 'plus' || event.plan === 'deluxe') && (
             <Link href={`/superadmin/eventos/${event.id}/invitados`} className="ghost-link">
-              invitados & rsvp →
+              Invitados & RSVP →
             </Link>
           )}
           {event.template_type && (
             <Link href={`/superadmin/eventos/${event.id}/preview`} target="_blank" className="ghost-link">
-              vista previa ↗
+              Vista previa ↗
             </Link>
           )}
         </div>
@@ -245,8 +241,8 @@ export default async function EventoDetailPage({ params }: Props) {
 
       {/* Template selector */}
       <div style={{ marginBottom: '8px' }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: C.muted, letterSpacing: '2px', marginBottom: '16px' }}>
-          TEMPLATE
+        <p style={{ fontSize: '11px', color: C.muted, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '16px' }}>
+          Template
         </p>
         <TemplateSelector
           eventId={event.id}
@@ -261,8 +257,8 @@ export default async function EventoDetailPage({ params }: Props) {
 
       {/* Organizadores */}
       <div style={{ marginBottom: '8px' }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: C.muted, letterSpacing: '2px', marginBottom: '16px' }}>
-          ORGANIZADORES
+        <p style={{ fontSize: '11px', color: C.muted, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '16px' }}>
+          Organizadores
         </p>
         <OrganizersEditor eventId={event.id} initialOrganizers={organizers} />
       </div>
@@ -272,8 +268,8 @@ export default async function EventoDetailPage({ params }: Props) {
 
       {/* Cambiar plan */}
       <div style={{ marginBottom: '8px' }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: C.muted, letterSpacing: '2px', marginBottom: '16px' }}>
-          PLAN
+        <p style={{ fontSize: '11px', color: C.muted, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '16px' }}>
+          Plan
         </p>
         <PlanChanger
           eventId={event.id}
@@ -287,8 +283,8 @@ export default async function EventoDetailPage({ params }: Props) {
 
       {/* Costeo */}
       <div style={{ marginBottom: '8px' }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: C.muted, letterSpacing: '2px', marginBottom: '16px' }}>
-          COSTEO
+        <p style={{ fontSize: '11px', color: C.muted, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '16px' }}>
+          Costeo
         </p>
         <PricingEditor
           eventId={event.id}

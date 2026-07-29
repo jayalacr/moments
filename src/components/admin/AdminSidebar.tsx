@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronDown, ChevronRight, Calendar, Users, LayoutDashboard, Eye, Edit3, LogOut, Sparkles, PanelLeftClose } from 'lucide-react';
+import { ChevronDown, ChevronRight, Calendar, Users, LayoutDashboard, Eye, Edit3, LogOut, Sparkles, PanelLeftClose, UserCog, Plus } from 'lucide-react';
 import LogoutButton from '@/components/auth/LogoutButton';
 
 const C = {
@@ -31,16 +31,18 @@ interface AdminSidebarProps {
   onToggleCollapse?: () => void;
   onClose?: () => void;
   onNavigate?: (href: string) => void;
+  basePath?: string;
 }
 
-export default function AdminSidebar({ profile, events, isOpen, isHidden, onToggleCollapse, onClose, onNavigate }: AdminSidebarProps) {
+export default function AdminSidebar({ profile, events, isOpen, isHidden, onToggleCollapse, onClose, onNavigate, basePath = '/admin' }: AdminSidebarProps) {
   const pathname = usePathname();
   const [isEventsExpanded, setIsEventsExpanded] = useState(true);
   const [expandedEventIds, setExpandedEventIds] = useState<string[]>([]);
   const isWeddingPlanner = profile?.role === 'wedding-planner';
-  
+  const isSuperadminArea = basePath === '/superadmin';
+
   // Detect active event from URL
-  const eventMatch = pathname.match(/\/admin\/eventos\/([^\/]+)/);
+  const eventMatch = pathname.match(new RegExp(`${basePath}/eventos/([^/]+)`));
   const activeEventId = eventMatch ? eventMatch[1] : null;
 
   // Auto-expand active event on mount/navigation
@@ -247,14 +249,14 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
           Principal
         </div>
         
-        <Link 
-          href="/admin" 
-          className={`nav-item ${isActive('/admin') ? 'active' : ''}`}
+        <Link
+          href={basePath}
+          className={`nav-item ${isActive(basePath) ? 'active' : ''}`}
           onClick={(e) => {
             // Only trigger loading if we are clicking the link itself, not the expand button
             const target = e.target as HTMLElement;
             if (!target.closest('.collapse-btn')) {
-              onNavigate?.('/admin');
+              onNavigate?.(basePath);
               onClose?.();
             }
           }}
@@ -280,12 +282,12 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
             {events.map(event => (
               <div key={event.id}>
                 <Link
-                  href={`/admin/eventos/${event.id}`}
+                  href={`${basePath}/eventos/${event.id}`}
                   className={`nav-item sub ${activeEventId === event.id ? 'active' : ''}`}
                   onClick={(e) => {
                     const target = e.target as HTMLElement;
                     if (!target.closest('.collapse-btn')) {
-                      onNavigate?.(`/admin/eventos/${event.id}`);
+                      onNavigate?.(`${basePath}/eventos/${event.id}`);
                       onClose?.();
                     }
                   }}
@@ -317,10 +319,10 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
                   <div style={{ marginLeft: '44px', borderLeft: `1px solid ${C.border}`, paddingLeft: '8px', marginTop: '4px', marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                     {!isWeddingPlanner && (
                       <Link
-                        href={`/admin/eventos/${event.id}`}
-                        className={`nav-item ${isActive(`/admin/eventos/${event.id}`) ? 'active' : ''}`}
+                        href={`${basePath}/eventos/${event.id}`}
+                        className={`nav-item ${isActive(`${basePath}/eventos/${event.id}`) ? 'active' : ''}`}
                         style={{ padding: '6px 10px', fontSize: '12px', background: 'transparent' }}
-                        onClick={() => { onNavigate?.(`/admin/eventos/${event.id}`); onClose?.(); }}
+                        onClick={() => { onNavigate?.(`${basePath}/eventos/${event.id}`); onClose?.(); }}
                       >
                         <LayoutDashboard size={14} />
                         Resumen
@@ -328,10 +330,10 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
                     )}
                     {!isWeddingPlanner && (
                       <Link
-                        href={`/admin/eventos/${event.id}/editar`}
-                        className={`nav-item ${isParentActive(`/admin/eventos/${event.id}/editar`) ? 'active' : ''}`}
+                        href={`${basePath}/eventos/${event.id}/editar`}
+                        className={`nav-item ${isParentActive(`${basePath}/eventos/${event.id}/editar`) ? 'active' : ''}`}
                         style={{ padding: '6px 10px', fontSize: '12px', background: 'transparent' }}
-                        onClick={() => { onNavigate?.(`/admin/eventos/${event.id}/editar`); onClose?.(); }}
+                        onClick={() => { onNavigate?.(`${basePath}/eventos/${event.id}/editar`); onClose?.(); }}
                       >
                         <Edit3 size={14} />
                         Configurar
@@ -339,10 +341,10 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
                     )}
                     {(isWeddingPlanner || event.plan === 'plus' || event.plan === 'deluxe') && (
                       <Link
-                        href={`/admin/eventos/${event.id}/invitados`}
-                        className={`nav-item ${isParentActive(`/admin/eventos/${event.id}/invitados`) ? 'active' : ''}`}
+                        href={`${basePath}/eventos/${event.id}/invitados`}
+                        className={`nav-item ${isParentActive(`${basePath}/eventos/${event.id}/invitados`) ? 'active' : ''}`}
                         style={{ padding: '6px 10px', fontSize: '12px', background: 'transparent' }}
-                        onClick={() => { onNavigate?.(`/admin/eventos/${event.id}/invitados`); onClose?.(); }}
+                        onClick={() => { onNavigate?.(`${basePath}/eventos/${event.id}/invitados`); onClose?.(); }}
                       >
                         <Users size={14} />
                         Invitados
@@ -350,10 +352,10 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
                     )}
                     {!isWeddingPlanner && (
                       <Link
-                        href={`/admin/eventos/${event.id}/preview`}
-                        className={`nav-item ${isParentActive(`/admin/eventos/${event.id}/preview`) ? 'active' : ''}`}
+                        href={`${basePath}/eventos/${event.id}/preview`}
+                        className={`nav-item ${isParentActive(`${basePath}/eventos/${event.id}/preview`) ? 'active' : ''}`}
                         style={{ padding: '6px 10px', fontSize: '12px', background: 'transparent' }}
-                        onClick={() => { onNavigate?.(`/admin/eventos/${event.id}/preview`); onClose?.(); }}
+                        onClick={() => { onNavigate?.(`${basePath}/eventos/${event.id}/preview`); onClose?.(); }}
                       >
                         <Eye size={14} />
                         Vista previa
@@ -369,6 +371,28 @@ export default function AdminSidebar({ profile, events, isOpen, isHidden, onTogg
               </p>
             )}
           </div>
+        )}
+
+        {isSuperadminArea && (
+          <>
+            <div className="section-header">Acciones</div>
+            <Link
+              href={`${basePath}/eventos/nuevo`}
+              className={`nav-item ${isActive(`${basePath}/eventos/nuevo`) ? 'active' : ''}`}
+              onClick={() => { onNavigate?.(`${basePath}/eventos/nuevo`); onClose?.(); }}
+            >
+              <Plus size={18} />
+              <span>Nuevo evento</span>
+            </Link>
+            <Link
+              href={`${basePath}/organizadores`}
+              className={`nav-item ${isParentActive(`${basePath}/organizadores`) ? 'active' : ''}`}
+              onClick={() => { onNavigate?.(`${basePath}/organizadores`); onClose?.(); }}
+            >
+              <UserCog size={18} />
+              <span>Organizadores</span>
+            </Link>
+          </>
         )}
 
       </div>

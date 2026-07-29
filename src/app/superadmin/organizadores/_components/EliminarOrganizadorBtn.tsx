@@ -4,10 +4,10 @@ import { useState, useTransition } from 'react';
 import { deleteOrganizador } from '../_actions';
 
 const C = {
-  border: '#222D3F',
-  text: '#EAF0FB', muted: '#7A90A8',
-  red: '#F87171', redDim: 'rgba(248,113,113,0.12)',
-  bg: '#0D1117', bgModal: '#161B22',
+  border: '#EDE5D8',
+  text: '#1C1611', muted: '#9C8E82',
+  red: '#C0392B', redDim: 'rgba(192,57,43,0.1)',
+  card: '#FFFFFF',
 };
 
 interface Props {
@@ -43,9 +43,8 @@ export function EliminarOrganizadorBtn({ organizadorId, nombre, email }: Props) 
           borderRadius: '6px',
           backgroundColor: 'transparent',
           color: C.red,
-          fontFamily: 'var(--font-mono)',
           fontSize: '10px',
-          letterSpacing: '1.5px',
+          letterSpacing: '1px',
           textTransform: 'uppercase',
           cursor: 'pointer',
           flexShrink: 0,
@@ -58,32 +57,32 @@ export function EliminarOrganizadorBtn({ organizadorId, nombre, email }: Props) 
         <div
           style={{
             position: 'fixed', inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.7)',
+            backgroundColor: 'rgba(28,22,17,0.6)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             zIndex: 50,
           }}
           onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}
         >
           <div style={{
-            backgroundColor: C.bgModal,
+            backgroundColor: C.card,
             border: `1px solid ${C.border}`,
-            borderRadius: '12px',
+            borderRadius: '14px',
             padding: '28px 32px',
             maxWidth: '440px',
             width: '90%',
           }}>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '3px', color: C.red, marginBottom: '12px' }}>
-              CONFIRMAR ELIMINACIÓN
+            <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: C.red, marginBottom: '12px' }}>
+              Confirmar eliminación
             </p>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '15px', color: C.text, marginBottom: '8px' }}>
+            <p style={{ fontSize: '15px', color: C.text, marginBottom: '8px' }}>
               {nombre || email}
             </p>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: C.muted, lineHeight: 1.6, marginBottom: '20px' }}>
+            <p style={{ fontSize: '12px', color: C.muted, lineHeight: 1.6, marginBottom: '20px' }}>
               Se eliminará la cuenta del usuario y perderá acceso a todos los eventos asignados. Los eventos quedarán reasignados al superadmin. No se puede deshacer.
             </p>
 
             {error && (
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.red, marginBottom: '16px' }}>
+              <p style={{ fontSize: '11px', color: C.red, marginBottom: '16px' }}>
                 {error}
               </p>
             )}
@@ -95,14 +94,12 @@ export function EliminarOrganizadorBtn({ organizadorId, nombre, email }: Props) 
                 style={{
                   padding: '9px 20px',
                   backgroundColor: C.red,
-                  color: '#0D1117',
+                  color: '#FFFFFF',
                   border: 'none',
                   borderRadius: '6px',
-                  fontFamily: 'var(--font-mono)',
                   fontSize: '11px',
-                  letterSpacing: '2px',
-                  textTransform: 'uppercase',
-                  fontWeight: 700,
+                  letterSpacing: '0.05em',
+                  fontWeight: 500,
                   cursor: isPending ? 'not-allowed' : 'pointer',
                   opacity: isPending ? 0.6 : 1,
                 }}
@@ -118,7 +115,6 @@ export function EliminarOrganizadorBtn({ organizadorId, nombre, email }: Props) 
                   borderRadius: '6px',
                   backgroundColor: 'transparent',
                   color: C.muted,
-                  fontFamily: 'var(--font-mono)',
                   fontSize: '11px',
                   cursor: 'pointer',
                 }}

@@ -35,17 +35,30 @@ export default async function SuperadminEditarPage({ params }: Props) {
   if (!event) redirect('/superadmin');
 
   return (
-    <div style={{ padding: '40px 48px', maxWidth: '760px' }}>
+    <div className="sa-editar-container">
+      <style>{`
+        .sa-editar-container {
+          padding: 40px 48px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        @media (max-width: 768px) {
+          .sa-editar-container { padding: 24px 20px; }
+        }
+      `}</style>
+
       <div style={{ marginBottom: '36px' }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: '#2DD4BF', marginBottom: '8px' }}>
+        <p style={{ fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', color: '#C9A87C', marginBottom: '8px' }}>
           Editando invitación
         </p>
         <h1
           style={{
-            fontSize: '22px',
-            fontWeight: 400,
-            color: '#EAF0FB',
-            lineHeight: 1.2,
+            fontFamily: 'var(--font-cormorant)',
+            fontSize: '32px',
+            fontWeight: 300,
+            fontStyle: 'italic',
+            color: '#1C1611',
+            lineHeight: 1.1,
           }}
         >
           {event.title}
@@ -57,7 +70,7 @@ export default async function SuperadminEditarPage({ params }: Props) {
         currentSubdomain={event.subdomain ?? event.slug}
       />
 
-      <div style={{ margin: '40px 0', height: '1px', backgroundColor: '#222D3F' }} />
+      <div style={{ margin: '40px 0', height: '1px', backgroundColor: '#EDE5D8' }} />
 
       <EditarForm
         eventId={event.id}
@@ -65,7 +78,6 @@ export default async function SuperadminEditarPage({ params }: Props) {
         initialConfig={event.config ?? {}}
         initialRsvpDeadline={event.rsvp_deadline}
         plan={event.plan as 'essential' | 'plus' | 'deluxe'}
-        theme="dark"
       />
     </div>
   );

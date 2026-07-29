@@ -7,11 +7,11 @@ import NuevoEventoForm from './_components/NuevoEventoForm';
 export const metadata: Metadata = { title: 'Nuevo Evento' };
 
 const C = {
-  muted: '#7A90A8',
-  mutedMid: '#9DB2C8',
-  accent: '#2DD4BF',
-  text: '#EAF0FB',
-  border: '#222D3F',
+  muted: '#9C8E82',
+  mutedLight: '#C5B9B0',
+  accent: '#C9A87C',
+  text: '#1C1611',
+  border: '#EDE5D8',
 };
 
 export default async function NuevoEventoPage() {
@@ -37,26 +37,33 @@ export default async function NuevoEventoPage() {
     .single();
 
   return (
-    <div style={{ padding: '32px 40px', maxWidth: '560px' }}>
+    <div style={{ padding: '40px 48px', maxWidth: '600px', boxSizing: 'border-box' }}>
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '28px' }}>
-        <Link
-          href="/superadmin"
-          style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted, textDecoration: 'none', letterSpacing: '1px' }}
-        >
-          /eventos
+        <Link href="/superadmin" style={{ fontSize: '11px', color: C.muted, textDecoration: 'none' }}>
+          Eventos
         </Link>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted }}>/</span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.accent, letterSpacing: '1px' }}>nuevo</span>
+        <span style={{ fontSize: '11px', color: C.mutedLight }}>/</span>
+        <span style={{ fontSize: '11px', color: C.accent }}>Nuevo</span>
       </div>
 
       {/* Header */}
       <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '20px', fontWeight: 400, color: C.text, letterSpacing: '-0.01em', marginBottom: '8px' }}>
+        <h1
+          style={{
+            fontFamily: 'var(--font-cormorant)',
+            fontSize: '32px',
+            fontWeight: 300,
+            fontStyle: 'italic',
+            color: C.text,
+            lineHeight: 1.1,
+            marginBottom: '8px',
+          }}
+        >
           Nuevo evento
         </h1>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.mutedMid }}>
-          // El evento se crea en estado <span style={{ color: C.accent }}>draft</span> — publica cuando esté listo
+        <p style={{ fontSize: '12px', color: C.muted }}>
+          El evento se crea en estado <span style={{ color: C.accent }}>borrador</span> — publica cuando esté listo.
         </p>
       </div>
 

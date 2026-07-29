@@ -6,15 +6,15 @@ import { updateSubdomain } from '../_actions';
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'moments-mx.com';
 
 const C = {
-  bg: '#0D1117',
-  sidebar: '#161B26',
-  border: '#222D3F',
-  borderBright: '#2D3F57',
-  accent: '#2DD4BF',
-  accentDim: 'rgba(45,212,191,0.1)',
-  text: '#EAF0FB',
-  muted: '#7A90A8',
-  mutedMid: '#9DB2C8',
+  bg: '#F8F3EC',
+  sidebar: '#FFFFFF',
+  border: '#EDE5D8',
+  borderBright: '#D8CBB8',
+  accent: '#C9A87C',
+  accentDim: 'rgba(201,168,124,0.12)',
+  text: '#1C1611',
+  muted: '#9C8E82',
+  mutedMid: '#7A6F63',
 };
 
 const inputStyle: React.CSSProperties = {
@@ -26,7 +26,6 @@ const inputStyle: React.CSSProperties = {
   borderRight: 'none',
   color: C.text,
   fontSize: '13px',
-  fontFamily: 'var(--font-mono)',
   outline: 'none',
   boxSizing: 'border-box',
 };
@@ -68,7 +67,7 @@ export default function SubdomainForm({ eventId, currentSubdomain }: Props) {
 
   return (
     <div style={{ marginBottom: '0' }}>
-      <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase', color: C.muted, marginBottom: '12px' }}>
+      <p style={{ fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase', color: C.muted, marginBottom: '12px' }}>
         Subdominio
       </p>
 
@@ -87,7 +86,6 @@ export default function SubdomainForm({ eventId, currentSubdomain }: Props) {
             backgroundColor: C.bg,
             border: `1px solid ${C.borderBright}`,
             borderLeft: 'none',
-            fontFamily: 'var(--font-mono)',
             fontSize: '12px',
             color: C.muted,
             whiteSpace: 'nowrap',
@@ -102,11 +100,10 @@ export default function SubdomainForm({ eventId, currentSubdomain }: Props) {
             style={{
               marginLeft: '12px',
               padding: '10px 20px',
-              backgroundColor: saved ? 'rgba(45,212,191,0.15)' : C.accent,
-              color: saved ? C.accent : '#07090F',
+              backgroundColor: saved ? 'rgba(201,168,124,0.15)' : C.accent,
+              color: saved ? C.accent : '#F8F3EC',
               border: saved ? `1px solid ${C.accent}` : 'none',
               borderRadius: '6px',
-              fontFamily: 'var(--font-mono)',
               fontSize: '11px',
               fontWeight: 600,
               letterSpacing: '0.08em',
@@ -121,12 +118,12 @@ export default function SubdomainForm({ eventId, currentSubdomain }: Props) {
         </div>
 
         {error && (
-          <p style={{ marginTop: '8px', fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#F87171' }}>
+          <p style={{ marginTop: '8px', fontSize: '10px', color: '#C0392B' }}>
             {error}
           </p>
         )}
         {!error && (
-          <p style={{ marginTop: '8px', fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted }}>
+          <p style={{ marginTop: '8px', fontSize: '10px', color: C.muted }}>
             // Preview: {value || '____'}.{ROOT_DOMAIN}
           </p>
         )}

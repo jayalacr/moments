@@ -12,13 +12,6 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return { title: `Invitados | ${data?.title ?? 'Evento'}` };
 }
 
-const C = {
-  bg: '#0D1117',
-  muted: '#7A90A8',
-  accent: '#2DD4BF',
-  text: '#EAF0FB',
-};
-
 interface Props {
   params: Promise<{ id: string }>;
 }
@@ -42,31 +35,34 @@ export default async function SuperadminInvitadosPage({ params }: Props) {
     <div className="sa-invitados-container">
       <style>{`
         .sa-invitados-container {
-          padding: 32px 40px;
+          padding: 40px 48px;
           width: 100%;
-          max-width: 1200px;
           box-sizing: border-box;
-          background-color: ${C.bg};
-          min-height: 100vh;
-          color: ${C.text};
         }
         @media (max-width: 768px) {
-          .sa-invitados-container {
-            padding: 20px 16px;
-          }
+          .sa-invitados-container { padding: 24px 20px; }
         }
       `}</style>
-      <div style={{ marginBottom: '28px' }}>
+      <div style={{ marginBottom: '36px' }}>
         <Link
           href={`/superadmin/eventos/${id}`}
-          style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '16px' }}
+          style={{ fontSize: '11px', color: '#9C8E82', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '16px' }}
         >
           ← volver al evento
         </Link>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '3px', textTransform: 'uppercase', color: C.accent, marginBottom: '8px' }}>
+        <p style={{ fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', color: '#C9A87C', marginBottom: '8px' }}>
           Gestión de asistentes
         </p>
-        <h1 style={{ fontSize: '20px', fontWeight: 400, color: C.text, lineHeight: 1.2 }}>
+        <h1
+          style={{
+            fontFamily: 'var(--font-cormorant)',
+            fontSize: '32px',
+            fontWeight: 300,
+            fontStyle: 'italic',
+            color: '#1C1611',
+            lineHeight: 1.1,
+          }}
+        >
           Invitados & Confirmaciones
         </h1>
       </div>

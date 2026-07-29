@@ -1,6 +1,7 @@
 'use client';
 
 import { useTransition, useState } from 'react';
+import Link from 'next/link';
 import { createEvent } from '@/app/superadmin/_actions';
 
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'moments-mx.com';
@@ -18,22 +19,23 @@ interface Me {
 }
 
 const C = {
-  bg: '#0D1117',
-  sidebar: '#161B26',
-  border: '#222D3F',
-  borderBright: '#2D3F57',
-  accent: '#2DD4BF',
-  accentDim: 'rgba(45,212,191,0.1)',
-  text: '#EAF0FB',
-  muted: '#7A90A8',
-  mutedMid: '#9DB2C8',
+  bg: '#F8F3EC',
+  card: '#FFFFFF',
+  border: '#EDE5D8',
+  borderBright: '#D8CBB8',
+  accent: '#C9A87C',
+  accentDim: 'rgba(201,168,124,0.12)',
+  text: '#1C1611',
+  muted: '#9C8E82',
+  mutedLight: '#C5B9B0',
+  red: '#C0392B',
 };
 
 function generateSlug(title: string) {
   return title
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9\s-]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
@@ -43,12 +45,11 @@ function generateSlug(title: string) {
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '10px 14px',
-  backgroundColor: C.sidebar,
+  backgroundColor: C.card,
   border: `1px solid ${C.borderBright}`,
   borderRadius: '6px',
   color: C.text,
   fontSize: '13px',
-  fontFamily: 'var(--font-sans)',
   outline: 'none',
   boxSizing: 'border-box',
 };
@@ -56,7 +57,7 @@ const inputStyle: React.CSSProperties = {
 const selectStyle: React.CSSProperties = {
   ...inputStyle,
   appearance: 'none',
-  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23536480'/%3E%3C/svg%3E")`,
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239C8E82'/%3E%3C/svg%3E")`,
   backgroundRepeat: 'no-repeat',
   backgroundPosition: 'right 14px center',
   paddingRight: '36px',
@@ -65,9 +66,8 @@ const selectStyle: React.CSSProperties = {
 
 const labelStyle: React.CSSProperties = {
   display: 'block',
-  fontFamily: 'var(--font-mono)',
-  fontSize: '9px',
-  letterSpacing: '2px',
+  fontSize: '11px',
+  letterSpacing: '1.5px',
   color: C.muted,
   marginBottom: '8px',
   textTransform: 'uppercase',
@@ -107,7 +107,7 @@ export default function NuevoEventoForm({ organizers, me }: { organizers: Organi
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <style>{`
         input:focus, select:focus { border-color: ${C.accent} !important; }
-        input::placeholder { color: ${C.muted}; }
+        input::placeholder { color: ${C.mutedLight}; }
       `}</style>
 
       {/* Título */}
@@ -128,7 +128,7 @@ export default function NuevoEventoForm({ organizers, me }: { organizers: Organi
       <div>
         <label htmlFor="slug" style={labelStyle}>Slug (url pública)</label>
         <div style={{ position: 'relative' }}>
-          <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontFamily: 'var(--font-mono)', fontSize: '12px', color: C.muted, pointerEvents: 'none' }}>
+          <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: C.muted, pointerEvents: 'none' }}>
             /boda/
           </span>
           <input
@@ -142,7 +142,7 @@ export default function NuevoEventoForm({ organizers, me }: { organizers: Organi
             style={{ ...inputStyle, paddingLeft: '56px' }}
           />
         </div>
-        <p style={{ marginTop: '6px', fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted }}>
+        <p style={{ marginTop: '6px', fontSize: '11px', color: C.muted }}>
           Solo minúsculas, números y guiones
         </p>
       </div>
@@ -167,7 +167,6 @@ export default function NuevoEventoForm({ organizers, me }: { organizers: Organi
             border: `1px solid ${C.borderBright}`,
             borderLeft: 'none',
             borderRadius: '0 6px 6px 0',
-            fontFamily: 'var(--font-mono)',
             fontSize: '12px',
             color: C.muted,
             whiteSpace: 'nowrap',
@@ -176,13 +175,13 @@ export default function NuevoEventoForm({ organizers, me }: { organizers: Organi
           </span>
         </div>
         {subdomainError && (
-          <p style={{ marginTop: '6px', fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#F87171' }}>
+          <p style={{ marginTop: '6px', fontSize: '11px', color: C.red }}>
             {subdomainError}
           </p>
         )}
         {!subdomainError && (
-          <p style={{ marginTop: '6px', fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted }}>
-            // Se auto-genera desde el slug. Disponible en planes Plus y Deluxe.
+          <p style={{ marginTop: '6px', fontSize: '11px', color: C.muted }}>
+            Se auto-genera desde el slug. Disponible en planes Plus y Deluxe.
           </p>
         )}
       </div>
@@ -221,8 +220,8 @@ export default function NuevoEventoForm({ organizers, me }: { organizers: Organi
           placeholder="ej: essential-demo, boda-clasica-dorado"
           style={inputStyle}
         />
-        <p style={{ marginTop: '6px', fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted }}>
-          // Clave del template registrado en src/lib/templates.ts — se puede asignar después
+        <p style={{ marginTop: '6px', fontSize: '11px', color: C.muted }}>
+          Clave del template registrado en src/lib/templates.ts — se puede asignar después.
         </p>
       </div>
 
@@ -243,8 +242,8 @@ export default function NuevoEventoForm({ organizers, me }: { organizers: Organi
           ))}
         </select>
         {organizers.length === 0 && (
-          <p style={{ marginTop: '6px', fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#F87171' }}>
-            // No hay organizadores. Invita uno primero desde Supabase Auth.
+          <p style={{ marginTop: '6px', fontSize: '11px', color: C.red }}>
+            No hay organizadores. Invita uno primero desde &ldquo;Organizadores&rdquo;.
           </p>
         )}
       </div>
@@ -256,37 +255,35 @@ export default function NuevoEventoForm({ organizers, me }: { organizers: Organi
           disabled={isPending}
           style={{
             padding: '11px 24px',
-            backgroundColor: isPending ? C.accentDim : C.accent,
-            color: isPending ? C.mutedMid : '#07090F',
+            backgroundColor: isPending ? C.accentDim : '#1C1611',
+            color: isPending ? C.mutedLight : '#F8F3EC',
             border: 'none',
-            borderRadius: '6px',
-            fontFamily: 'var(--font-mono)',
+            borderRadius: '8px',
             fontSize: '12px',
-            fontWeight: 600,
-            letterSpacing: '0.08em',
+            fontWeight: 500,
+            letterSpacing: '0.05em',
             cursor: isPending ? 'not-allowed' : 'pointer',
-            transition: 'background 0.15s',
+            transition: 'opacity 0.15s',
           }}
         >
-          {isPending ? 'creando...' : '$ create event'}
+          {isPending ? 'Creando...' : 'Crear evento'}
         </button>
 
-        <a
+        <Link
           href="/superadmin"
           style={{
             padding: '11px 20px',
             backgroundColor: 'transparent',
             border: `1px solid ${C.borderBright}`,
-            borderRadius: '6px',
-            fontFamily: 'var(--font-mono)',
+            borderRadius: '8px',
             fontSize: '12px',
-            color: C.mutedMid,
+            color: C.muted,
             textDecoration: 'none',
-            letterSpacing: '0.05em',
+            letterSpacing: '0.02em',
           }}
         >
-          cancelar
-        </a>
+          Cancelar
+        </Link>
       </div>
     </form>
   );

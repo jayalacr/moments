@@ -5,16 +5,16 @@ import { createClient } from '@/lib/supabase/client';
 import { updateTemplateType } from '@/app/superadmin/_actions';
 
 const C = {
-  border: '#222D3F',
-  borderBright: '#2D3F57',
-  accent: '#2DD4BF',
-  accentDim: 'rgba(45,212,191,0.1)',
-  text: '#EAF0FB',
-  muted: '#7A90A8',
-  mutedMid: '#9DB2C8',
-  green: '#4ADE80',
-  greenDim: 'rgba(74,222,128,0.1)',
-  red: '#F87171',
+  border: '#EDE5D8',
+  borderBright: '#D8CBB8',
+  accent: '#C9A87C',
+  accentDim: 'rgba(201,168,124,0.12)',
+  text: '#1C1611',
+  muted: '#9C8E82',
+  mutedMid: '#7A6F63',
+  green: '#5A7A5A',
+  greenDim: 'rgba(90,122,90,0.12)',
+  red: '#C0392B',
 };
 
 interface Props {
@@ -79,8 +79,8 @@ export default function TemplateUpload({ eventId, currentUrl, eventSlug, eventTy
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
       {/* Estado actual */}
-      <div style={{ padding: '14px 16px', border: `1px solid ${C.border}`, borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.02)' }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: C.muted, letterSpacing: '2px', marginBottom: '8px' }}>
+      <div style={{ padding: '14px 16px', border: `1px solid ${C.border}`, borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.015)' }}>
+        <p style={{ fontSize: '9px', color: C.muted, letterSpacing: '2px', marginBottom: '8px' }}>
           TEMPLATE ACTUAL
         </p>
         {currentUrl ? (
@@ -90,7 +90,7 @@ export default function TemplateUpload({ eventId, currentUrl, eventSlug, eventTy
               href={currentUrl}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.accent, wordBreak: 'break-all' }}
+              style={{ fontSize: '11px', color: C.accent, wordBreak: 'break-all' }}
             >
               {currentUrl}
             </a>
@@ -98,7 +98,7 @@ export default function TemplateUpload({ eventId, currentUrl, eventSlug, eventTy
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: C.muted, flexShrink: 0 }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: C.muted }}>
+            <span style={{ fontSize: '11px', color: C.muted }}>
               Sin template — la invitación no es pública aún
             </span>
           </div>
@@ -125,10 +125,10 @@ export default function TemplateUpload({ eventId, currentUrl, eventSlug, eventTy
         >
           <span style={{ fontSize: '28px' }}>⬆</span>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: uploading ? C.accent : C.mutedMid }}>
+            <p style={{ fontSize: '12px', color: uploading ? C.accent : C.mutedMid }}>
               {uploading ? 'Subiendo...' : 'Seleccionar archivo HTML'}
             </p>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted, marginTop: '4px' }}>
+            <p style={{ fontSize: '10px', color: C.muted, marginTop: '4px' }}>
               El archivo reemplaza el template actual
             </p>
           </div>
@@ -146,23 +146,23 @@ export default function TemplateUpload({ eventId, currentUrl, eventSlug, eventTy
 
       {/* Feedback */}
       {status === 'success' && (
-        <div style={{ padding: '12px 16px', borderRadius: '6px', backgroundColor: C.greenDim, border: `1px solid rgba(74,222,128,0.2)` }}>
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: C.green }}>
+        <div style={{ padding: '12px 16px', borderRadius: '6px', backgroundColor: C.greenDim, border: `1px solid rgba(90,122,90,0.2)` }}>
+          <p style={{ fontSize: '12px', color: C.green }}>
             ✓ Template subido correctamente. Publica el evento para que sea visible.
           </p>
         </div>
       )}
       {status === 'error' && (
-        <div style={{ padding: '12px 16px', borderRadius: '6px', backgroundColor: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)' }}>
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: C.red }}>
+        <div style={{ padding: '12px 16px', borderRadius: '6px', backgroundColor: 'rgba(192,57,41,0.1)', border: '1px solid rgba(192,57,41,0.2)' }}>
+          <p style={{ fontSize: '12px', color: C.red }}>
             ✗ {errorMsg}
           </p>
         </div>
       )}
 
       {/* Tip */}
-      <div style={{ padding: '12px 16px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${C.border}` }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: C.muted, lineHeight: 1.7 }}>
+      <div style={{ padding: '12px 16px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.015)', border: `1px solid ${C.border}` }}>
+        <p style={{ fontSize: '10px', color: C.muted, lineHeight: 1.7 }}>
           // El HTML puede acceder al config del evento via:<br />
           // <span style={{ color: C.accent }}>window.__MOMENTS__.config</span><br />
           // Ejemplo: window.__MOMENTS__.config.couple.person1
@@ -182,7 +182,6 @@ export default function TemplateUpload({ eventId, currentUrl, eventSlug, eventTy
             padding: '10px 16px',
             border: `1px solid ${C.borderBright}`,
             borderRadius: '6px',
-            fontFamily: 'var(--font-mono)',
             fontSize: '11px',
             color: C.mutedMid,
             textDecoration: 'none',
