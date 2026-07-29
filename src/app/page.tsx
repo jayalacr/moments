@@ -537,8 +537,12 @@ export default function LandingPage() {
       a: 'Sí. Es un link que abre directo en el navegador del celular, sin apps ni registros ni contraseñas — un solo toque y ya está.',
     },
     {
-      q: '¿Cómo se paga y emiten factura?',
-      a: 'Coordinamos el método de pago y, si lo necesitas, tu facturación directamente por WhatsApp al confirmar tu plan.',
+      q: '¿Cómo se paga?',
+      a: 'Por transferencia bancaria. Te compartimos los datos por WhatsApp al confirmar tu plan.',
+    },
+    {
+      q: '¿Emiten factura?',
+      a: 'Escríbenos por WhatsApp para coordinar tu facturación.',
     },
   ];
 
@@ -767,12 +771,11 @@ export default function LandingPage() {
             </Link>
           </div>
           <p style={{ textAlign: 'center', marginTop: '32px', fontFamily: 'var(--font-c)', fontSize: '14px', fontStyle: 'italic', color: 'rgba(250,247,242,0.35)' }}>
-            * La carga de datos puede realizarla el organizador desde su panel o solicitarla a Moments con costo adicional, sujeto a disponibilidad.
+            * La carga de datos la realiza el organizador desde su panel.
           </p>
         </div>
       </section>
 
-      {/* Cómo funciona */}
       {/* Cómo funciona */}
       <section className="section" id="como">
         <div className="wrap">

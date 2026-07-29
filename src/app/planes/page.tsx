@@ -918,7 +918,7 @@ export default function PlanesPage() {
           Tú editas la información · diseño personalizado incluido
         </p>
         <p className="plans-note" style={{ paddingTop: 12 }}>
-          * La carga de datos puede realizarla el organizador desde su panel o solicitarla a Moments con costo adicional, sujeto a disponibilidad.
+          * La carga de datos la realiza el organizador desde su panel.
         </p>
       </div>
       <SiteFooter />

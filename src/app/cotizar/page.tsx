@@ -562,7 +562,13 @@ export default function CotizarPage() {
             >
               Pedir informes por WhatsApp →
             </a>
-          ) : (
+          ) : null}
+
+          <p style={{ marginTop: '12px', fontSize: '10.5px', color: 'var(--muted-fg)', textAlign: 'center' }}>
+            Pago por transferencia bancaria.
+          </p>
+
+          {!whatsappHref && (
             <p style={{ marginTop: '18px', fontSize: '11px', color: 'var(--muted-fg)', textAlign: 'center' }}>
               WhatsApp no está configurado (falta NEXT_PUBLIC_WHATSAPP_NUMBER).
             </p>
