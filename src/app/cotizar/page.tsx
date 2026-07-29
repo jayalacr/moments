@@ -565,7 +565,7 @@ export default function CotizarPage() {
           ) : null}
 
           <p style={{ marginTop: '12px', fontSize: '10.5px', color: 'var(--muted-fg)', textAlign: 'center' }}>
-            Pago por transferencia bancaria.
+            Pago por transferencia bancaria · 50% de anticipo para iniciar.
           </p>
 
           {!whatsappHref && (

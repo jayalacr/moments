@@ -538,7 +538,7 @@ export default function LandingPage() {
     },
     {
       q: '¿Cómo se paga?',
-      a: 'Por transferencia bancaria. Te compartimos los datos por WhatsApp al confirmar tu plan.',
+      a: 'Por transferencia bancaria. Para iniciar se requiere el 50% de anticipo; el resto se liquida antes de publicar tu invitación. Te compartimos los datos por WhatsApp al confirmar tu plan.',
     },
     {
       q: '¿Emiten factura?',

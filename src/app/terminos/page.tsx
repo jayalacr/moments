@@ -65,8 +65,9 @@ export default function TerminosPage() {
 
         <h2 style={h2}>4. Pago</h2>
         <p style={p}>
-          El pago se realiza por transferencia bancaria. Los datos de la cuenta se comparten directamente por
-          WhatsApp al confirmar tu plan. Tu invitación se publica una vez confirmado el pago.
+          El pago se realiza por transferencia bancaria. Para iniciar el diseño de tu invitación se requiere
+          un anticipo del 50% del total; el 50% restante se liquida antes de publicarla. Los datos de la
+          cuenta se comparten directamente por WhatsApp al confirmar tu plan.
         </p>
 
         <h2 style={h2}>5. Cambios y correcciones</h2>
