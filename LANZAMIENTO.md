@@ -207,10 +207,16 @@ no se quiere ese tracking. No reintentar esto sin que Juan lo pida de nuevo.
 
 ---
 
-## A7 · Páginas legales — rutas creadas, ⛔ falta texto real de **B7**
+## A7 · Páginas legales — borrador redactado, ⛔ falta revisión legal de **B7**
 
-- Crear `/aviso-de-privacidad` y `/terminos` con el texto que entregue Juan.
-- Enlazarlas desde `SiteFooter.tsx`.
+`/aviso-de-privacidad` y `/terminos` ya tienen contenido real (no placeholder),
+fundamentado en el producto: datos que se recaban, encargados del tratamiento,
+vigencia, pago, edición. Enlazadas desde `SiteFooter.tsx`.
+
+Quedan como placeholder visible en la página (marcados en dorado) los datos que no
+se debían inventar: razón social, domicilio fiscal, correo de contacto ARCO/dudas,
+jurisdicción, y la política de cancelaciones/reembolsos — esta última especialmente
+importante, es una decisión de negocio, no de redacción.
 
 ---
 
@@ -336,12 +342,14 @@ UPDATE events SET extension_months = CASE extension_key
 Vercel Analytics ya está instalado y activo (A6), no requiere cuenta adicional —
 usa el mismo proyecto de Vercel. Meta Pixel descartado por decisión de Juan.
 
-### B7 · Redactar los textos legales `P0` → desbloquea **A7**
+### B7 · Revisar los textos legales `P0` → desbloquea el cierre de **A7**
 
-En México la LFPDPPP lo exige si captas datos personales — y captas nombres y teléfonos de invitados de tus clientes. Meta además lo pide como requisito para aprobar anuncios.
+Borrador ya redactado (ver A7). Falta que Juan:
 
-- [ ] Aviso de privacidad (mencionar datos de invitados, Cloudinary y Supabase como encargados)
-- [ ] Términos y condiciones (entregables, tiempos, política de expiración, reembolsos)
+- [ ] Revise el borrador con un abogado (o al menos personalmente) antes de publicarlo como definitivo
+- [ ] Complete los placeholders: razón social, domicilio fiscal, correo de contacto
+- [ ] Defina la política de cancelaciones y reembolsos
+- [ ] Quite `robots: { index: false }` de ambas páginas una vez el contenido sea final
 
 ### B8 · Capturar screenshots de las plantillas `P1` → desbloquea **A8**
 
