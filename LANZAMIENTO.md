@@ -275,7 +275,7 @@ La infraestructura ya está: Supabase y Resend ya están integrados.
 ## A13 · Pendientes menores `P2`
 
 - [x] **FAQ con objeciones reales de compra** — 5 preguntas nuevas agregadas (preview antes de pagar, corrección post-publicación, invitados mayores, pago/factura sin inventar método).
-- [ ] **Precio de referencia en "Diseño desde cero"** (`page.tsx:701`) ⛔ depende de **B9**
+- [ ] **Precio de referencia en "Diseño desde cero"** — sin cambio, Juan confirmó que no hay precio base todavía.
 - [x] **Link de navegación mal apuntado** — corregido, `/#como` en vez de `/#que-es`.
 - [x] **Dos rutas de conversión compitiendo** — resuelto: `/cotizar` es la ruta principal (decisión de Juan). El CTA secundario del hero ahora lleva ahí en vez de a WhatsApp directo.
 - [ ] **Footer incompleto** — Juan confirmó dejarlo como está (WhatsApp + Instagram + legales), sin agregar más contacto.
@@ -348,11 +348,11 @@ En México la LFPDPPP lo exige si captas datos personales — y captas nombres y
 - [ ] Capturar Classic, Elegance y Costa en viewport móvil (390×844)
 - [ ] Exportar optimizadas a `public/templates/`
 
-### B9 · Decisiones de negocio pendientes `P1`
+### B9 · Decisiones de negocio — cerrado
 
-- [ ] **Precio de referencia del diseño personalizado** — desbloquea el ítem de A13
-- [ ] **¿Se cobra la carga de datos?** La landing dice "con costo adicional, sujeto a disponibilidad" (`page.tsx:751`) pero no está en el cotizador
-- [ ] **Método de pago** — no aparece en ningún lado del sitio. Es la primera pregunta que va a llegar por WhatsApp
+- **Precio de referencia del diseño personalizado**: no hay precio base por ahora. Se deja tal cual (sin "desde $X" en la landing).
+- **Carga de datos por Moments**: descartado como servicio. Se quitó la mención en `page.tsx` y `planes/page.tsx` — solo queda la carga por el organizador desde su panel.
+- **Método de pago**: solo transferencia bancaria. Agregado al FAQ (`page.tsx`) y a `/cotizar`.
 
 ### B10 · Prueba social `P1`
 
