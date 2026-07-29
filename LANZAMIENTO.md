@@ -118,7 +118,7 @@ Ojo con el matiz de marketing: hoy dice *"1 mes **gratis**"*. Con 2 meses convie
 
 ---
 
-## A1 · Centralizar el número de WhatsApp `P0` ⛔ depende de **B2**
+## A1 · Centralizar el número de WhatsApp — cerrado
 
 **Archivos:** `src/app/page.tsx:30` · `src/components/site/SiteFooter.tsx:7` · `src/app/cotizar/page.tsx:38` · `src/app/plantillas/page.tsx:226`
 
@@ -140,7 +140,7 @@ En producción eso significa que el CTA del hero, los tres botones de plan, el d
 
 ---
 
-## A2 · Evitar que las invitaciones se indexen `P0`
+## A2 · Evitar que las invitaciones se indexen — cerrado
 
 **Archivo:** `src/app/[type]/[slug]/page.tsx`
 
@@ -152,7 +152,7 @@ Ninguna ruta del proyecto declara `noindex`. Las invitaciones publicadas contien
 
 ---
 
-## A3 · Unificar dominios ⛔ depende de **B1** `P0`
+## A3 · Unificar dominios — cerrado
 
 Hay **cuatro dominios distintos** hardcodeados:
 
@@ -171,7 +171,7 @@ Los subdominios de cliente, los links de invitación y el watermark de las imág
 
 ---
 
-## A4 · Open Graph del sitio de marketing `P0` ⛔ depende de **B5**
+## A4 · Open Graph del sitio de marketing — código cerrado, ⛔ falta imagen de **B5**
 
 **Archivo:** `src/app/layout.tsx:16-22`
 
@@ -182,7 +182,7 @@ Solo las invitaciones tienen `openGraph`. El layout raíz tiene únicamente `tit
 
 ---
 
-## A5 · Bug de título duplicado `P0`
+## A5 · Bug de título duplicado — cerrado
 
 **Archivo:** `src/app/plantillas/page.tsx:12`
 
@@ -203,7 +203,7 @@ no se quiere ese tracking. No reintentar esto sin que Juan lo pida de nuevo.
 
 ---
 
-## A7 · Páginas legales `P0` ⛔ depende de **B7**
+## A7 · Páginas legales — rutas creadas, ⛔ falta texto real de **B7**
 
 - Crear `/aviso-de-privacidad` y `/terminos` con el texto que entregue Juan.
 - Enlazarlas desde `SiteFooter.tsx`.
@@ -223,7 +223,7 @@ Las tres cards renderizan el mismo bloque CSS genérico con "Sofía & Mateo". Cl
 
 ---
 
-## A9 · Arreglar los demos de la página de planes `P1`
+## A9 · Arreglar los demos de la página de planes — cerrado
 
 **Archivo:** `src/app/planes/page.tsx:769, 848, 854, 861`
 
@@ -233,7 +233,7 @@ Los seis links de "Ver demo" apuntan **todos** a `/plantillas/deluxe`. El mensaj
 
 ---
 
-## A10 · Copy del hero `P1`
+## A10 · Copy del hero — cerrado
 
 **Archivo:** `src/app/page.tsx:592-602`
 
@@ -258,7 +258,7 @@ La infraestructura ya está: Supabase y Resend ya están integrados.
 
 ---
 
-## A12 · Destacar el plan correcto `P1`
+## A12 · Destacar el plan correcto — cerrado (corregido en page.tsx y también en planes/page.tsx, que tenía el mismo bug sin documentar)
 
 **Archivo:** `src/app/page.tsx:576`
 
@@ -283,24 +283,20 @@ La infraestructura ya está: Supabase y Resend ya están integrados.
 
 Trabajo que Claude Code **no puede hacer**. Varios bloquean ítems de la Parte A.
 
-### B1 · Definir y comprar el dominio `P0` → desbloquea **A3**
+### B1 · Definir y comprar el dominio — cerrado
 
-Hoy hay cuatro dominios distintos en el código y al menos tres están mal. Hay que decidir cuál es el real y comprarlo si aún no.
+Dominio definitivo confirmado por Juan: `www.moments-mx.com`, ya apuntando a Vercel.
 
-- [ ] Elegir dominio definitivo
-- [ ] Comprarlo y apuntar DNS a Vercel
+### B2 · Configurar variables de entorno en Vercel — cerrado
 
-### B2 · Configurar variables de entorno en Vercel `P0` → desbloquea **A1**, **A3**
+- [x] `NEXT_PUBLIC_WHATSAPP_NUMBER` — agregada vía CLI (Production + Preview), activa desde el próximo deploy
+- [x] `NEXT_PUBLIC_ROOT_DOMAIN` — ya estaba configurada
+- [x] `NEXT_PUBLIC_BASE_URL` — ya estaba configurada
+- [x] Supabase, Resend, Cloudinary y `CRON_SECRET` — confirmado que ya están en producción (`vercel env ls`)
 
-- [ ] `NEXT_PUBLIC_WHATSAPP_NUMBER` — el número real de ventas
-- [ ] `NEXT_PUBLIC_ROOT_DOMAIN`
-- [ ] `NEXT_PUBLIC_BASE_URL`
-- [ ] Confirmar que las de Supabase, Resend, Cloudinary y `CRON_SECRET` estén en producción
+### B3 · Verificar el número de WhatsApp de ventas — cerrado
 
-### B3 · Verificar el número de WhatsApp de ventas `P0`
-
-- [ ] Confirmar que `528126390927` es el correcto y está activo
-- [ ] Idealmente, cuenta de WhatsApp Business con perfil y horario
+Confirmado por Juan: `528126390927` es el correcto.
 
 ### B4 · Aplicar SQL en el dashboard de Supabase `P0` → desbloquea **A11**
 
