@@ -192,15 +192,14 @@ El layout define `template: "%s | Moments"` y la página usa `title: 'Plantillas
 
 ---
 
-## A6 · Instalar analytics `P0` ⛔ depende de **B6**
+## A6 · Instalar analytics — cerrado
 
-No hay ninguna dependencia de analytics en `package.json`. Vas a lanzar sin saber de dónde llega la gente ni dónde abandona.
+`@vercel/analytics` instalado y montado en el layout raíz. Los clics a WhatsApp en la
+landing y el cotizador se registran como evento de conversión ("WhatsApp Click") en
+Vercel Analytics, visible en el dashboard del proyecto.
 
-El punto sensible es el Meta Pixel: necesita acumular datos **desde el día 1**. Instalarlo en dos meses significa empezar de cero justo cuando quieras pautar.
-
-- Instalar `@vercel/analytics` y montarlo en el layout raíz.
-- Montar Meta Pixel con el ID que entregue Juan.
-- Registrar los clics a WhatsApp como evento de conversión.
+**Decisión de Juan: sin Meta Pixel.** Se construyó y se revirtió a petición explícita —
+no se quiere ese tracking. No reintentar esto sin que Juan lo pida de nuevo.
 
 ---
 
@@ -332,11 +331,10 @@ UPDATE events SET extension_months = CASE extension_key
 - [ ] `public/og-default.jpg` — 1200×630, fallback de invitaciones sin portada (hoy referenciada pero **inexistente**)
 - [ ] Imagen OG de marca para el sitio de marketing
 
-### B6 · Crear cuentas de analytics `P0` → desbloquea **A6**
+### B6 · Analytics — cerrado
 
-- [ ] Activar Vercel Analytics (gratuito)
-- [ ] Crear Meta Business Suite y obtener el Pixel ID
-- [ ] Opcional: GA4
+Vercel Analytics ya está instalado y activo (A6), no requiere cuenta adicional —
+usa el mismo proyecto de Vercel. Meta Pixel descartado por decisión de Juan.
 
 ### B7 · Redactar los textos legales `P0` → desbloquea **A7**
 
