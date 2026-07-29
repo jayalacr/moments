@@ -95,11 +95,15 @@ Este ítem existía en la v1 del documento por una lectura incorrecta del modelo
 - `PURGE_GRACE_DAYS = 30` (también en `eventDate.ts`) es un concepto **separado**: días de gracia después de `expires_at` antes de que sea seguro purgar el evento de BD + Cloudinary. No se guarda en DB, se calcula al momento de revisar. El dashboard de `/superadmin` ya distingue "vigente" / "inactiva (día X/30)" / "lista para depurar".
 - **No requiere nada de B4.** Ítem cerrado, sin acción de código pendiente.
 
-### A0.4b — Falta: hacer cumplir la ventana de anticipación de publicación `P1` ⛔ depende de decisión de negocio
+### A0.4b — No aplica, cerrado
 
-Lo que sí queda pendiente y **no estaba en la v1 del documento**: los meses incluidos/extra determinan **cuánto antes de la boda se puede publicar** una invitación (ej. 2 meses incluidos = puedes publicarla hasta 2 meses antes de la boda sin pagar extra; si la boda está a 5 meses, necesitas comprar 3 meses extra). Hoy nada en el código valida ni comunica esto — `PricingEditor` guarda la extensión, pero no hay chequeo de `fechaBoda - published_at ≤ mesesIncluidos + mesesExtra`.
-
-Antes de construirlo, decisión de Juan: si el organizador intenta publicar fuera de la ventana pagada, ¿se bloquea el botón de publicar, se muestra una advertencia pero se deja pasar, o se cobra automáticamente la extensión faltante? Sin esto no se puede implementar sin adivinar el comportamiento.
+Los meses incluidos/extra determinan cuánto antes de la boda se puede publicar una
+invitación. Se consideró validar esto en código (bloquear/advertir/cobrar automático
+si se publica fuera de la ventana pagada), pero **no hace falta**: solo Juan
+(superadmin) puede publicar un evento — los organizadores no tienen ese botón. Como
+Juan ya conoce el precio al momento de publicar, no hay riesgo de que alguien se
+salte la ventana pagada sin que él se dé cuenta. No construir esto salvo que cambie
+quién puede publicar.
 
 ### A0.5 — Actualizar el copy de "1 mes" en todo el sitio
 
@@ -245,7 +249,7 @@ Detalle revelador: la clase `.hero__sub` está definida en el CSS (`línea 291`)
 
 ---
 
-## A11 · Captura de leads `P1`
+## A11 · Captura de leads — no por ahora (decisión de Juan)
 
 Todo termina en un link externo de WhatsApp. Si alguien navega en desktop sin WhatsApp Web, se pierde completo — y nunca construyes una lista. `/cotizar` es una calculadora bien hecha que no guarda absolutamente nada.
 
@@ -355,12 +359,9 @@ En México la LFPDPPP lo exige si captas datos personales — y captas nombres y
 - [ ] Dos invitaciones demo completas con fotografía real
 - [ ] Testimonios, aunque sean de las primeras parejas
 
-### B11 · Instagram `P1`
+### B11 · Instagram — cerrado
 
-Para el mercado de bodas, Instagram es **el** canal de descubrimiento. El footer apunta hoy a `@code4u_mx` (`SiteFooter.tsx:50`), no a una cuenta de Moments.
-
-- [ ] Crear la cuenta con 9–12 posts antes de lanzar
-- [ ] Pasar el usuario para actualizar el link
+`@code4u_mx` en el footer es correcto — confirmado por Juan, no es un error. No cambiar.
 
 ### B12 · Prueba final en dispositivo real `P0`
 
@@ -407,5 +408,7 @@ Revisado y correcto, no hay que tocarlo:
 | **1** | A0 completo, A2, A5, A12 | B1, B2, B3 |
 | **2** | A1, A3 | B4, B5, B6 |
 | **3** | A4, A6, A7, A9, A10 | B7, B8 |
-| **4** | A8, A11 | B9, B10 |
-| **5** | A13 | B11, **B12** |
+| **4** | A8 (cuando esté B8) | B9, B10 |
+| **5** | A13 | **B12** |
+
+A11 (captura de leads) descartado por ahora — decisión de Juan. B11 (Instagram) cerrado, `@code4u_mx` es correcto.
