@@ -3,8 +3,7 @@
 import { useTransition, useState } from 'react';
 import Link from 'next/link';
 import { createEvent } from '@/app/superadmin/_actions';
-
-const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'moments-mx.com';
+import { ROOT_DOMAIN } from '@/lib/invitation';
 
 interface Organizer {
   id: string;

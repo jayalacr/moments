@@ -1,11 +1,11 @@
 import { Montserrat, Jost } from 'next/font/google';
 import { Instagram } from 'lucide-react';
+import { waLink } from '@/lib/contact';
 
 const montserrat = Montserrat({ subsets: ['latin'], weight: ['300'], variable: '--font-montserrat' });
 const jost = Jost({ subsets: ['latin'], weight: ['300', '400'], variable: '--font-jost' });
 
-const WA_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '5200000000';
-const WA_HREF = `https://wa.me/${WA_NUMBER}?text=Hola%20Moments%2C%20quiero%20cotizar%20mi%20invitaci%C3%B3n`;
+const WA_HREF = waLink('Hola Moments, quiero cotizar mi invitación');
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -44,9 +44,11 @@ export default function SiteFooter() {
           <span className="sf__copy">© 2026 Powered by code4u</span>
           <span className="sf__wordmark">moments</span>
           <div className="sf__links">
-            <a href={WA_HREF} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
-              <WhatsAppIcon className="sf__wa" />
-            </a>
+            {WA_HREF && (
+              <a href={WA_HREF} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+                <WhatsAppIcon className="sf__wa" />
+              </a>
+            )}
             <a href="https://www.instagram.com/code4u_mx/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
               <Instagram size={20} strokeWidth={1.5} />
             </a>

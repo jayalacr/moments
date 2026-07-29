@@ -1,4 +1,4 @@
-const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'moments-mx.com';
+export const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? '';
 
 export function getInvitationUrl(
   event: { subdomain?: string | null; event_type: string; slug: string },

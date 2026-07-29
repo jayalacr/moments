@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Cormorant_Garamond, Jost, Montserrat } from 'next/font/google';
 import SiteHeader from '@/components/site/SiteHeader';
 import SiteFooter from '@/components/site/SiteFooter';
+import { waLink } from '@/lib/contact';
 
 
 const cormorant = Cormorant_Garamond({ subsets: ['latin'], weight: ['300', '400', '500'], style: ['normal', 'italic'], variable: '--font-cormorant' });
@@ -47,6 +48,7 @@ const PLANS = [
 ];
 
 export default function PlantillasPage() {
+  const newDesignWaHref = waLink('Hola Moments, tengo una idea para un nuevo diseño de plantilla');
   const css = `
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -223,7 +225,11 @@ export default function PlantillasPage() {
                 <p className="soon-sub">Seguimos creando. Un nuevo estilo llega pronto.</p>
               </div>
               <div className="soon-body">
-                <p>¿Tienes una estética en mente? <a href="https://wa.me/" style={{ color: 'var(--gold)', textDecoration: 'none' }}>Cuéntanos →</a></p>
+                {newDesignWaHref ? (
+                  <p>¿Tienes una estética en mente? <a href={newDesignWaHref} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)', textDecoration: 'none' }}>Cuéntanos →</a></p>
+                ) : (
+                  <p>¿Tienes una estética en mente? Escríbenos.</p>
+                )}
               </div>
             </article>
           </div>

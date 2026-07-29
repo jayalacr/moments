@@ -1,10 +1,10 @@
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
+import { ROOT_DOMAIN } from '@/lib/invitation'
 
 const DEV_TUNNEL_DOMAINS = ['devtunnels.ms', 'ngrok.io', 'ngrok-free.app', 'loca.lt']
 const SYSTEM_SUBDOMAINS = new Set(['www', 'admin', 'superadmin', 'api'])
-const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'moments-mx.com'
 
 function isTunnelHost(host: string): boolean {
   return DEV_TUNNEL_DOMAINS.some(d => host.endsWith(d))

@@ -7,6 +7,7 @@ import { Instagram } from 'lucide-react';
 import SiteHeader from '@/components/site/SiteHeader';
 import SiteFooter from '@/components/site/SiteFooter';
 import { BASE_PRICES } from '@/lib/pricing';
+import { waLink } from '@/lib/contact';
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
@@ -27,8 +28,7 @@ const montserrat = Montserrat({
   variable: '--font-montserrat',
 });
 
-const WA_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '5200000000';
-const WA_HREF = `https://wa.me/${WA_NUMBER}?text=Hola%20Moments%2C%20quiero%20cotizar%20mi%20invitaci%C3%B3n`;
+const WA_HREF = waLink('Hola Moments, quiero cotizar mi invitación');
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -595,10 +595,12 @@ export default function LandingPage() {
           <h1 className="hero__heading">Una invitación tan única como tu boda.</h1>
           <div className="hero__ctas">
             <Link className="btn btn--gold" href="/plantillas">Ver plantillas</Link>
-            <a className="btn btn--ghost" href={WA_HREF} target="_blank" rel="noopener noreferrer">
-              <WhatsAppIcon className="wa-icon" />
-              Cotizar por WhatsApp
-            </a>
+            {WA_HREF && (
+              <a className="btn btn--ghost" href={WA_HREF} target="_blank" rel="noopener noreferrer">
+                <WhatsAppIcon className="wa-icon" />
+                Cotizar por WhatsApp
+              </a>
+            )}
           </div>
         </div>
         <div className={`hero__scroll-hint${navScrolled ? ' hidden' : ''}`} aria-hidden="true">
@@ -700,7 +702,9 @@ export default function LandingPage() {
                 <li>Animaciones y detalles exclusivos</li>
                 <li>Costo adicional según complejidad</li>
               </ul>
-              <a href={WA_HREF} target="_blank" rel="noopener noreferrer" className="btn btn--gold">Cotizar diseño a medida</a>
+              {WA_HREF && (
+                <a href={WA_HREF} target="_blank" rel="noopener noreferrer" className="btn btn--gold">Cotizar diseño a medida</a>
+              )}
             </div>
           </div>
         </div>
@@ -731,14 +735,16 @@ export default function LandingPage() {
                     <li key={f}><CheckIcon />{f}</li>
                   ))}
                 </ul>
-                <a
-                  className={`btn btn--block${plan.featured ? ' btn--gold' : ' btn--ghost'}`}
-                  href={WA_HREF}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {plan.cta}
-                </a>
+                {WA_HREF && (
+                  <a
+                    className={`btn btn--block${plan.featured ? ' btn--gold' : ' btn--ghost'}`}
+                    href={WA_HREF}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {plan.cta}
+                  </a>
+                )}
               </article>
             ))}
           </div>
@@ -825,10 +831,12 @@ export default function LandingPage() {
             <h2>Comienza a escribir tu<br /><em>historia</em> hoy mismo.</h2>
             <p>Cuéntanos de tu boda y te enviamos una cotización sin compromiso, hoy mismo.</p>
             <div className="ctaband__ctas">
-              <a className="btn btn--gold" href={WA_HREF} target="_blank" rel="noopener noreferrer">
-                <WhatsAppIcon className="wa-icon" />
-                Solicitar diseño
-              </a>
+              {WA_HREF && (
+                <a className="btn btn--gold" href={WA_HREF} target="_blank" rel="noopener noreferrer">
+                  <WhatsAppIcon className="wa-icon" />
+                  Solicitar diseño
+                </a>
+              )}
               <Link className="btn btn--ghost" href="/plantillas">Ver demo en vivo</Link>
             </div>
           </div>

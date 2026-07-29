@@ -17,6 +17,7 @@ import {
   type Plan,
   type DesignType,
 } from '@/lib/pricing';
+import { waLink } from '@/lib/contact';
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
@@ -36,8 +37,6 @@ const montserrat = Montserrat({
   weight: ['300', '400', '500'],
   variable: '--font-montserrat',
 });
-
-const WHATSAPP_NUMBER = '528126390927';
 
 const PLAN_ICONS: Record<Plan, typeof Sparkles> = {
   essential: Sparkles,
@@ -78,8 +77,10 @@ export default function CotizarPage() {
       `• Diseño: ${designType === 'template' ? 'Plantilla prediseñada' : 'Diseño personalizado'}`,
       `• Publicación: ${totalLabel}`,
     ];
-    return encodeURIComponent(lines.join('\n'));
+    return lines.join('\n');
   }, [plan, designType, extraMonths, totalMonths]);
+
+  const whatsappHref = waLink(whatsappMessage);
 
   const css = `
     :root {
@@ -551,14 +552,20 @@ export default function CotizarPage() {
             </p>
           )}
 
-          <a
-            href={`https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="q-cta"
-          >
-            Pedir informes por WhatsApp →
-          </a>
+          {whatsappHref ? (
+            <a
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="q-cta"
+            >
+              Pedir informes por WhatsApp →
+            </a>
+          ) : (
+            <p style={{ marginTop: '18px', fontSize: '11px', color: 'var(--muted-fg)', textAlign: 'center' }}>
+              WhatsApp no está configurado (falta NEXT_PUBLIC_WHATSAPP_NUMBER).
+            </p>
+          )}
         </aside>
       </div>
       <SiteFooter />

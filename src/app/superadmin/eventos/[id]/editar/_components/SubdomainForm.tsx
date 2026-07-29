@@ -2,8 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { updateSubdomain } from '../_actions';
-
-const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'moments-mx.com';
+import { ROOT_DOMAIN } from '@/lib/invitation';
 
 const C = {
   bg: '#F8F3EC',

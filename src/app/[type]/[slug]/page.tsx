@@ -1,8 +1,11 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { notFound } from 'next/navigation';
 import { TEMPLATES } from '@/lib/templates';
+import { ROOT_DOMAIN } from '@/lib/invitation';
 import { Jost } from 'next/font/google';
 export const revalidate = 86400;
+
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
 
 const jost = Jost({ subsets: ['latin'], weight: ['300', '400'] });
 
@@ -33,7 +36,7 @@ export async function generateMetadata({ params }: Pick<Props, 'params'>) {
   // Convertir a imagen OG: 1200×630, JPEG, calidad auto (WhatsApp y scrapers la requieren)
   const heroUrl = rawHeroUrl?.includes('res.cloudinary.com')
     ? rawHeroUrl.replace('/upload/', '/upload/f_jpg,q_auto,w_1200,h_630,c_fill/')
-    : rawHeroUrl ?? 'https://moments.events/og-default.jpg';
+    : rawHeroUrl ?? `${BASE_URL}/og-default.jpg`;
 
   const title = event.title;
   const description = `Estás invitado a celebrar con nosotros. Mira los detalles de: ${title}`;
@@ -144,7 +147,7 @@ export default async function InvitacionPage({ params, searchParams }: Props) {
           ¿Quieres crear la tuya?
         </p>
         <a
-          href={`${process.env.NEXT_PUBLIC_BASE_URL}/planes`}
+          href={`${BASE_URL}/planes`}
           style={{
             display: 'inline-block',
             padding: '12px 32px',
@@ -155,7 +158,7 @@ export default async function InvitacionPage({ params, searchParams }: Props) {
             textDecoration: 'none',
           }}
         >
-          Visita moments.mx
+          Visita {ROOT_DOMAIN || 'moments'}
         </a>
       </div>
     );

@@ -1,4 +1,6 @@
-const WATERMARK = 'l_text:Arial_60_bold:PREVIEW%20-%20moments.mx,co_white,o_40,g_center';
+import { ROOT_DOMAIN } from './invitation';
+
+const WATERMARK = `l_text:Arial_60_bold:PREVIEW%20-%20${encodeURIComponent(ROOT_DOMAIN || 'moments.mx')},co_white,o_40,g_center`;
 
 /**
  * Construye una URL de Cloudinary con transformaciones aplicadas.
