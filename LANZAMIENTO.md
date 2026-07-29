@@ -274,12 +274,12 @@ La infraestructura ya está: Supabase y Resend ya están integrados.
 
 ## A13 · Pendientes menores `P2`
 
-- **FAQ con objeciones reales de compra** (`page.tsx:510-527`): cómo se paga, si facturan, si se puede ver antes de pagar, qué pasa si hay un error después de publicar, si los invitados mayores podrán usarla.
-- **Precio de referencia en "Diseño desde cero"** (`page.tsx:701`): "costo adicional según complejidad" genera fricción y llena el WhatsApp de mensajes no calificados. Un "desde $X" filtra solo. ⛔ depende de **B9**
-- **Link de navegación mal apuntado** (`SiteHeader.tsx:12`): "Cómo funciona" va a `/#que-es`, pero la sección con ese nombre es `#como`.
-- **Dos rutas de conversión compitiendo**: el header lleva a `/cotizar`, el hero a WhatsApp. Definir jerarquía.
-- **Footer incompleto** (`SiteFooter.tsx`): sin contacto, sin email, sin links legales. Se ve inacabado para una marca premium.
-- **Landing es `'use client'` completa** (`page.tsx:1`): podría ser server component salvo el FAQ y el nav. Impacta LCP y SEO.
+- [x] **FAQ con objeciones reales de compra** — 5 preguntas nuevas agregadas (preview antes de pagar, corrección post-publicación, invitados mayores, pago/factura sin inventar método).
+- [ ] **Precio de referencia en "Diseño desde cero"** (`page.tsx:701`) ⛔ depende de **B9**
+- [x] **Link de navegación mal apuntado** — corregido, `/#como` en vez de `/#que-es`.
+- [x] **Dos rutas de conversión compitiendo** — resuelto: `/cotizar` es la ruta principal (decisión de Juan). El CTA secundario del hero ahora lleva ahí en vez de a WhatsApp directo.
+- [ ] **Footer incompleto** — Juan confirmó dejarlo como está (WhatsApp + Instagram + legales), sin agregar más contacto.
+- [ ] **Landing es `'use client'` completa** — evaluado y descartado por ahora: el efecto de scroll-reveal (`IntersectionObserver`) toca casi todas las secciones de la página, no solo el FAQ/nav. Separar en server/client component es un refactor grande y riesgoso (rompe la animación visual de toda la landing) para un beneficio marginal de LCP en una landing que ya server-renderiza su HTML. No hacerlo salvo que el LCP real sea un problema medido.
 
 ---
 
