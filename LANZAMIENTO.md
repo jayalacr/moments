@@ -362,10 +362,9 @@ de la primera versión entregada, sin reembolso después.
 - **Carga de datos por Moments**: descartado como servicio. Se quitó la mención en `page.tsx` y `planes/page.tsx` — solo queda la carga por el organizador desde su panel.
 - **Método de pago**: solo transferencia bancaria. Agregado al FAQ (`page.tsx`) y a `/cotizar`.
 
-### B10 · Prueba social `P1`
+### B10 · Prueba social — descartado por ahora
 
-- [ ] Dos invitaciones demo completas con fotografía real
-- [ ] Testimonios, aunque sean de las primeras parejas
+Decisión de Juan: no contemplar por ahora. No construir sin que lo pida de nuevo.
 
 ### B11 · Instagram — cerrado
 
@@ -416,7 +415,7 @@ Revisado y correcto, no hay que tocarlo:
 | **1** | A0 completo, A2, A5, A12 | B1, B2, B3 |
 | **2** | A1, A3 | B4, B5, B6 |
 | **3** | A4, A6, A7, A9, A10 | B7, B8 |
-| **4** | A8 (cuando esté B8) | B9, B10 |
+| **4** | A8 (cuando esté B8) | — |
 | **5** | A13 | **B12** |
 
 A11 (captura de leads) descartado por ahora — decisión de Juan. B11 (Instagram) cerrado, `@code4u_mx` es correcto.
