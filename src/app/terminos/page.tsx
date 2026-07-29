@@ -1,6 +1,7 @@
 import { Cormorant_Garamond, Jost } from 'next/font/google';
 import SiteHeader from '@/components/site/SiteHeader';
 import SiteFooter from '@/components/site/SiteFooter';
+import { waLink } from '@/lib/contact';
 
 const cormorant = Cormorant_Garamond({ subsets: ['latin'], weight: ['300', '400', '500'], style: ['normal', 'italic'], variable: '--font-cormorant' });
 const jost = Jost({ subsets: ['latin'], weight: ['300', '400'], variable: '--font-jost' });
@@ -12,9 +13,10 @@ export const metadata = {
 
 const h2: React.CSSProperties = { fontFamily: 'var(--font-cormorant)', fontSize: '20px', fontWeight: 500, marginTop: '36px', marginBottom: '10px', color: '#1C1611' };
 const p: React.CSSProperties = { fontSize: '14px', lineHeight: 1.8, color: '#5C5248', marginBottom: '12px' };
-const placeholder: React.CSSProperties = { color: '#B8965A', fontStyle: 'italic' };
 
 export default function TerminosPage() {
+  const contactWaHref = waLink('Hola, tengo una duda sobre los términos y condiciones de Moments.');
+
   return (
     <div className={`${cormorant.variable} ${jost.variable}`} style={{ fontFamily: 'var(--font-jost), system-ui, sans-serif', background: '#FAF7F2', color: '#1C1611', minHeight: '100dvh' }}>
       <SiteHeader />
@@ -26,15 +28,13 @@ export default function TerminosPage() {
 
         <div style={{ border: '1px solid #E6DDD2', borderRadius: '10px', padding: '16px 20px', background: '#FFFFFF', marginBottom: '32px' }}>
           <p style={{ ...p, marginBottom: 0, fontSize: '12.5px' }}>
-            <strong>Borrador pendiente de revisión legal.</strong> Los campos marcados en{' '}
-            <span style={placeholder}>cursiva dorada</span> deben completarse antes de publicar esta página de forma definitiva.
+            <strong>Borrador pendiente de revisión legal.</strong> Recomendado que alguien con conocimiento legal lo revise antes de considerarlo definitivo.
           </p>
         </div>
 
         <p style={p}>
-          Estos términos rigen el uso de la plataforma Moments, operada por{' '}
-          <span style={placeholder}>[razón social / nombre legal]</span>. Al contratar un plan, aceptas lo
-          siguiente.
+          Estos términos rigen el uso de la plataforma Moments, operada por code4u. Al contratar un plan,
+          aceptas lo siguiente.
         </p>
 
         <h2 style={h2}>1. El servicio</h2>
@@ -78,11 +78,9 @@ export default function TerminosPage() {
 
         <h2 style={h2}>6. Cancelaciones y reembolsos</h2>
         <p style={p}>
-          <span style={placeholder}>
-            [Pendiente: definir la política de cancelación y reembolsos — por ejemplo, si se reembolsa antes
-            de que se entregue la primera versión, si hay reembolso parcial, o si el servicio es de venta
-            final una vez iniciado el trabajo de diseño.]
-          </span>
+          Si solicitas la cancelación antes de que te entreguemos la primera versión de tu invitación, te
+          reembolsamos el 100% de tu pago. Una vez entregada la primera versión, el servicio se considera
+          realizado y no aplica reembolso, ya que el trabajo de diseño ya se llevó a cabo.
         </p>
 
         <h2 style={h2}>7. Propiedad de la información</h2>
@@ -102,13 +100,13 @@ export default function TerminosPage() {
         <h2 style={h2}>9. Ley aplicable</h2>
         <p style={p}>
           Estos términos se rigen por las leyes de los Estados Unidos Mexicanos. Cualquier controversia se
-          resolverá ante los tribunales de <span style={placeholder}>[ciudad / estado]</span>.
+          resolverá ante los tribunales de Monterrey, Nuevo León.
         </p>
 
         <h2 style={h2}>10. Contacto</h2>
         <p style={p}>
-          Para dudas sobre estos términos, escríbenos a <span style={placeholder}>[correo de contacto]</span>{' '}
-          o por WhatsApp.
+          Para dudas sobre estos términos,{' '}
+          {contactWaHref ? <a href={contactWaHref} target="_blank" rel="noopener noreferrer" style={{ color: '#B8965A' }}>escríbenos por WhatsApp</a> : 'escríbenos por WhatsApp'}.
         </p>
       </main>
       <SiteFooter />

@@ -1,6 +1,7 @@
 import { Cormorant_Garamond, Jost } from 'next/font/google';
 import SiteHeader from '@/components/site/SiteHeader';
 import SiteFooter from '@/components/site/SiteFooter';
+import { waLink } from '@/lib/contact';
 
 const cormorant = Cormorant_Garamond({ subsets: ['latin'], weight: ['300', '400', '500'], style: ['normal', 'italic'], variable: '--font-cormorant' });
 const jost = Jost({ subsets: ['latin'], weight: ['300', '400'], variable: '--font-jost' });
@@ -13,9 +14,10 @@ export const metadata = {
 const h2: React.CSSProperties = { fontFamily: 'var(--font-cormorant)', fontSize: '20px', fontWeight: 500, marginTop: '36px', marginBottom: '10px', color: '#1C1611' };
 const p: React.CSSProperties = { fontSize: '14px', lineHeight: 1.8, color: '#5C5248', marginBottom: '12px' };
 const li: React.CSSProperties = { fontSize: '14px', lineHeight: 1.8, color: '#5C5248', marginBottom: '6px' };
-const placeholder: React.CSSProperties = { color: '#B8965A', fontStyle: 'italic' };
 
 export default function AvisoDePrivacidadPage() {
+  const arcoWaHref = waLink('Hola, quiero ejercer mis derechos ARCO sobre mis datos personales en Moments.');
+
   return (
     <div className={`${cormorant.variable} ${jost.variable}`} style={{ fontFamily: 'var(--font-jost), system-ui, sans-serif', background: '#FAF7F2', color: '#1C1611', minHeight: '100dvh' }}>
       <SiteHeader />
@@ -27,15 +29,13 @@ export default function AvisoDePrivacidadPage() {
 
         <div style={{ border: '1px solid #E6DDD2', borderRadius: '10px', padding: '16px 20px', background: '#FFFFFF', marginBottom: '32px' }}>
           <p style={{ ...p, marginBottom: 0, fontSize: '12.5px' }}>
-            <strong>Borrador pendiente de revisión legal.</strong> Los campos marcados en{' '}
-            <span style={placeholder}>cursiva dorada</span> deben completarse antes de publicar esta página de forma definitiva.
+            <strong>Borrador pendiente de revisión legal.</strong> Recomendado que alguien con conocimiento de la LFPDPPP lo revise antes de considerarlo definitivo.
           </p>
         </div>
 
         <p style={p}>
-          <span style={placeholder}>[Razón social / nombre legal]</span>, operadora de la plataforma Moments
-          (en adelante, &ldquo;Moments&rdquo;, &ldquo;nosotros&rdquo;), con domicilio en{' '}
-          <span style={placeholder}>[domicilio fiscal]</span>, es responsable del tratamiento de tus datos
+          code4u, operador de la plataforma Moments (en adelante, &ldquo;Moments&rdquo;, &ldquo;nosotros&rdquo;),
+          con operaciones en Monterrey, Nuevo León, México, es responsable del tratamiento de tus datos
           personales conforme a la Ley Federal de Protección de Datos Personales en Posesión de los
           Particulares (LFPDPPP).
         </p>
@@ -82,8 +82,8 @@ export default function AvisoDePrivacidadPage() {
         <h2 style={h2}>Tus derechos ARCO</h2>
         <p style={p}>
           Tienes derecho a acceder, rectificar, cancelar u oponerte al tratamiento de tus datos personales
-          (derechos ARCO), así como a revocar tu consentimiento. Para ejercerlos, escríbenos a{' '}
-          <span style={placeholder}>[correo de contacto para privacidad]</span>.
+          (derechos ARCO), así como a revocar tu consentimiento. Para ejercerlos,{' '}
+          {arcoWaHref ? <a href={arcoWaHref} target="_blank" rel="noopener noreferrer" style={{ color: '#B8965A' }}>escríbenos por WhatsApp</a> : 'escríbenos por WhatsApp'}.
         </p>
 
         <h2 style={h2}>Cambios a este aviso</h2>
