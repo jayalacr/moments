@@ -524,6 +524,22 @@ export default function LandingPage() {
       q: '¿Puedo agregar mesa de regalos y datos bancarios?',
       a: 'Sí. Los planes Plus y Deluxe incluyen una sección de mesa de regalos donde puedes listar tiendas, links de registro y datos bancarios para transferencias — todo integrado en la misma invitación.',
     },
+    {
+      q: '¿Puedo ver mi invitación antes de pagar?',
+      a: 'Sí. En cuanto capturamos tus datos puedes revisar la invitación completa desde tu panel de organizador, antes de que se publique y antes de confirmar el pago.',
+    },
+    {
+      q: '¿Qué pasa si necesito corregir algo después de publicarla?',
+      a: 'Puedes editar el contenido de tu invitación en cualquier momento desde tu panel — nombres, fotos, itinerario — sin costo adicional. Los cambios se reflejan al instante.',
+    },
+    {
+      q: '¿Mis invitados mayores podrán abrirla sin problema?',
+      a: 'Sí. Es un link que abre directo en el navegador del celular, sin apps ni registros ni contraseñas — un solo toque y ya está.',
+    },
+    {
+      q: '¿Cómo se paga y emiten factura?',
+      a: 'Coordinamos el método de pago y, si lo necesitas, tu facturación directamente por WhatsApp al confirmar tu plan.',
+    },
   ];
 
   const plans = [
@@ -596,12 +612,7 @@ export default function LandingPage() {
           <p className="hero__sub">Con confirmación de asistencia y panel de control. Desde {formatMXN(BASE_PRICES.essential)} MXN, lista en 5 días.</p>
           <div className="hero__ctas">
             <Link className="btn btn--gold" href="/plantillas">Ver plantillas</Link>
-            {WA_HREF && (
-              <a className="btn btn--ghost" href={WA_HREF} target="_blank" rel="noopener noreferrer" onClick={() => trackWhatsAppClick('hero')}>
-                <WhatsAppIcon className="wa-icon" />
-                Cotizar por WhatsApp
-              </a>
-            )}
+            <Link className="btn btn--ghost" href="/cotizar">Cotizar mi invitación</Link>
           </div>
         </div>
         <div className={`hero__scroll-hint${navScrolled ? ' hidden' : ''}`} aria-hidden="true">

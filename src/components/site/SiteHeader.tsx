@@ -9,7 +9,7 @@ const jost = Jost({ subsets: ['latin'], weight: ['300', '400', '500', '600'], va
 
 const LINKS = [
   { label: 'Inicio',        href: '/' },
-  { label: 'Cómo funciona', href: '/#que-es' },
+  { label: 'Cómo funciona', href: '/#como' },
   { label: 'Plantillas',    href: '/plantillas' },
   { label: 'Planes',        href: '/planes' },
   { label: 'Preguntas',     href: '/#faq' },
