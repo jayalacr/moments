@@ -20,6 +20,7 @@ export default function FloatingPlanSwitcher({
 
   return (
     <div
+      data-plan-switcher
       style={{
         position: 'fixed',
         bottom: '24px',

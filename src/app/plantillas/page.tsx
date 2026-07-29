@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Cormorant_Garamond, Jost, Montserrat } from 'next/font/google';
 import SiteHeader from '@/components/site/SiteHeader';
 import SiteFooter from '@/components/site/SiteFooter';
@@ -21,7 +22,7 @@ const TEMPLATES = [
     tagline: 'Oscuro, dramático e inmersivo.',
     description: 'Fondo negro con tipografía dorada. Para parejas que buscan una presencia fuerte, cinematográfica y atemporal.',
     previewBase: '/plantillas/deluxe',
-    style: 'dark' as const,
+    image: '/templates/classic.jpg',
   },
   {
     key: 'elegance',
@@ -29,7 +30,7 @@ const TEMPLATES = [
     tagline: 'Marfil, papel y detalles en oro.',
     description: 'Textura de papel artesanal, transiciones suaves y paleta cálida. Romántico y con carácter propio.',
     previewBase: '/plantillas/classic-elegance',
-    style: 'light' as const,
+    image: '/templates/elegance.jpg',
   },
   {
     key: 'costa',
@@ -37,7 +38,7 @@ const TEMPLATES = [
     tagline: 'Arena, turquesa y brisa marina.',
     description: 'Diseño luminoso inspirado en bodas frente al mar. Paleta fresca y tipografía elegante para celebraciones en la playa.',
     previewBase: '/plantillas/costa',
-    style: 'light' as const,
+    image: '/templates/costa.jpg',
   },
 ];
 
@@ -85,35 +86,8 @@ export default function PlantillasPage() {
     .card:hover .preview img { transform: scale(1.04); }
 
     /* Preview */
-    .preview { height: 320px; position: relative; overflow: hidden; }
-    .preview--dark { background: #1C1611; }
-    .preview--light { background: #F8F5F0; }
-    .preview-inner {
-      width: 100%; height: 100%; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 10px;
-      padding: 2rem;
-    }
-    .p-label { font-family: var(--font-j); font-size: 9px; font-weight: 400; letter-spacing: 0.3em; text-transform: uppercase; }
-    .preview--dark .p-label { color: rgba(184,150,90,0.6); }
-    .preview--light .p-label { color: #9B8B78; }
-    .p-names { font-family: var(--font-c); font-size: 52px; font-weight: 400; line-height: 1.1; text-align: center; }
-    .preview--dark .p-names { color: rgba(250,247,242,0.92); }
-    .preview--light .p-names { color: #2C2420; }
-    .p-amp { font-style: italic; font-size: 38px; display: block; }
-    .p-line { width: 56px; height: 1px; display: block; }
-    .preview--dark .p-line { background: rgba(184,150,90,0.45); }
-    .preview--light .p-line { background: #C9B99A; }
-    .p-date { font-family: var(--font-j); font-size: 10px; font-weight: 300; letter-spacing: 0.2em; }
-    .preview--dark .p-date { color: rgba(184,150,90,0.65); }
-    .preview--light .p-date { color: #9B8B78; }
-    .p-deco { position: absolute; top: 16px; left: 16px; right: 16px; height: 1px; }
-    .preview--dark .p-deco { background: rgba(184,150,90,0.15); }
-    .p-badge {
-      position: absolute; top: 16px; right: 16px;
-      font-family: var(--font-j); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
-      padding: 4px 12px; border-radius: 100px;
-      background: rgba(184,150,90,0.15); border: 1px solid rgba(184,150,90,0.3); color: var(--gold);
-    }
+    .preview { aspect-ratio: 3 / 5; position: relative; overflow: hidden; background: #1C1611; }
+    .preview img { object-fit: cover; object-position: top center; transition: transform 0.4s ease; }
 
     /* Card body */
     .card-body { padding: 28px 28px 24px; flex: 1; display: flex; flex-direction: column; }
@@ -150,7 +124,6 @@ export default function PlantillasPage() {
 
     @media (max-width: 720px) {
       .grid { grid-template-columns: 1fr; gap: 24px; padding: 56px 0; }
-      .preview { height: 260px; }
     }
   `;
 
@@ -177,19 +150,13 @@ export default function PlantillasPage() {
           <div className="grid">
             {TEMPLATES.map((tpl) => (
               <article key={tpl.key} className="card">
-                <div className={`preview preview--${tpl.style}`}>
-                  <span className="p-deco" />
-                  <div className="preview-inner">
-                    <span className="p-label">Nos casamos</span>
-                    <div className="p-names">
-                      Sofía<br />
-                      <span className="p-amp">&amp;</span>
-                      Mateo
-                    </div>
-                    <span className="p-line" />
-                    <span className="p-date">14 · 02 · 2026</span>
-                  </div>
-                  <span className="p-badge">{tpl.name}</span>
+                <div className="preview">
+                  <Image
+                    src={tpl.image}
+                    alt={`Vista previa de la plantilla ${tpl.name}`}
+                    fill
+                    sizes="(max-width: 720px) 100vw, 50vw"
+                  />
                 </div>
                 <div className="card-body">
                   <div className="card-name">{tpl.name}</div>
