@@ -2,18 +2,19 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
-import { Cormorant_Garamond, Jost, Cinzel } from 'next/font/google';
-import { Play, Pause, Hotel, Car, UserX, ChevronDown, Check, Waves, Gift, Sailboat } from 'lucide-react';
+import { Cormorant_Garamond, Jost, Fraunces } from 'next/font/google';
+import { Play, Pause, Hotel, Car, UserX, ChevronDown, Check, Gift, Shirt, Info } from 'lucide-react';
 import type { PhotoEntry } from '@/lib/imageLayout';
 import ContentProtection from '@/components/templates/shared/ContentProtection';
 import { getCapabilities } from '@/lib/plans';
+import { useSmoothScroll } from '@/hooks/useSmoothScroll';
 
 // ---------------------------------------------------------------------------
 // Fonts
 // ---------------------------------------------------------------------------
 const cormorant = Cormorant_Garamond({ subsets: ['latin'], weight: ['300', '400', '600'], style: ['normal', 'italic'], variable: '--font-cormorant' });
 const jost = Jost({ subsets: ['latin'], weight: ['300', '400', '500'], variable: '--font-jost' });
-const cinzel = Cinzel({ subsets: ['latin'], weight: ['400', '700'], variable: '--font-cinzel' });
+const fraunces = Fraunces({ subsets: ['latin'], style: ['normal', 'italic'], axes: ['SOFT', 'WONK', 'opsz'], variable: '--font-fraunces' });
 
 // ---------------------------------------------------------------------------
 // Types
@@ -45,7 +46,7 @@ export interface CostaConfig {
   godparents?: { person1?: string; person2?: string };
   photos?: PhotoEntry[];
   itinerary?: ItineraryItem[];
-  dressCode?: { label?: string; women?: string; men?: string; swatches?: Swatch[] };
+  dressCode?: { label?: string; women?: string; men?: string; swatches?: Swatch[]; avoid?: Swatch[] };
   notes?: string[];
   gifts?: { bank?: string; holder?: string; account?: string; clabe?: string; giftListUrl?: string; giftListLabel?: string; giftTypes?: string[]; envelopeMessage?: string };
   music?: { url?: string; title?: string; artist?: string };
@@ -90,21 +91,24 @@ interface Props {
 // ---------------------------------------------------------------------------
 const css = `
   :root {
-    --sand:      #FBF6EC;
-    --foam:      #FFFDFA;
-    --lagoon:    #2AACA6;
-    --coral:     #E8836B;
-    --deep:      #0E2B33;
-    --ink:       #123138;
-    --champagne: #B9975B;
+    --foam:       #FFFCF7;
+    --sand:       #F4EADA;
+    --wet-sand:   #E3D3BC;
+    --lagoon:     #1F9B9B;
+    --shallow:    #7FCFC8;
+    --coral:      #E2725B;
+    --coral-soft: #F2A38C;
+    --deep:       #0B2A31;
+    --ink:        #14343B;
+    --champagne:  #C2A26B;
     --font-cormorant: 'Cormorant Garamond';
-    --font-cinzel: 'Cinzel';
+    --font-fraunces: 'Fraunces';
     --font-jost: 'Jost';
   }
 
   .cs-root { background: var(--foam); color: var(--ink); font-family: var(--font-jost), sans-serif; overflow-x: hidden; }
   .cs-display { font-family: var(--font-cormorant), serif; }
-  .cs-heading { font-family: var(--font-cinzel), serif; letter-spacing: 0.08em; }
+  .cs-heading { font-family: var(--font-fraunces), serif; letter-spacing: -0.01em; font-variation-settings: 'SOFT' 60, 'WONK' 1, 'opsz' 48; }
   .cs-eyebrow { font-family: var(--font-jost), sans-serif; font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--champagne); }
 
   .cs-section { padding: 5rem 1.5rem; }
@@ -115,14 +119,8 @@ const css = `
   .cs-heading-block { text-align: center; margin-bottom: 3.5rem; }
   .cs-heading-block h2 { font-size: clamp(1.9rem, 4vw, 2.6rem); margin-top: 0.75rem; }
   .cs-heading-rule { width: 34px; height: 1px; background: var(--champagne); opacity: 0.55; margin: 1.1rem auto 0; }
-
-  /* ── Curvas orgánicas entre secciones ── */
-  .cs-curve { display: block; width: 100%; line-height: 0; margin-bottom: -1px; }
-  .cs-curve svg { display: block; width: 100%; height: 38px; }
-  @media (min-width: 768px) { .cs-curve svg { height: 56px; } }
-  .cs-hero-curve { display: block; width: 100%; line-height: 0; margin-top: -1px; }
-  .cs-hero-curve svg { display: block; width: 100%; height: 64px; }
-  @media (min-width: 768px) { .cs-hero-curve svg { height: 96px; } }
+  .cs-heading-block--offset { text-align: left; margin-bottom: 3rem; max-width: 480px; padding-left: 1.25rem; border-left: 2px solid var(--champagne); }
+  .cs-heading-block--offset h2 { margin-top: 0.4rem; }
 
   /* ── Hero: pantalla dividida, no foto full-bleed con texto encima ── */
   .cs-hero { position: relative; display: flex; flex-direction: column; min-height: 100svh; overflow: hidden; }
@@ -133,23 +131,19 @@ const css = `
   .cs-hero-img { width: 100%; height: 120%; object-fit: cover; }
   .cs-hero-panel { flex: 1; background: var(--deep); color: var(--foam); display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 1.1rem; padding: 3rem 2rem; text-align: left; }
   @media (min-width: 900px) { .cs-hero-panel { flex: 0 0 42%; padding: 3rem 3.5rem; } }
-  .cs-hero-label { font-family: var(--font-jost), sans-serif; font-size: 11px; letter-spacing: 0.4em; text-transform: uppercase; opacity: 0.75; }
-  .cs-hero-names { font-family: var(--font-cormorant), serif; font-weight: 300; font-style: italic; font-size: clamp(2.4rem, 7vw, 4.2rem); line-height: 1.05; }
+  .cs-hero-label { font-family: var(--font-jost), sans-serif; font-size: 13px; letter-spacing: 0.4em; text-transform: uppercase; opacity: 0.8; }
+  .cs-hero-names { font-family: var(--font-cormorant), serif; font-weight: 300; font-style: italic; font-size: clamp(2.9rem, 8.5vw, 5rem); line-height: 1.05; }
   .cs-hero-amp { display: block; font-family: var(--font-cormorant), serif; color: var(--champagne); font-style: normal; }
   .cs-hero-rule { width: 46px; height: 1px; background: var(--champagne); opacity: 0.6; }
-  .cs-hero-meta { display: flex; flex-direction: column; gap: 0.35rem; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.75; }
+  .cs-hero-meta { display: flex; flex-direction: column; gap: 0.4rem; font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.8; }
 
-  /* ── Loader: ondas expandiéndose como en el agua ── */
-  .cs-loader { position: fixed; inset: 0; background: var(--deep); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem; transition: opacity 0.6s ease, transform 0.6s ease; }
+  /* ── Loader: monograma + línea de horizonte que se dibuja ── */
+  .cs-loader { position: fixed; inset: 0; background: var(--deep); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.25rem; transition: opacity 0.6s ease, transform 0.6s ease; }
   .cs-loader--out { opacity: 0; transform: scale(1.03); pointer-events: none; }
-  .cs-loader-ripple { position: relative; width: 90px; height: 90px; display: flex; align-items: center; justify-content: center; }
-  .cs-loader-ripple span { position: absolute; border-radius: 50%; border: 1px solid var(--champagne); animation: csRipple 2.4s cubic-bezier(0.2,0.6,0.4,1) infinite; }
-  .cs-loader-ripple span:nth-child(2) { animation-delay: 0.7s; }
-  .cs-loader-ripple span:nth-child(3) { animation-delay: 1.4s; }
-  .cs-loader-ripple-dot { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--champagne); animation: csFadeUp 0.6s ease 0.2s both; }
-  @keyframes csRipple { 0% { width: 8px; height: 8px; opacity: 0.9; } 100% { width: 90px; height: 90px; opacity: 0; } }
-  .cs-loader-mono { font-family: var(--font-cormorant), serif; font-style: italic; color: var(--foam); font-size: clamp(1.4rem, 4vw, 2rem); animation: csFadeUp 0.8s ease 0.5s both; }
-  .cs-loader-date { color: rgba(255,255,255,0.55); font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; animation: csFadeUp 0.8s ease 0.8s both; }
+  .cs-loader-mono { font-family: var(--font-cormorant), serif; font-style: italic; color: var(--foam); font-size: clamp(2.2rem, 6vw, 3.2rem); animation: csFadeUp 0.8s ease 0.1s both; }
+  .cs-loader-line { width: 0; height: 1px; background: var(--champagne); animation: csLineGrow 1.1s cubic-bezier(0.16,1,0.3,1) 0.45s forwards; }
+  @keyframes csLineGrow { to { width: 64px; } }
+  .cs-loader-date { color: rgba(255,255,255,0.65); font-size: 13px; letter-spacing: 0.25em; text-transform: uppercase; animation: csFadeUp 0.8s ease 0.7s both; }
   @keyframes csFadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
   /* ── Music toggle ── */
@@ -160,13 +154,13 @@ const css = `
   .cs-music-bars span:nth-child(3) { animation-delay: 0.4s; }
   @keyframes csBar { from { height: 3px; } to { height: 12px; } }
 
-  /* ── Countdown ── */
-  .cs-countdown { display: flex; justify-content: center; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
-  .cs-cd-pill { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 84px; height: 84px; border-radius: 50%; background: var(--foam); border: 1px solid rgba(185,151,91,0.35); box-shadow: 0 12px 30px rgba(14,43,51,0.06); }
-  @media (min-width: 768px) { .cs-cd-pill { width: 108px; height: 108px; } }
-  .cs-cd-num { font-family: var(--font-cinzel), serif; font-size: 1.5rem; color: var(--ink); }
-  @media (min-width: 768px) { .cs-cd-num { font-size: 2rem; } }
-  .cs-cd-lbl { font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5; margin-top: 0.2rem; }
+  /* ── Countdown: fichas tipo arco, no círculos ── */
+  .cs-countdown { display: flex; justify-content: center; align-items: flex-end; gap: 0.85rem; flex-wrap: wrap; }
+  .cs-cd-pill { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 78px; padding: 1.35rem 0.5rem 1rem; border-radius: 40px 40px 8px 8px; background: var(--foam); border: 1px solid rgba(185,151,91,0.35); border-top: 2px solid var(--champagne); box-shadow: 0 12px 30px rgba(14,43,51,0.07); }
+  @media (min-width: 768px) { .cs-cd-pill { width: 98px; padding: 1.75rem 0.5rem 1.25rem; } }
+  .cs-cd-num { font-family: var(--font-fraunces), serif; font-size: 1.6rem; color: var(--ink); }
+  @media (min-width: 768px) { .cs-cd-num { font-size: 2.1rem; } }
+  .cs-cd-lbl { font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5; margin-top: 0.3rem; }
 
   /* ── Cita: pull-quote a ancho completo sobre foto, no tarjeta aislada ── */
   .cs-quote-bleed { position: relative; min-height: 68svh; display: flex; align-items: center; background-size: cover; background-position: center; }
@@ -176,16 +170,15 @@ const css = `
   .cs-quote-bleed-content p.txt { font-family: var(--font-cormorant), serif; font-style: italic; font-size: clamp(1.4rem, 3vw, 2rem); line-height: 1.5; }
   .cs-quote-bleed-content .cs-eyebrow { color: var(--champagne); margin-top: 1.25rem; display: block; }
 
-  /* ── Sección itinerario: contiene la nota flotante de los padres ── */
+  /* ── Sección de padres: bloque propio, ya no una nota escondida ── */
   .cs-itinerary-section { position: relative; }
-  .cs-parents-note { position: absolute; top: -2.25rem; right: 1.25rem; max-width: 230px; background: var(--foam); border: 1px solid rgba(185,151,91,0.35); border-radius: 16px; padding: 1.25rem 1.5rem; box-shadow: 0 24px 44px rgba(14,43,51,0.14); transform: rotate(-2.2deg); z-index: 3; }
-  @media (min-width: 768px) { .cs-parents-note { top: -3rem; right: 4rem; max-width: 300px; padding: 1.5rem 1.75rem; } }
-  .cs-parents-note-eyebrow { font-family: var(--font-jost), sans-serif; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--champagne); margin-bottom: 0.6rem; }
-  .cs-parents-note-cols { display: flex; gap: 1.25rem; }
-  .cs-parents-note-cols .role { font-family: var(--font-cormorant), serif; font-style: italic; font-size: 1.05rem; color: var(--coral); margin-bottom: 0.15rem; }
-  .cs-parents-note-cols .names { font-size: 11px; line-height: 1.5; opacity: 0.85; }
-  .cs-parents-fallback { max-width: 640px; margin: 0 auto 3.5rem; display: grid; gap: 2rem; text-align: center; }
-  @media (min-width: 560px) { .cs-parents-fallback { grid-template-columns: 1fr auto 1fr; align-items: center; } }
+  .cs-parents-section { max-width: 720px; margin: 0 auto; display: grid; gap: 2.5rem; text-align: center; }
+  @media (min-width: 640px) { .cs-parents-section { grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1.5rem; } }
+  .cs-parents-block .role { font-family: var(--font-cormorant), serif; font-style: italic; font-size: 1.3rem; color: var(--coral); margin-bottom: 0.65rem; }
+  .cs-parents-block .names { display: flex; flex-direction: column; gap: 0.3rem; font-size: 15px; line-height: 1.5; opacity: 0.85; }
+  .cs-parents-block .names .amp { font-family: var(--font-cormorant), serif; font-style: italic; color: var(--champagne); font-size: 0.85rem; }
+  .cs-parents-divider { width: 1px; height: 64px; background: var(--champagne); opacity: 0.4; margin: 0 auto; }
+  @media (max-width: 639px) { .cs-parents-divider { width: 40px; height: 1px; } }
 
   /* ── Itinerario: vertical en móvil, recorrido horizontal en escritorio ── */
   .cs-timeline { max-width: 640px; margin: 0 auto; position: relative; padding-left: 2rem; padding-top: 1rem; display: flex; flex-direction: column; gap: 0; }
@@ -194,15 +187,17 @@ const css = `
   .cs-tl-item:last-child { padding-bottom: 0; }
   .cs-tl-item:nth-child(even) { padding-left: 1.5rem; }
   .cs-tl-dot { position: absolute; left: -2rem; top: 1.2rem; width: 15px; height: 15px; border-radius: 50%; background: var(--lagoon); border: 3px solid var(--foam); box-shadow: 0 0 0 1px rgba(42,172,166,0.4); }
+  .cs-tl-photo { width: var(--tl-photo, 140px); max-width: 100%; aspect-ratio: 4 / 3; border-radius: 14px; overflow: hidden; margin: 0 auto 0.85rem; box-shadow: 0 14px 28px rgba(14,43,51,0.1); }
+  .cs-tl-photo img { width: 100%; height: 100%; object-fit: cover; }
   .cs-tl-time { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--lagoon); }
-  .cs-tl-name { font-family: var(--font-cormorant), serif; font-size: 1.5rem; margin: 0.2rem 0; }
+  .cs-tl-name { font-family: var(--font-cormorant), serif; font-size: var(--tl-name-size, 1.5rem); margin: 0.2rem 0; }
   .cs-tl-venue { font-size: 13px; opacity: 0.75; }
   .cs-tl-link { display: inline-block; margin-top: 0.6rem; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--coral); text-decoration: none; border-bottom: 1px solid var(--coral); }
   @media (min-width: 900px) {
-    .cs-timeline { flex-direction: row; max-width: 100%; padding-left: 0; overflow-x: auto; }
+    .cs-timeline { flex-direction: row; flex-wrap: wrap; justify-content: center; max-width: 100%; padding-left: 0; padding-bottom: 1rem; }
     .cs-timeline::before { left: 0; right: 0; top: 1.4rem; bottom: auto; height: 1px; width: auto; background: repeating-linear-gradient(to right, var(--lagoon) 0 6px, transparent 6px 12px); }
-    .cs-tl-item { flex: 1; min-width: 200px; padding-bottom: 0; padding-top: 3rem; text-align: center; }
-    .cs-tl-item:nth-child(even) { padding-left: 0; padding-top: 5.5rem; }
+    .cs-tl-item { flex: 0 1 var(--tl-item-basis, 220px); padding: 3rem 1.25rem 0; padding-bottom: 0; text-align: center; }
+    .cs-tl-item:nth-child(even) { padding-left: 1.25rem; }
     .cs-tl-dot { left: 50%; top: 1rem; transform: translateX(-50%); }
   }
 
@@ -210,31 +205,45 @@ const css = `
   .cs-photo-breakout { width: 100vw; position: relative; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; aspect-ratio: 21 / 9; overflow: hidden; margin-bottom: 3rem; }
   .cs-photo-breakout img { width: 100%; height: 100%; object-fit: cover; }
   .cs-photos-wrap { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 5rem; display: flex; flex-direction: column; gap: 3rem; }
-  .cs-photo { aspect-ratio: 16 / 10; overflow: hidden; border-radius: 10px; box-shadow: 0 20px 40px rgba(14,43,51,0.12); }
+  .cs-photo { position: relative; aspect-ratio: 16 / 10; overflow: hidden; }
   .cs-photo img { width: 100%; height: 100%; object-fit: cover; }
+  .cs-photo--arch { border-radius: 999px 999px 8px 8px / 45% 45% 2% 2%; box-shadow: 0 20px 40px rgba(14,43,51,0.12); }
+  .cs-photo--oval { border-radius: 50%; aspect-ratio: 4 / 3; box-shadow: 0 20px 40px rgba(14,43,51,0.12); }
+  .cs-photo--bleed { border-radius: 0; margin-inline: -8vw; }
+  .cs-photo--tint::after { content: ''; position: absolute; inset: 0; background: var(--lagoon); mix-blend-mode: multiply; opacity: 0.35; }
 
-  /* ── Hoteles: collage tipo revista, no grid parejo ── */
-  .cs-hotels { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
-  .cs-hotel-main { border-radius: 18px; padding: 2rem; background: var(--foam); border: 1px solid rgba(42,172,166,0.2); }
-  .cs-hotel-main .name { font-size: 1.35rem; }
-  .cs-hotel-side-row { display: flex; gap: 1.25rem; flex-wrap: wrap; }
-  @media (min-width: 768px) { .cs-hotel-side-row { margin-top: -1.5rem; margin-left: 2.5rem; } }
-  .cs-hotel-side { flex: 1; min-width: 190px; border-radius: 14px; padding: 1.25rem; background: var(--foam); border: 1px solid rgba(42,172,166,0.15); }
+  /* ── Hoteles: tarjetas uniformes, misma forma para todas ── */
+  .cs-hotels-grid { max-width: 760px; margin: 0 auto; display: grid; gap: 1.25rem; }
+  @media (min-width: 640px) { .cs-hotels-grid { grid-template-columns: 1fr 1fr; } }
+  .cs-hotel-card { border-radius: 18px; padding: 1.75rem; background: var(--foam); border: 1px solid rgba(42,172,166,0.2); box-shadow: 0 14px 32px rgba(14,43,51,0.06); display: flex; flex-direction: column; gap: 0.4rem; text-align: left; }
+  .cs-hotel-card .name { font-size: 1.2rem; }
+  .cs-hotel-card .badge { display: inline-flex; align-self: flex-start; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--lagoon); background: rgba(42,172,166,0.1); border-radius: 100px; padding: 0.25rem 0.65rem; margin-bottom: 0.5rem; }
+  .cs-transport-card { max-width: 640px; margin: 2.75rem auto 0; text-align: center; border-radius: 18px; padding: 2.25rem 1.75rem; background: var(--foam); border: 1px solid rgba(42,172,166,0.2); box-shadow: 0 14px 32px rgba(14,43,51,0.06); }
+  .cs-transport-schedule { display: flex; flex-direction: column; gap: 0.9rem; max-width: 320px; margin: 0 auto; }
+  .cs-transport-row { display: grid; grid-template-columns: 64px auto 1fr; align-items: center; gap: 0.75rem; text-align: left; }
+  .cs-transport-time { font-family: var(--font-fraunces), serif; font-size: 13px; color: var(--lagoon); text-align: right; }
+  .cs-transport-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--coral); justify-self: center; }
+  .cs-transport-detail { font-size: 13px; opacity: 0.75; }
 
-  /* ── Detalles: dress code + regalos + notas fusionados, columnas asimétricas ── */
-  .cs-details-grid { display: grid; gap: 2.75rem; max-width: 920px; margin: 0 auto; }
-  @media (min-width: 860px) { .cs-details-grid { grid-template-columns: 1.3fr 1fr; align-items: start; } }
-  .cs-dress-label { display: inline-block; padding: 0.5rem 1.5rem; border: 1px solid var(--lagoon); border-radius: 100px; font-family: var(--font-cinzel), serif; font-size: 0.85rem; letter-spacing: 0.15em; margin-bottom: 1.75rem; }
-  .cs-dress-cols { display: grid; gap: 1.5rem; text-align: left; margin-bottom: 2rem; }
-  @media (min-width: 480px) { .cs-dress-cols { grid-template-columns: 1fr 1fr; } }
+  /* ── Detalles: tres tarjetas independientes del mismo tamaño, no una mezcla ── */
+  .cs-details-cards { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 1.5rem; max-width: 1180px; margin: 0 auto; }
+  .cs-detail-card { display: flex; flex-direction: column; flex: 1 1 320px; max-width: 380px; background: var(--foam); border: 1px solid rgba(42,172,166,0.2); border-radius: 18px; padding: 1.75rem; box-shadow: 0 14px 32px rgba(14,43,51,0.06); text-align: left; }
+  .cs-detail-head { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; }
+  .cs-detail-icon { width: 34px; height: 34px; border-radius: 10px; background: rgba(42,172,166,0.12); display: flex; align-items: center; justify-content: center; color: var(--lagoon); flex-shrink: 0; }
+  .cs-detail-head h3 { font-family: var(--font-fraunces), serif; font-size: 1.05rem; }
+  .cs-dress-label { display: inline-block; padding: 0.5rem 1.5rem; border: 1px solid var(--lagoon); border-radius: 100px; font-family: var(--font-fraunces), serif; font-size: 0.85rem; letter-spacing: 0.15em; margin-bottom: 1.5rem; }
+  .cs-dress-cols { display: grid; gap: 1.5rem; margin-bottom: 1.75rem; }
+  @media (min-width: 420px) { .cs-dress-cols { grid-template-columns: 1fr 1fr; } }
   .cs-dress-cols h4 { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--coral); margin-bottom: 0.5rem; }
   .cs-swatches { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+  .cs-swatches-label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--coral); margin-bottom: 0.75rem; }
   .cs-swatch { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
   .cs-swatch-dot { width: 40px; height: 40px; border-radius: 50%; box-shadow: 0 6px 16px rgba(14,43,51,0.12); }
   .cs-swatch span { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.6; }
-  .cs-details-side { display: flex; flex-direction: column; gap: 1.75rem; }
-  .cs-gift-card { background: var(--foam); border: 1px solid rgba(42,172,166,0.2); border-radius: 16px; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
-  .cs-gift-icon { width: 32px; height: 32px; border-radius: 9px; background: rgba(42,172,166,0.12); display: flex; align-items: center; justify-content: center; color: var(--lagoon); }
+  .cs-swatch--avoid .cs-swatch-dot { position: relative; opacity: 0.55; box-shadow: none; border: 1px solid rgba(226,114,91,0.4); }
+  .cs-swatch-x { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .cs-gift-block { padding-top: 1.1rem; margin-top: 1.1rem; border-top: 1px dashed rgba(42,172,166,0.25); display: flex; flex-direction: column; gap: 0.6rem; }
+  .cs-gift-block:first-child { padding-top: 0; margin-top: 0; border-top: none; }
   .cs-gift-row { display: flex; flex-direction: column; gap: 0.1rem; }
   .cs-gift-row span.lbl { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.5; }
   .cs-gift-row span.val { font-size: 13px; }
@@ -242,9 +251,6 @@ const css = `
   .cs-notes { display: flex; flex-direction: column; gap: 1rem; }
   .cs-note { display: flex; gap: 0.85rem; align-items: flex-start; }
   .cs-note-mark { color: var(--coral); font-family: var(--font-cormorant), serif; font-style: italic; font-size: 1.05rem; flex-shrink: 0; }
-
-  /* ── No niños ── */
-  .cs-adults { max-width: 460px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
 
   /* ── RSVP fusionado con el footer: un solo cierre ── */
   .cs-footer { background: var(--deep); color: var(--foam); text-align: center; padding: 6rem 1.5rem 3.5rem; }
@@ -294,6 +300,10 @@ const css = `
   .cs-dietary-summary::-webkit-details-marker { display: none; }
   .cs-dietary-options { border: 1px solid rgba(42,172,166,0.2); border-radius: 10px; padding: 0.5rem; margin-top: 0.3rem; display: flex; flex-direction: column; gap: 2px; background: var(--sand); }
   .cs-dietary-option { display: flex; align-items: center; gap: 10px; padding: 6px 8px; font-size: 13px; cursor: pointer; }
+
+  /* ── Texturas: grano global + manchas de acuarela ── */
+  .cs-grain { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; opacity: 0.045; mix-blend-mode: multiply; }
+  .cs-watercolor-blob { position: absolute; width: 320px; height: 320px; pointer-events: none; mix-blend-mode: multiply; z-index: 0; }
 `;
 
 // ---------------------------------------------------------------------------
@@ -301,68 +311,114 @@ const css = `
 // ---------------------------------------------------------------------------
 function buildThemeCSS(theme?: CostaConfig['theme']): string {
   if (!theme?.accentColor) return '';
-  return `:root { --lagoon: ${theme.accentColor}; }`;
+  return `:root {
+    --lagoon: ${theme.accentColor};
+    --shallow: color-mix(in oklab, ${theme.accentColor} 45%, white);
+  }`;
 }
 
 // ---------------------------------------------------------------------------
-// Curvas orgánicas — nunca la misma dos veces seguidas
+// Transiciones entre secciones: sangrado por degradado, sin separadores
+// decorativos. La entrada al RSVP usa un degradado más alto y difuminado.
 // ---------------------------------------------------------------------------
-const HeroCurve = ({ fill }: { fill: string }) => (
-  <div className="cs-hero-curve" aria-hidden="true">
-    <svg viewBox="0 0 1440 100" preserveAspectRatio="none" style={{ fill }}>
-      <path d="M0,55 C160,15 320,85 480,65 C640,45 800,10 960,28 C1120,46 1280,88 1440,50 L1440,100 L0,100 Z" />
-    </svg>
-  </div>
-);
-
-const CurveTop = ({ fill, flip = false }: { fill: string; flip?: boolean }) => (
-  <div className="cs-curve" style={{ transform: flip ? 'scaleX(-1)' : undefined }} aria-hidden="true">
-    <svg viewBox="0 0 1440 70" preserveAspectRatio="none" style={{ fill }}>
-      <path d="M0,70 C220,12 480,0 740,20 C1000,38 1220,60 1440,32 L1440,0 L0,0 Z" />
-    </svg>
-  </div>
-);
-
 const BG: Record<'sand' | 'foam' | 'deep', string> = { sand: 'var(--sand)', foam: 'var(--foam)', deep: 'var(--deep)' };
+
+const BleedGradient = ({ from, to, height = 110 }: { from: 'sand' | 'foam' | 'deep'; to: 'sand' | 'foam' | 'deep'; height?: number }) => (
+  <div aria-hidden="true" style={{ height, background: `linear-gradient(to bottom, ${BG[from]}, ${BG[to]})` }} />
+);
+
+const InvasionBadge = ({ label, deep = false }: { label: React.ReactNode; deep?: boolean }) => (
+  <div style={{ position: 'relative', zIndex: 5, display: 'flex', justifyContent: 'center', marginTop: -28, marginBottom: -28 }} aria-hidden="true">
+    <div style={{
+      width: 56, height: 56, borderRadius: '50%',
+      background: deep ? 'var(--coral)' : 'var(--champagne)',
+      color: 'var(--deep)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: 'var(--font-cormorant), serif', fontStyle: 'italic', fontSize: '1.3rem',
+      boxShadow: '0 12px 30px rgba(11,42,49,0.28)',
+    }}>
+      {label}
+    </div>
+  </div>
+);
 
 const fadeUp = {
   hidden: { opacity: 0, y: 26 },
   show: { opacity: 1, y: 0, transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] as const } },
 };
 
+// Catálogo de reveals — antes todo usaba fadeUp; ahora cada arquetipo tiene el suyo.
+const maskReveal = {
+  hidden: { clipPath: 'inset(100% 0 0 0)' },
+  show: { clipPath: 'inset(0% 0 0 0)', transition: { duration: 1, ease: [0.16, 1, 0.3, 1] as const } },
+};
+const slideIn = (fromLeft = true) => ({
+  hidden: { opacity: 0, x: fromLeft ? -36 : 36 },
+  show: { opacity: 1, x: 0, transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] as const } },
+});
+const staggerChildren = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.12 } },
+};
+const staggerItem = {
+  hidden: { opacity: 0, y: 18 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const } },
+};
+
 const Section = ({
   bg = 'foam',
-  flip,
+  edge,
   className = '',
   style,
   children,
 }: {
   bg?: 'sand' | 'foam' | 'deep';
-  flip?: boolean;
+  edge?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
   children: React.ReactNode;
 }) => (
   <>
-    <CurveTop fill={BG[bg]} flip={flip} />
+    {edge}
     <section className={`cs-section ${bg !== 'foam' ? `cs-section--${bg}` : ''} ${className}`.trim()} style={style}>
       {children}
     </section>
   </>
 );
 
-const SectionHeading = ({ eyebrow, title }: { eyebrow?: string; title: string }) => (
+const SectionHeading = ({ eyebrow, title, variant = 'centered' }: { eyebrow?: string; title: string; variant?: 'centered' | 'offset' }) => (
   <motion.div
-    className="cs-heading-block"
+    className={`cs-heading-block${variant === 'offset' ? ' cs-heading-block--offset' : ''}`}
     initial="hidden"
     whileInView="show"
     viewport={{ once: true, margin: '-80px' }}
-    variants={fadeUp}
+    variants={variant === 'offset' ? slideIn(true) : fadeUp}
   >
     {eyebrow && <p className="cs-eyebrow">{eyebrow}</p>}
     <h2 className="cs-heading">{title}</h2>
-    <span className="cs-heading-rule" />
+    {variant === 'centered' && <span className="cs-heading-rule" />}
   </motion.div>
+);
+
+const GrainOverlay = () => (
+  <svg className="cs-grain" aria-hidden="true" focusable="false">
+    <filter id="cs-grain-filter">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" stitchTiles="stitch" />
+      <feColorMatrix type="saturate" values="0" />
+    </filter>
+    <rect width="100%" height="100%" filter="url(#cs-grain-filter)" />
+  </svg>
+);
+
+const WatercolorBlob = ({ id, seed, fill, opacity = 0.16, style }: { id: string; seed: number; fill: string; opacity?: number; style?: React.CSSProperties }) => (
+  <svg className="cs-watercolor-blob" aria-hidden="true" focusable="false" style={{ opacity, ...style }}>
+    <filter id={id}>
+      <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="4" seed={seed} result="noise" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="55" xChannelSelector="R" yChannelSelector="G" />
+      <feGaussianBlur stdDeviation="6" />
+    </filter>
+    <ellipse cx="50%" cy="50%" rx="45%" ry="45%" fill={fill} filter={`url(#${id})`} />
+  </svg>
 );
 
 // ---------------------------------------------------------------------------
@@ -385,6 +441,7 @@ export default function CostaTemplate({
   const [isPlaying, setIsPlaying] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isRsvpOpen, setIsRsvpOpen] = useState(false);
+  useSmoothScroll(!isRsvpOpen);
   const [rsvpDone, setRsvpDone] = useState(hasExistingRsvp);
   const [guestConfirmed, setGuestConfirmed] = useState<null | boolean>(null);
   const [attendeeNames, setAttendeeNames] = useState<string[]>([]);
@@ -399,6 +456,7 @@ export default function CostaTemplate({
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress: heroProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
   const heroParallaxY = useTransform(heroProgress, [0, 1], ['0%', '18%']);
+  const heroPanelParallaxY = useTransform(heroProgress, [0, 1], ['0%', '7%']);
 
   useEffect(() => {
     const t1 = setTimeout(() => setLoaderOut(true), 1600);
@@ -497,15 +555,17 @@ export default function CostaTemplate({
           <div className="cs-photos-wrap">
             {rest.map((p, i) => {
               const odd = i % 2 === 1;
+              const shape = ['arch', 'oval', 'bleed'][i % 3];
+              const width = shape === 'bleed' ? undefined : odd ? '64%' : '78%';
               return (
                 <motion.div
                   key={i}
-                  className="cs-photo"
-                  style={{ width: odd ? '64%' : '78%', marginLeft: odd ? 'auto' : undefined }}
-                  initial={{ opacity: 0, x: odd ? 40 : -40, rotate: odd ? 1.3 : -1 }}
-                  whileInView={{ opacity: 1, x: 0, rotate: odd ? 1.3 : -1 }}
+                  className={`cs-photo cs-photo--${shape}${i === 0 ? ' cs-photo--tint' : ''}`}
+                  style={{ width, marginLeft: shape !== 'bleed' && odd ? 'auto' : undefined, rotate: shape === 'bleed' ? 0 : (odd ? 1.3 : -1) }}
+                  initial="hidden"
+                  whileInView="show"
                   viewport={{ once: true, margin: '-60px' }}
-                  transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                  variants={maskReveal}
                 >
                   <img src={p.url} alt="Costa" style={{ objectPosition: p.objectPosition || 'center' }} />
                 </motion.div>
@@ -528,35 +588,35 @@ export default function CostaTemplate({
   const hasGifts = config.sections?.gifts !== false && !!config.gifts && (showTransfer || showList || showEnvelope);
   const hasNotes = config.sections?.notes !== false && !!config.notes?.filter(n => n?.trim()).length;
   const hasDressCode = config.sections?.dressCode !== false && !!config.dressCode;
-  const hasDetails = hasDressCode || hasGifts || hasNotes;
+  const hasDetails = hasDressCode || hasGifts || hasNotes || !!config.noChildren;
+  const hasDestination = config.sections?.destination !== false && !!config.destination && !!(config.destination.hotels?.length || config.destination.transport?.info);
+  const preDetailsBg: 'sand' | 'foam' | 'deep' = hasDestination ? 'foam' : showItinerary ? 'sand' : showParentsNote ? 'deep' : 'sand';
+  const preFooterBg: 'sand' | 'foam' | 'deep' = hasDetails ? 'sand' : preDetailsBg;
 
-  if (!isLoaded && caps.loader) {
-    return (
-      <div className="flex-1 flex flex-col">
-        <ContentProtection enabled={false}>
-          <div className={`cs-root ${cormorant.variable} ${jost.variable} ${cinzel.variable}`}>
-            <style dangerouslySetInnerHTML={{ __html: css }} />
-            {themeCSS && <style dangerouslySetInnerHTML={{ __html: themeCSS }} />}
-            <div className={`cs-loader ${loaderOut ? 'cs-loader--out' : ''}`}>
-              <div className="cs-loader-ripple">
-                <span /><span /><span />
-                <div className="cs-loader-ripple-dot" />
-              </div>
-              <p className="cs-loader-mono">{config.monogram || `${config.couple?.person1?.[0] ?? ''} & ${config.couple?.person2?.[0] ?? ''}`}</p>
-              <p className="cs-loader-date">{config.date?.day} · {config.date?.month} · {config.date?.year}</p>
-            </div>
-          </div>
-        </ContentProtection>
-      </div>
-    );
-  }
+  const formatParents = (s?: string) => (s || 'Sus padres').split('&').map(p => p.trim()).filter(Boolean);
+
+  const itineraryCount = config.itinerary?.length ?? 0;
+  const timelineVars = {
+    '--tl-photo': itineraryCount <= 3 ? '160px' : itineraryCount === 4 ? '130px' : '105px',
+    '--tl-name-size': itineraryCount <= 3 ? '1.65rem' : itineraryCount === 4 ? '1.4rem' : '1.2rem',
+    '--tl-item-basis': itineraryCount <= 3 ? '240px' : itineraryCount === 4 ? '200px' : '170px',
+  } as React.CSSProperties;
 
   return (
     <div className="flex-1 flex flex-col">
       <ContentProtection enabled={true}>
-        <div className={`cs-root ${cormorant.variable} ${jost.variable} ${cinzel.variable}`}>
+        <div className={`cs-root ${cormorant.variable} ${jost.variable} ${fraunces.variable}`}>
           <style dangerouslySetInnerHTML={{ __html: css }} />
           {themeCSS && <style dangerouslySetInnerHTML={{ __html: themeCSS }} />}
+          <GrainOverlay />
+
+          {caps.loader && !isLoaded && (
+            <div className={`cs-loader ${loaderOut ? 'cs-loader--out' : ''}`}>
+              <p className="cs-loader-mono">{config.monogram || `${config.couple?.person1?.[0] ?? ''} & ${config.couple?.person2?.[0] ?? ''}`}</p>
+              <span className="cs-loader-line" />
+              <p className="cs-loader-date">{config.date?.day} · {config.date?.month} · {config.date?.year}</p>
+            </div>
+          )}
 
           {caps.music && audioSrc && (
             <audio ref={audioRef} src={audioSrc} loop preload="auto" crossOrigin="anonymous"
@@ -576,7 +636,7 @@ export default function CostaTemplate({
                 <img src={heroPhoto} alt="Hero" className="cs-hero-img" />
               </motion.div>
             </div>
-            <div className="cs-hero-panel">
+            <motion.div className="cs-hero-panel" style={{ y: heroPanelParallaxY }}>
               <span className="cs-hero-label">{config.heroLabel || 'Boda frente al mar'}</span>
               <h1 className="cs-hero-names">
                 {config.couple?.person1}<span className="cs-hero-amp">&amp; {config.couple?.person2}</span>
@@ -586,14 +646,15 @@ export default function CostaTemplate({
                 <span>{config.date?.day} · {config.date?.month} · {config.date?.year}</span>
                 <span>{config.location}</span>
               </div>
-            </div>
+            </motion.div>
           </section>
-          <HeroCurve fill={caps.countdown ? 'var(--sand)' : 'var(--foam)'} />
+          <InvasionBadge label={config.monogram || `${config.couple?.person1?.[0] ?? ''}&${config.couple?.person2?.[0] ?? ''}`} />
 
           {/* ── COUNTDOWN ── */}
           {caps.countdown && (
-            <Section bg="sand">
-              <SectionHeading eyebrow="Cada ola nos acerca" title="Cuenta Regresiva" />
+            <Section bg="sand" style={{ position: 'relative', overflow: 'hidden' }}>
+              <WatercolorBlob id="cs-wc-countdown" seed={7} fill="var(--shallow)" opacity={0.18} style={{ top: '-4rem', left: '50%', transform: 'translateX(-50%)' }} />
+              <SectionHeading eyebrow="Cada ola nos acerca" title="Cuenta Regresiva" variant="offset" />
               <div className="cs-countdown">
                 {[
                   { v: timeLeft.days, l: 'Días' },
@@ -605,8 +666,10 @@ export default function CostaTemplate({
                     key={i}
                     className="cs-cd-pill"
                     style={{ marginTop: i % 2 === 1 ? 22 : 0 }}
-                    animate={{ y: [0, -8, 0] }}
-                    transition={{ duration: 3 + i * 0.4, repeat: Infinity, ease: 'easeInOut' }}
+                    initial="hidden"
+                    whileInView="show"
+                    viewport={{ once: true, margin: '-40px' }}
+                    variants={staggerItem}
                   >
                     <span className="cs-cd-num">{String(u.v).padStart(2, '0')}</span>
                     <span className="cs-cd-lbl">{u.l}</span>
@@ -634,119 +697,117 @@ export default function CostaTemplate({
             </section>
           )}
 
-          {/* ── ITINERARIO (con la nota de los padres flotando encima) ── */}
-          {showItinerary ? (
-            <Section bg="sand" flip className="cs-itinerary-section">
-              {showParentsNote && (
-                <motion.div
-                  className="cs-parents-note"
-                  initial={{ opacity: 0, y: -16, rotate: -8 }}
-                  whileInView={{ opacity: 1, y: 0, rotate: -2.2 }}
-                  viewport={{ once: true, margin: '-40px' }}
-                  transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <p className="cs-parents-note-eyebrow">Con la bendición de</p>
-                  <div className="cs-parents-note-cols">
-                    <div>
-                      <p className="role">Ella</p>
-                      <p className="names">{config.parents?.person1 || 'Sus padres'}</p>
-                    </div>
-                    <div>
-                      <p className="role">Él</p>
-                      <p className="names">{config.parents?.person2 || 'Sus padres'}</p>
-                    </div>
+          {/* ── PADRES: sección propia, ya no una nota escondida sobre el itinerario ── */}
+          {showParentsNote && (
+            <Section bg="deep">
+              <SectionHeading eyebrow="Con la bendición de" title="Nuestras familias" />
+              <motion.div
+                className="cs-parents-section"
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: '-60px' }}
+                variants={staggerChildren}
+              >
+                <motion.div className="cs-parents-block" variants={staggerItem}>
+                  <p className="role">Ella</p>
+                  <div className="names">
+                    {formatParents(config.parents?.person1).map((n, i, arr) => (
+                      <React.Fragment key={i}>
+                        <span>{n}</span>
+                        {i < arr.length - 1 && <span className="amp">&amp;</span>}
+                      </React.Fragment>
+                    ))}
                   </div>
                 </motion.div>
-              )}
-              <SectionHeading eyebrow="El gran día" title="Itinerario" />
-              <div className="cs-timeline">
+                <motion.div className="cs-parents-divider" variants={staggerItem} />
+                <motion.div className="cs-parents-block" variants={staggerItem}>
+                  <p className="role">Él</p>
+                  <div className="names">
+                    {formatParents(config.parents?.person2).map((n, i, arr) => (
+                      <React.Fragment key={i}>
+                        <span>{n}</span>
+                        {i < arr.length - 1 && <span className="amp">&amp;</span>}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </motion.div>
+              </motion.div>
+            </Section>
+          )}
+
+          {renderBlocks('parents')}
+
+          {/* ── ITINERARIO ── */}
+          {showItinerary && (
+            <Section bg="sand" className="cs-itinerary-section">
+              <SectionHeading eyebrow="El gran día" title="Itinerario" variant="offset" />
+              <motion.div
+                className="cs-timeline"
+                style={timelineVars}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: '-60px' }}
+                variants={staggerChildren}
+              >
                 {config.itinerary!.map((item, idx) => (
                   <motion.div
                     key={idx}
                     className="cs-tl-item"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: '-60px' }}
-                    transition={{ duration: 0.8, delay: idx * 0.12, ease: [0.16, 1, 0.3, 1] }}
+                    variants={staggerItem}
                   >
                     <span className="cs-tl-dot" />
+                    {item.image && (
+                      <div className="cs-tl-photo"><img src={item.image} alt={item.name || 'Itinerario'} /></div>
+                    )}
                     <p className="cs-tl-time">{item.time}</p>
                     <h3 className="cs-tl-name">{item.name}</h3>
                     <p className="cs-tl-venue">{item.venue}{item.address ? ` · ${item.address}` : ''}</p>
                     {item.mapsUrl && <a href={item.mapsUrl} target="_blank" rel="noopener noreferrer" className="cs-tl-link">Ver ubicación</a>}
                   </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </Section>
-          ) : (
-            showParentsNote && (
-              <Section bg="deep" flip>
-                <SectionHeading eyebrow="Con la bendición de" title="Nuestras familias" />
-                <div className="cs-parents-fallback">
-                  <div>
-                    <p className="cs-display" style={{ fontStyle: 'italic', fontSize: '1.4rem', color: 'var(--coral)', marginBottom: '0.4rem' }}>Ella</p>
-                    <p>{config.parents?.person1 || 'Sus padres'}</p>
-                  </div>
-                  <Sailboat size={22} style={{ opacity: 0.4 }} />
-                  <div>
-                    <p className="cs-display" style={{ fontStyle: 'italic', fontSize: '1.4rem', color: 'var(--coral)', marginBottom: '0.4rem' }}>Él</p>
-                    <p>{config.parents?.person2 || 'Sus padres'}</p>
-                  </div>
-                </div>
-              </Section>
-            )
           )}
 
           {renderBlocks('itinerary')}
 
           {/* ── DESTINO: collage de hoteles, no grid parejo ── */}
           {config.sections?.destination !== false && config.destination && (config.destination.hotels?.length || config.destination.transport?.info) && (
-            <Section bg="foam">
-              <SectionHeading eyebrow="Viaje" title="Hospedaje y transporte" />
-              <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '3.5rem' }}>
+            <Section bg="foam" edge={<BleedGradient from="sand" to="foam" />} style={{ position: 'relative', overflow: 'hidden' }}>
+              <WatercolorBlob id="cs-wc-destination" seed={19} fill="var(--coral-soft)" opacity={0.14} style={{ top: '30%', right: '-6rem' }} />
+              <SectionHeading eyebrow="Viaje" title="Hospedaje y transporte" variant="offset" />
+              <div style={{ maxWidth: 760, margin: '0 auto' }}>
                 {!!config.destination.hotels?.length && (
-                  <div className="cs-hotels">
+                  <motion.div className="cs-hotels-grid" initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} variants={staggerChildren}>
                     {config.destination.hotels.map((h, i) => (
-                      i === 0 ? (
-                        <div key={i} className="cs-hotel-main">
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
-                            <p className="cs-display name">{h.name}</p>
-                            <Hotel size={18} style={{ color: 'var(--lagoon)', flexShrink: 0, marginTop: 2 }} />
-                          </div>
-                          {h.category && <p className="cs-eyebrow" style={{ fontSize: 9 }}>{h.category}</p>}
-                          {h.address && <p style={{ fontSize: 13, opacity: 0.7, marginTop: 6 }}>{h.address}</p>}
-                          {h.note && <p style={{ fontSize: 12, opacity: 0.6, fontStyle: 'italic', marginTop: 4 }}>{h.note}</p>}
-                          {h.phone && <a href={`tel:${h.phone.replace(/\s/g, '')}`} className="cs-eyebrow" style={{ fontSize: 9, marginTop: 8, display: 'inline-block' }}>{h.phone}</a>}
+                      <motion.div key={i} className="cs-hotel-card" variants={staggerItem}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                          {i === 0 ? <span className="badge">Sede del evento</span> : <span />}
+                          <Hotel size={16} style={{ color: 'var(--lagoon)', flexShrink: 0 }} />
                         </div>
-                      ) : null
+                        <p className="cs-display name">{h.name}</p>
+                        {h.category && <p className="cs-eyebrow" style={{ fontSize: 9 }}>{h.category}</p>}
+                        {h.address && <p style={{ fontSize: 13, opacity: 0.7 }}>{h.address}</p>}
+                        {h.note && <p style={{ fontSize: 12, opacity: 0.6, fontStyle: 'italic' }}>{h.note}</p>}
+                        {h.phone && <a href={`tel:${h.phone.replace(/\s/g, '')}`} className="cs-eyebrow" style={{ fontSize: 9, marginTop: 4, display: 'inline-block' }}>{h.phone}</a>}
+                      </motion.div>
                     ))}
-                    {config.destination.hotels.length > 1 && (
-                      <div className="cs-hotel-side-row">
-                        {config.destination.hotels.slice(1).map((h, i) => (
-                          <div key={i} className="cs-hotel-side">
-                            <p className="cs-display" style={{ fontSize: '1.05rem' }}>{h.name}</p>
-                            {h.category && <p className="cs-eyebrow" style={{ fontSize: 8 }}>{h.category}</p>}
-                            {h.address && <p style={{ fontSize: 12, opacity: 0.65, marginTop: 4 }}>{h.address}</p>}
-                            {h.phone && <a href={`tel:${h.phone.replace(/\s/g, '')}`} className="cs-eyebrow" style={{ fontSize: 8, marginTop: 6, display: 'inline-block' }}>{h.phone}</a>}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  </motion.div>
                 )}
                 {config.destination.transport?.info && (
-                  <div style={{ textAlign: 'center' }}>
+                  <div className="cs-transport-card">
                     <Car size={22} style={{ color: 'var(--coral)', marginBottom: '0.75rem' }} />
                     <p style={{ fontSize: 14, opacity: 0.75, maxWidth: 480, margin: '0 auto 1.25rem' }}>{config.destination.transport.info}</p>
                     {!!config.destination.transport.schedule?.length && (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                      <motion.div className="cs-transport-schedule" initial="hidden" whileInView="show" viewport={{ once: true, margin: '-40px' }} variants={staggerChildren}>
                         {config.destination.transport.schedule.map((s, i) => (
-                          <div key={i} style={{ display: 'flex', gap: '0.75rem', fontSize: 13 }}>
-                            <span className="cs-eyebrow" style={{ fontSize: 10, width: 70, textAlign: 'right' }}>{s.time}</span>
-                            <span style={{ opacity: 0.7 }}>{s.detail}</span>
-                          </div>
+                          <motion.div key={i} className="cs-transport-row" variants={staggerItem}>
+                            <span className="cs-transport-time">{s.time}</span>
+                            <span className="cs-transport-dot" />
+                            <span className="cs-transport-detail">{s.detail}</span>
+                          </motion.div>
                         ))}
-                      </div>
+                      </motion.div>
                     )}
                   </div>
                 )}
@@ -754,105 +815,137 @@ export default function CostaTemplate({
             </Section>
           )}
 
-          {/* ── DETALLES: dress code + regalos + notas fusionados, columnas asimétricas ── */}
+          {/* ── DETALLES: dress code, regalos, notas y evento para adultos, todo en tarjetas del mismo tamaño ── */}
           {hasDetails && (
-            <Section bg="sand">
-              <SectionHeading eyebrow="Importante" title="Detalles para el gran día" />
-              <div className="cs-details-grid">
+            <Section bg="sand" edge={preDetailsBg !== 'sand' ? <BleedGradient from={preDetailsBg} to="sand" /> : undefined} style={{ position: 'relative', overflow: 'hidden' }}>
+              <WatercolorBlob id="cs-wc-details" seed={31} fill="var(--shallow)" opacity={0.15} style={{ bottom: '-5rem', left: '-4rem' }} />
+              <SectionHeading eyebrow="Importante" title="Detalles para el gran día" variant="offset" />
+              <div className="cs-details-cards">
                 {hasDressCode && (
-                  <div>
+                  <div className="cs-detail-card">
+                    <div className="cs-detail-head">
+                      <div className="cs-detail-icon"><Shirt size={16} /></div>
+                      <h3>Código de vestimenta</h3>
+                    </div>
                     <span className="cs-dress-label">{config.dressCode!.label}</span>
                     <div className="cs-dress-cols">
                       <div><h4>Ellas</h4><p style={{ fontSize: 14, opacity: 0.8, lineHeight: 1.6 }}>{config.dressCode!.women}</p></div>
                       <div><h4>Ellos</h4><p style={{ fontSize: 14, opacity: 0.8, lineHeight: 1.6 }}>{config.dressCode!.men}</p></div>
                     </div>
                     {!!config.dressCode!.swatches?.length && (
-                      <div className="cs-swatches">
-                        {config.dressCode!.swatches!.map((s, i) => (
-                          <div key={i} className="cs-swatch">
-                            <div className="cs-swatch-dot" style={{ backgroundColor: s.color }} />
-                            <span>{s.name}</span>
-                          </div>
-                        ))}
+                      <div>
+                        <p className="cs-swatches-label">Colores sugeridos</p>
+                        <motion.div className="cs-swatches" initial="hidden" whileInView="show" viewport={{ once: true, margin: '-40px' }} variants={staggerChildren}>
+                          {config.dressCode!.swatches!.map((s, i) => (
+                            <motion.div key={i} className="cs-swatch" variants={staggerItem}>
+                              <div className="cs-swatch-dot" style={{ backgroundColor: s.color }} />
+                              <span>{s.name}</span>
+                            </motion.div>
+                          ))}
+                        </motion.div>
+                      </div>
+                    )}
+                    {!!config.dressCode!.avoid?.length && (
+                      <div style={{ marginTop: '1.5rem' }}>
+                        <p className="cs-swatches-label">Por favor evita</p>
+                        <motion.div className="cs-swatches" initial="hidden" whileInView="show" viewport={{ once: true, margin: '-40px' }} variants={staggerChildren}>
+                          {config.dressCode!.avoid!.map((s, i) => (
+                            <motion.div key={i} className="cs-swatch cs-swatch--avoid" variants={staggerItem}>
+                              <div className="cs-swatch-dot" style={{ backgroundColor: s.color }}>
+                                <span className="cs-swatch-x">
+                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5" strokeLinecap="round" />
+                                  </svg>
+                                </span>
+                              </div>
+                              <span>{s.name}</span>
+                            </motion.div>
+                          ))}
+                        </motion.div>
                       </div>
                     )}
                   </div>
                 )}
 
-                {(hasGifts || hasNotes) && (
-                  <div className="cs-details-side">
-                    {hasGifts && (() => {
-                      const gifts = config.gifts!;
-                      return (
-                        <>
-                          {showTransfer && gifts.bank && (
-                            <div className="cs-gift-card">
-                              <div className="cs-gift-icon"><Waves size={15} /></div>
-                              {[
-                                { label: 'Banco', value: gifts.bank },
-                                { label: 'Nombre', value: gifts.holder },
-                                { label: 'Cuenta', value: gifts.account },
-                                { label: 'CLABE', value: gifts.clabe },
-                              ].filter(r => r.value).map(r => (
-                                <div key={r.label} className="cs-gift-row">
-                                  <span className="lbl">{r.label}</span>
-                                  <span className="val">{r.value}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          {showList && gifts.giftListUrl && (
-                            <div className="cs-gift-card">
-                              <div className="cs-gift-icon"><Gift size={15} /></div>
-                              <p className="cs-display" style={{ fontSize: '1.05rem', fontStyle: 'italic' }}>Mesa de regalos</p>
-                              {gifts.giftListLabel && <p style={{ fontSize: 12, opacity: 0.65 }}>{gifts.giftListLabel}</p>}
-                              <a href={gifts.giftListUrl} target="_blank" rel="noopener noreferrer" className="cs-gift-link">Ver lista →</a>
-                            </div>
-                          )}
-                          {showEnvelope && (
-                            <div className="cs-gift-card">
-                              <div className="cs-gift-icon"><Gift size={15} /></div>
-                              <p className="cs-display" style={{ fontSize: '1.05rem', fontStyle: 'italic' }}>Sobre de regalo</p>
-                              <p style={{ fontSize: 12, opacity: 0.65 }}>{gifts.envelopeMessage || 'Con gusto recibimos sobres el día del evento'}</p>
-                            </div>
-                          )}
-                        </>
-                      );
-                    })()}
-
-                    {hasNotes && (
-                      <div className="cs-notes">
-                        {config.notes!.filter(n => n?.trim()).map((note, i) => (
-                          <div key={i} className="cs-note">
-                            <span className="cs-note-mark">{String(i + 1).padStart(2, '0')}</span>
-                            <p style={{ fontSize: 13, opacity: 0.75, lineHeight: 1.6 }}>{note}</p>
-                          </div>
-                        ))}
+                {hasGifts && (() => {
+                  const gifts = config.gifts!;
+                  return (
+                    <div className="cs-detail-card">
+                      <div className="cs-detail-head">
+                        <div className="cs-detail-icon"><Gift size={16} /></div>
+                        <h3>Regalos</h3>
                       </div>
-                    )}
+                      {showTransfer && gifts.bank && (
+                        <div className="cs-gift-block">
+                          {[
+                            { label: 'Banco', value: gifts.bank },
+                            { label: 'Nombre', value: gifts.holder },
+                            { label: 'Cuenta', value: gifts.account },
+                            { label: 'CLABE', value: gifts.clabe },
+                          ].filter(r => r.value).map(r => (
+                            <div key={r.label} className="cs-gift-row">
+                              <span className="lbl">{r.label}</span>
+                              <span className="val">{r.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {showList && gifts.giftListUrl && (
+                        <div className="cs-gift-block">
+                          <p className="cs-display" style={{ fontSize: '1.05rem', fontStyle: 'italic' }}>Mesa de regalos</p>
+                          {gifts.giftListLabel && <p style={{ fontSize: 12, opacity: 0.65 }}>{gifts.giftListLabel}</p>}
+                          <a href={gifts.giftListUrl} target="_blank" rel="noopener noreferrer" className="cs-gift-link">Ver lista →</a>
+                        </div>
+                      )}
+                      {showEnvelope && (
+                        <div className="cs-gift-block">
+                          <p className="cs-display" style={{ fontSize: '1.05rem', fontStyle: 'italic' }}>Sobre de regalo</p>
+                          <p style={{ fontSize: 12, opacity: 0.65 }}>{gifts.envelopeMessage || 'Con gusto recibimos sobres el día del evento'}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {hasNotes && (
+                  <div className="cs-detail-card">
+                    <div className="cs-detail-head">
+                      <div className="cs-detail-icon"><Info size={16} /></div>
+                      <h3>Recomendaciones</h3>
+                    </div>
+                    <div className="cs-notes">
+                      {config.notes!.filter(n => n?.trim()).map((note, i) => (
+                        <div key={i} className="cs-note">
+                          <span className="cs-note-mark">{String(i + 1).padStart(2, '0')}</span>
+                          <p style={{ fontSize: 13, opacity: 0.75, lineHeight: 1.6 }}>{note}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {config.noChildren && (
+                  <div className="cs-detail-card" style={{ alignItems: 'center', textAlign: 'center' }}>
+                    <div className="cs-detail-head" style={{ flexDirection: 'column' }}>
+                      <div className="cs-detail-icon"><UserX size={16} /></div>
+                      <h3>Evento para adultos</h3>
+                    </div>
+                    <p style={{ fontSize: 13, opacity: 0.75, lineHeight: 1.6 }}>
+                      {config.noChildrenMessage || 'Con todo nuestro cariño, les pedimos que esta celebración sea exclusiva para adultos. Agradecemos su comprensión.'}
+                    </p>
                   </div>
                 )}
               </div>
             </Section>
           )}
 
-          {/* ── NO NIÑOS ── */}
-          {config.noChildren && (
-            <Section bg="deep" flip>
-              <div className="cs-adults">
-                <UserX size={26} style={{ color: 'var(--coral)' }} />
-                <p className="cs-heading" style={{ fontSize: 18 }}>Evento para adultos</p>
-                <p style={{ fontSize: 13, opacity: 0.7, lineHeight: 1.7 }}>
-                  {config.noChildrenMessage || 'Con todo nuestro cariño, les pedimos que esta celebración sea exclusiva para adultos. Agradecemos su comprensión.'}
-                </p>
-              </div>
-            </Section>
-          )}
-
-          {/* ── RSVP fusionado con el footer: un solo cierre ── */}
-          <CurveTop fill="var(--deep)" />
+          {/* ── RSVP fusionado con el footer: entra con un degradado difuminado ── */}
+          <div aria-hidden="true" style={{
+            height: 340,
+            background: `linear-gradient(to bottom, ${BG[preFooterBg]} 0%, ${BG[preFooterBg]} 12%, color-mix(in oklab, ${BG[preFooterBg]} 55%, var(--deep)) 55%, var(--deep) 90%, var(--deep) 100%)`,
+          }} />
           <footer className="cs-footer">
-            <SectionHeading eyebrow="RSVP" title="¿Nos acompañas en la orilla?" />
+            <SectionHeading eyebrow="RSVP" title="Confirma tu asistencia" />
             <p className="cs-footer-blurb">
               Será un verdadero honor celebrar este inicio contigo. Por favor confirma tu asistencia.
             </p>

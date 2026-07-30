@@ -962,6 +962,25 @@ export default function EleganceTemplate({
                    </div>
                  </div>
                )}
+               {config.dressCode.avoid?.length && (
+                 <div className="mt-12">
+                   <p className="label text-[9px] mb-10">Por Favor Evita</p>
+                   <div className="flex flex-wrap justify-center gap-8">
+                     {config.dressCode.avoid.map((s, i) => (
+                       <div key={i} className="flex flex-col items-center gap-3">
+                         <div className="relative w-16 h-16 rounded-full border border-black/5 opacity-60" style={{ backgroundColor: s.color }}>
+                           <span className="absolute inset-0 flex items-center justify-center">
+                             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                               <path d="M4 4l10 10M14 4L4 14" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5" strokeLinecap="round" />
+                             </svg>
+                           </span>
+                         </div>
+                         <span className="label text-[8px] opacity-60">{s.name}</span>
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+               )}
             </div>
           </section>
         )}

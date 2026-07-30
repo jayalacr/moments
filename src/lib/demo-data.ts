@@ -74,6 +74,10 @@ export const DELUXE_DEMO: ClassicConfig = {
       { color: '#B8965A', name: 'Dorado' },
       { color: '#4A0E0E', name: 'Vino' },
     ],
+    avoid: [
+      { color: '#FFFFFF', name: 'Blanco' },
+      { color: '#F5E6D3', name: 'Marfil' },
+    ],
   },
   destination: {
     hotels: [
@@ -170,6 +174,9 @@ export const CLASSIC_ELEGANCE_DEMO: EleganceConfig = {
       { color: '#D4AF37', name: 'Dorado' },
       { color: '#1A1A1A', name: 'Ónix' },
     ],
+    avoid: [
+      { color: '#FFFFFF', name: 'Blanco' },
+    ],
   },
   gifts: {
     bank: 'Wells Fargo',
@@ -230,7 +237,7 @@ export const COSTA_DEMO: CostaConfig = {
   targetDate: '2027-03-14T17:00:00',
   monogram: 'C & D',
   theme: {
-    accentColor: '#2AACA6',
+    accentColor: '#1F9B9B',
     displayFont: 'cormorant',
     bodyFont: 'jost',
   },
@@ -259,13 +266,31 @@ export const COSTA_DEMO: CostaConfig = {
       venue: 'Playa Las Palmas',
       address: 'Riviera Maya, Q. Roo',
       mapsUrl: 'https://maps.google.com/?q=Riviera+Maya',
+      image: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=800&q=80',
     },
     {
-      time: '7:00 PM',
+      time: '6:30 PM',
+      name: 'Cóctel de Bienvenida',
+      venue: 'Jardín Oceanfront',
+      address: 'Hotel Las Palmas Resort',
+      mapsUrl: 'https://maps.google.com/?q=Riviera+Maya',
+      image: 'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&q=80',
+    },
+    {
+      time: '8:00 PM',
       name: 'Recepción bajo las Estrellas',
       venue: 'Terraza Oceanfront',
       address: 'Hotel Las Palmas Resort',
       mapsUrl: 'https://maps.google.com/?q=Riviera+Maya',
+      image: 'https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=800&q=80',
+    },
+    {
+      time: '11:00 PM',
+      name: 'Barra de Postres y Café',
+      venue: 'Terraza Oceanfront',
+      address: 'Hotel Las Palmas Resort',
+      mapsUrl: 'https://maps.google.com/?q=Riviera+Maya',
+      image: 'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=800&q=80',
     },
   ],
   dressCode: {
@@ -273,9 +298,13 @@ export const COSTA_DEMO: CostaConfig = {
     women: 'Vestido ligero y fresco, tonos claros. Evitar tacones finos por la arena.',
     men: 'Guayabera o camisa de lino, pantalón claro. Sin corbata.',
     swatches: [
-      { color: '#FBF6EC', name: 'Arena' },
-      { color: '#2AACA6', name: 'Turquesa' },
-      { color: '#E8836B', name: 'Coral' },
+      { color: '#F4EADA', name: 'Arena' },
+      { color: '#1F9B9B', name: 'Turquesa' },
+      { color: '#E2725B', name: 'Coral' },
+    ],
+    avoid: [
+      { color: '#FFFFFF', name: 'Blanco' },
+      { color: '#000000', name: 'Negro' },
     ],
   },
   gifts: {
@@ -286,6 +315,13 @@ export const COSTA_DEMO: CostaConfig = {
     giftListLabel: 'Mesa de Regalos Amazon',
     envelopeMessage: 'Tu presencia es nuestro mejor regalo. Si deseas tener un detalle, agradecemos el sobre.',
   },
+  notes: [
+    'La ceremonia y recepción son al aire libre, frente al mar: te recomendamos calzado cómodo para arena.',
+    'Habrá servicio de shuttle desde los hoteles recomendados; horarios en la sección de transporte.',
+    'La celebración continúa hasta la 1:00 AM. ¡Ven con energía para bailar toda la noche!',
+  ],
+  noChildren: true,
+  noChildrenMessage: 'Con todo nuestro cariño, les pedimos que esta celebración frente al mar sea exclusiva para adultos. Agradecemos mucho su comprensión.',
   whatsapp: { number: '5215512345678', message: 'Hola, confirmo mi asistencia a la boda de Camila & Diego. 🌊' },
   rsvpDeadline: '1 de Febrero de 2027',
   rsvp: {
