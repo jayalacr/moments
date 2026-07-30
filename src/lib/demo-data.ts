@@ -3,6 +3,7 @@
 import { ClassicConfig } from '@/components/templates/classic/ClassicTemplate';
 import { EleganceConfig } from '@/components/templates/elegance/EleganceTemplate';
 import { CostaConfig } from '@/components/templates/costa/CostaTemplate';
+import { JardinConfig } from '@/components/templates/jardin/JardinTemplate';
 
 
 export const DELUXE_DEMO: ClassicConfig = {
@@ -350,6 +351,141 @@ export const COSTA_DEMO: CostaConfig = {
       schedule: [
         { time: '4:00 PM', detail: 'Salida hacia Playa Las Palmas' },
         { time: '1:00 AM', detail: 'Retorno a los hoteles' },
+      ],
+    },
+  },
+  sections: {
+    quote: true,
+    parents: true,
+    itinerary: true,
+    dressCode: true,
+    destination: true,
+    gifts: true,
+  },
+};
+
+export const JARDIN_DEMO: JardinConfig = {
+  heroLabel: 'Boda de Jardín',
+  couple: { person1: 'Valentina', person2: 'Mateo' },
+  fullNames: { person1: 'Valentina Reyes Molina', person2: 'Mateo Salas Herrera' },
+  date: { day: '9', month: 'Mayo', year: '2027' },
+  location: 'Hacienda Los Laureles, Morelos',
+  targetDate: '2027-05-09T16:00:00',
+  monogram: 'V & M',
+  theme: {
+    accentColor: '#7C8B6F',
+    displayFont: 'playfair',
+    bodyFont: 'raleway',
+  },
+  music: {
+    url: 'https://drive.google.com/uc?export=download&id=1fPImssW-Q_GTZj9AdQB3oweUYzxSgWlp',
+    title: 'A Thousand Years',
+    artist: 'Christina Perri',
+  },
+  quote: {
+    text: 'El amor es la única cosecha que crece más cuando se comparte.',
+    reference: 'Anónimo',
+  },
+  photos: [
+    { role: 'hero', url: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1600&q=85' },
+    { role: 'block', afterSection: 'parents', url: 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=1400&q=80' },
+    { role: 'block', afterSection: 'itinerary', url: 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=1400&q=80' },
+  ],
+  parents: {
+    person1: 'Ernesto Reyes & Guadalupe Molina de Reyes',
+    person2: 'Javier Salas & Beatriz Herrera de Salas',
+  },
+  itinerary: [
+    {
+      time: '4:00 PM',
+      name: 'Ceremonia en el Jardín',
+      venue: 'Jardín Principal',
+      address: 'Hacienda Los Laureles, Morelos',
+      mapsUrl: 'https://maps.google.com/?q=Hacienda+Los+Laureles',
+      image: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=800&q=80',
+    },
+    {
+      time: '5:30 PM',
+      name: 'Cóctel entre Rosales',
+      venue: 'Terraza del Jardín',
+      address: 'Hacienda Los Laureles, Morelos',
+      mapsUrl: 'https://maps.google.com/?q=Hacienda+Los+Laureles',
+      image: 'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&q=80',
+    },
+    {
+      time: '7:30 PM',
+      name: 'Cena bajo las Luces',
+      venue: 'Salón de Cristal',
+      address: 'Hacienda Los Laureles, Morelos',
+      mapsUrl: 'https://maps.google.com/?q=Hacienda+Los+Laureles',
+      image: 'https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=800&q=80',
+    },
+    {
+      time: '10:00 PM',
+      name: 'Fiesta y Baile',
+      venue: 'Pista al Aire Libre',
+      address: 'Hacienda Los Laureles, Morelos',
+      mapsUrl: 'https://maps.google.com/?q=Hacienda+Los+Laureles',
+      image: 'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=800&q=80',
+    },
+  ],
+  dressCode: {
+    label: 'Elegante Campestre',
+    women: 'Vestido midi o largo en tonos tierra o pastel. Evitar tacones de aguja por el pasto.',
+    men: 'Traje claro o guayabera formal, sin corbata.',
+    swatches: [
+      { color: '#EEF1E6', name: 'Marfil' },
+      { color: '#7C8B6F', name: 'Salvia' },
+      { color: '#C77B58', name: 'Terracota' },
+    ],
+    avoid: [
+      { color: '#FFFFFF', name: 'Blanco' },
+      { color: '#3A3A3A', name: 'Negro noche' },
+    ],
+  },
+  gifts: {
+    bank: 'Santander',
+    holder: 'Valentina Reyes Molina',
+    clabe: '014 180 00512345678 9',
+    giftListUrl: 'https://www.liverpool.com.mx/tienda/wedding-registry',
+    giftListLabel: 'Mesa de Regalos Liverpool',
+    envelopeMessage: 'Tu presencia es nuestro mejor regalo. Si deseas tener un detalle, agradecemos el sobre.',
+  },
+  notes: [
+    'La ceremonia y recepción son al aire libre, sobre pasto: te recomendamos calzado bajo o cuñas.',
+    'El clima en mayo puede ser soleado, trae protector solar y, si gustas, un abanico.',
+    'Al anochecer refresca — un chal o saco ligero no está de más.',
+  ],
+  noChildren: true,
+  noChildrenMessage: 'Con todo nuestro cariño, les pedimos que esta celebración entre jardines sea exclusiva para adultos. Agradecemos mucho su comprensión.',
+  whatsapp: { number: '5215587654321', message: 'Hola, confirmo mi asistencia a la boda de Valentina & Mateo. 🌿' },
+  rsvpDeadline: '15 de Marzo de 2027',
+  rsvp: {
+    maxPlusOnes: 2,
+  },
+  dietary: { enabled: true, options: ['Vegetariano', 'Vegano', 'Sin gluten', 'Sin lácteos', 'Otro'] },
+  destination: {
+    hotels: [
+      {
+        name: 'Hacienda Los Laureles',
+        category: 'Sede del evento · Habitaciones disponibles',
+        address: 'Morelos, México',
+        note: 'Tarifa especial para invitados: código VALYMATEO27',
+        phone: '+52 777 123 4567',
+      },
+      {
+        name: 'Hotel Jardines de Cuernavaca',
+        category: 'Boutique · Recomendado',
+        address: 'Cuernavaca, Morelos',
+        note: 'A 15 min de la sede. Desayuno incluido.',
+        phone: '+52 777 765 4321',
+      },
+    ],
+    transport: {
+      info: 'Servicio de shuttle desde los hoteles recomendados hacia la hacienda.',
+      schedule: [
+        { time: '3:15 PM', detail: 'Salida hacia Hacienda Los Laureles' },
+        { time: '11:30 PM', detail: 'Retorno a los hoteles' },
       ],
     },
   },

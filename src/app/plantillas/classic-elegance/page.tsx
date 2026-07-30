@@ -13,16 +13,16 @@ export const metadata = {
 export default async function ClassicElegancePreviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ plan?: string }>;
+  searchParams: Promise<{ plan?: string; ui?: string }>;
 }) {
-  const { plan: rawPlan } = await searchParams;
+  const { plan: rawPlan, ui } = await searchParams;
   const plan: EventPlan = VALID_PLANS.includes(rawPlan as EventPlan)
     ? (rawPlan as EventPlan)
     : 'deluxe';
 
   return (
     <>
-      <FloatingPlanSwitcher activePlan={plan} baseUrl="/plantillas/classic-elegance" />
+      {ui !== 'hidden' && <FloatingPlanSwitcher activePlan={plan} baseUrl="/plantillas/classic-elegance" />}
       <EleganceTemplate key={plan} config={CLASSIC_ELEGANCE_DEMO} plan={plan} />
     </>
   );

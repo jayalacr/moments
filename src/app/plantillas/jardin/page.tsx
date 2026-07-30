@@ -1,16 +1,16 @@
-import ClassicTemplate from '@/components/templates/classic/ClassicTemplate';
-import { DELUXE_DEMO } from '@/lib/demo-data';
+import JardinTemplate from '@/components/templates/jardin/JardinTemplate';
+import { JARDIN_DEMO } from '@/lib/demo-data';
 import FloatingPlanSwitcher from '@/components/templates/shared/FloatingPlanSwitcher';
 import type { EventPlan } from '@/lib/plans';
 
 const VALID_PLANS: EventPlan[] = ['essential', 'plus', 'deluxe'];
 
 export const metadata = {
-  title: 'Vista Previa Deluxe Clásico',
-  description: 'Vista previa de la plantilla Deluxe Clásico para invitaciones digitales.',
+  title: 'Vista Previa Jardín',
+  description: 'Vista previa de la plantilla Jardín para invitaciones digitales de boda al aire libre.',
 };
 
-export default async function DeluxePreviewPage({
+export default async function JardinPreviewPage({
   searchParams,
 }: {
   searchParams: Promise<{ plan?: string; ui?: string }>;
@@ -22,8 +22,8 @@ export default async function DeluxePreviewPage({
 
   return (
     <>
-      {ui !== 'hidden' && <FloatingPlanSwitcher activePlan={plan} baseUrl="/plantillas/deluxe" />}
-      <ClassicTemplate key={plan} config={DELUXE_DEMO} plan={plan} />
+      {ui !== 'hidden' && <FloatingPlanSwitcher activePlan={plan} baseUrl="/plantillas/jardin" />}
+      <JardinTemplate key={plan} config={JARDIN_DEMO} plan={plan} />
     </>
   );
 }

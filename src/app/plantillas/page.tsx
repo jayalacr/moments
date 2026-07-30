@@ -46,6 +46,15 @@ const TEMPLATES = [
     image: '/templates/costa.jpg',
     video: null as string | null,
   },
+  {
+    key: 'jardin',
+    name: 'Jardín',
+    tagline: 'Salvia, marfil y terracota.',
+    description: 'Diseño cálido y natural inspirado en bodas de jardín al aire libre. Botánico, romántico y luminoso.',
+    previewBase: '/plantillas/jardin',
+    image: '/templates/jardin.jpg',
+    video: null as string | null,
+  },
 ];
 
 const PLANS = [

@@ -137,6 +137,13 @@ interface [Nombre]Config {
   rsvpDeadline?: string;
   sections?: Record<string, boolean>;
 
+  // Theme genérico — lo edita /admin (EditarForm.tsx) igual para las 3 plantillas
+  theme?: {
+    accentColor?: string;          // color de acento (botones, íconos, líneas)
+    displayFont?: string;          // fuente de títulos — ver catálogo aprobado (sección 6)
+    bodyFont?: string;             // fuente de cuerpo — ver catálogo aprobado (sección 6)
+  };
+
   // Plus/Deluxe
   targetDate?: string;           // ISO 8601 para cuenta regresiva
   destination?: { hotels: [...]; transport?: {...} };
@@ -153,6 +160,8 @@ interface [Nombre]Config {
 ```
 
 El template decide internamente qué renderizar según `caps = getCapabilities(plan)`.
+
+> **⚠️ Regla de oro: todo campo que declares en la interfaz de config, debe tener un render correspondiente en el JSX.** El formulario de `/admin` (`EditarForm.tsx`) es genérico y expone los mismos campos para las 3 plantillas (incluyendo `theme.displayFont`/`bodyFont` y `dressCode.avoid`), sin saber si un template en particular los usa. Un campo tipado pero nunca leído en el componente es una funcionalidad rota en silencio: el organizador lo configura, lo guarda, y no pasa nada — nadie se entera hasta que alguien lo nota a simple vista en producción. Antes de dar por terminada una plantilla, `grep` cada campo de la interfaz contra el JSX y confirma que aparece al menos una vez.
 
 ---
 
@@ -198,6 +207,9 @@ interface PhotoEntry {
 - Raleway (sans elegante)
 - Montserrat (limpia)
 - DM Sans (compacta)
+- Fraunces (serif variable con ejes ópticos — usado en Costa)
+
+> **⚠️ Gotcha de `next/font` con fuentes variables**: si pasas `axes` (ej. `['SOFT', 'WONK', 'opsz']` en Fraunces), **no** pases también `weight` con valores estáticos — combinar ambos rompe el build porque la fuente deja de comportarse como variable. Omite `weight` para obtener el rango completo, y controla el peso/estilo en CSS con `font-variation-settings`.
 
 ---
 
@@ -259,6 +271,8 @@ import JardinTemplate from '@/components/templates/jardin/JardinTemplate';
 
 ### Paso 5: Página de Preview
 
+Incluye siempre el query param `ui` para poder ocultar `FloatingPlanSwitcher` al grabar video o tomar capturas limpias (`/plantillas/jardin?plan=deluxe&ui=hidden`):
+
 ```typescript
 // src/app/plantillas/jardin/page.tsx
 import JardinTemplate from '@/components/templates/jardin/JardinTemplate';
@@ -270,15 +284,15 @@ const VALID_PLANS: EventPlan[] = ['essential', 'plus', 'deluxe'];
 
 export default async function JardinPreviewPage({
   searchParams,
-}: { searchParams: Promise<{ plan?: string }> }) {
-  const { plan: rawPlan } = await searchParams;
+}: { searchParams: Promise<{ plan?: string; ui?: string }> }) {
+  const { plan: rawPlan, ui } = await searchParams;
   const plan: EventPlan = VALID_PLANS.includes(rawPlan as EventPlan)
     ? (rawPlan as EventPlan)
     : 'deluxe';
 
   return (
     <>
-      <FloatingPlanSwitcher activePlan={plan} baseUrl="/plantillas/jardin" />
+      {ui !== 'hidden' && <FloatingPlanSwitcher activePlan={plan} baseUrl="/plantillas/jardin" />}
       <JardinTemplate key={plan} config={JARDIN_DEMO} plan={plan} />
     </>
   );
@@ -346,6 +360,10 @@ if (caps.rsvpMode === 'whatsapp') {
 
 **No modificar `src/app/globals.css`.**
 
+### Composición: contenido heterogéneo (dress code + regalos + notas + "sin niños"...)
+
+La sección de "Detalles" mezcla varios tipos de contenido distinto en un solo bloque. Un grid asimétrico de 2 columnas donde cada tipo tiene su propio layout (una tarjeta, texto suelto, otra tarjeta apilada al lado) se percibe como "revuelto" — nos tomó tres rondas de feedback llegar a esto en Costa. Lo que funcionó: **tarjetas del mismo tamaño, todas con el mismo patrón ícono + título + contenido**, en un contenedor `flex-wrap` centrado (no un `grid` que estira las tarjetas a ancho completo cuando hay pocas). Usa este patrón por default para cualquier sección que agrupe 2+ tipos de contenido distinto (dress code, regalos, notas, "evento para adultos", etc.) en vez de inventar un layout asimétrico nuevo.
+
 ### Breakpoints mínimos requeridos
 
 | Breakpoint | Ajuste |
@@ -355,7 +373,7 @@ if (caps.rsvpMode === 'whatsapp') {
 | `≤ 600px` | Grids en 1 columna |
 | `≤ 480px` | Hero en columna, padding mínimo |
 
-### Clases de Animación (IntersectionObserver)
+### Clases de Animación (IntersectionObserver) — patrón clásico (Classic, Elegance)
 
 | Clase | Efecto |
 |-------|--------|
@@ -363,6 +381,37 @@ if (caps.rsvpMode === 'whatsapp') {
 | `.reveal--slide-left` | Desde izquierda (-32px) |
 | `.reveal--slide-right` | Desde derecha (+32px) |
 | `.delay-1` a `.delay-5` | Retraso escalonado 0.1s–0.5s |
+
+### Animación con `motion` (framer-motion) — patrón moderno (Costa)
+
+Alternativa ya usada en el proyecto (`import { motion } from 'motion/react'`), preferible sobre IntersectionObserver manual para plantillas nuevas: menos código, mismo resultado, y da acceso a `useScroll`/`useTransform` para parallax.
+
+```typescript
+const fadeUp = { hidden: { opacity: 0, y: 26 }, show: { opacity: 1, y: 0, transition: { duration: 0.9 } } };
+
+<motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: '-80px' }} variants={fadeUp}>
+```
+
+Define un pequeño catálogo de variantes (`fadeUp`, `maskReveal`, `slideIn`, `staggerChildren`/`staggerItem`) y asigna una por tipo de elemento en vez de usar la misma en todo — si todo revela igual, la página se siente plana.
+
+> **⚠️ Gotcha de `useScroll({ target: ref })`**: si el componente tiene un early-return condicional (ej. pantalla de loader vs. contenido) que oculta el elemento al que apunta el `ref`, `useScroll` truena en runtime con `"Target ref is defined but not hydrated"` — porque el ref nunca se monta mientras esa rama esté activa. **Nunca dupliques el árbol JSX en un early-return si algún hook depende de un ref dentro de él.** El loader debe ser un overlay (`position: fixed`) renderizado condicionalmente *dentro* del árbol principal, no un `return` alterno completo.
+
+### Tamaños adaptativos con CSS custom properties
+
+Cuando una sección repite N elementos que define el organizador (itinerario, fotos, hoteles), no asumas una cantidad fija — el tamaño de cada elemento debe ajustarse según cuántos haya, o se ve apretado con muchos y desproporcionado con pocos:
+
+```typescript
+const count = config.itinerary?.length ?? 0;
+const vars = { '--item-size': count <= 3 ? '160px' : count === 4 ? '130px' : '105px' } as React.CSSProperties;
+// <div style={vars}> ... .cs-item { width: var(--item-size, 140px); } ...
+```
+
+### Scroll suave (Lenis) — opcional
+
+`lenis` (~3 KB) ya es dependencia del proyecto. Hook reutilizable: `src/hooks/useSmoothScroll.ts`. Requisitos si lo usas en una plantilla nueva:
+- Respetar `prefers-reduced-motion: reduce` (early return).
+- Apagarlo mientras el modal de RSVP esté abierto (`useSmoothScroll(!isRsvpOpen)`) — si no, el scroll del backdrop compite con el del modal.
+- Lenis usa scroll nativo, así que `useScroll` de `motion` sigue funcionando sin adaptador.
 
 ---
 
@@ -398,4 +447,7 @@ if (caps.rsvpMode === 'whatsapp') {
 - [ ] Responsive en 375px / 768px / 1440px
 - [ ] ContentProtection aplicado
 - [ ] Demo data en `demo-data.ts` con tipo correcto exportado
+- [ ] **Cada campo de la interfaz de config tiene un render correspondiente** — sin excepciones, incluyendo `theme.displayFont`/`bodyFont` y `dressCode.avoid`
+- [ ] **Cada sección condicional (`config.sections?.x`) tiene datos en el demo**, con suficientes items para verse realista (no solo 1-2 cuando el organizador normalmente pondrá más)
+- [ ] `?ui=hidden` en la página de preview oculta `FloatingPlanSwitcher` correctamente
 - [ ] Card agregada en `/plantillas/page.tsx`
