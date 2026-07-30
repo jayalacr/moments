@@ -39,8 +39,14 @@ export function parseWeddingDate(config: unknown): Date | null {
   return null;
 }
 
-/** expires_at = fecha de la boda: la invitación deja de ser funcional ahí. Los meses del plan solo rigen cuánto antes de la boda se puede publicar, no esto. */
+/** Días de gracia después de la boda antes de expirar: cubre madrugada de la fiesta y tornaboda. */
+const POST_EVENT_GRACE_DAYS = 2;
+
+/** expires_at = fecha de la boda + gracia: la invitación deja de ser funcional ahí. Los meses del plan solo rigen cuánto antes de la boda se puede publicar, no esto. */
 export function computeExpiresAt(config: unknown): string | null {
   const weddingDate = parseWeddingDate(config);
-  return weddingDate ? weddingDate.toISOString() : null;
+  if (!weddingDate) return null;
+  const expires = new Date(weddingDate);
+  expires.setDate(expires.getDate() + POST_EVENT_GRACE_DAYS);
+  return expires.toISOString();
 }

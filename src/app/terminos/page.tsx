@@ -8,7 +8,6 @@ const jost = Jost({ subsets: ['latin'], weight: ['300', '400'], variable: '--fon
 
 export const metadata = {
   title: 'Términos y Condiciones',
-  robots: { index: false, follow: false },
 };
 
 const h2: React.CSSProperties = { fontFamily: 'var(--font-cormorant)', fontSize: '20px', fontWeight: 500, marginTop: '36px', marginBottom: '10px', color: '#1C1611' };
@@ -39,16 +38,15 @@ export default function TerminosPage() {
 
         <h2 style={h2}>1. El servicio</h2>
         <p style={p}>
-          Moments crea y aloja una invitación digital personalizada para tu evento (boda, XV años, bautizo o
-          graduación), con las funciones correspondientes a tu plan: Essential, Plus o Deluxe. Los precios y
+          Moments crea y aloja una invitación digital personalizada para tu evento con las funciones correspondientes a tu plan: Essential, Plus o Deluxe. Los precios y
           funciones vigentes de cada plan se muestran en <span style={{ fontStyle: 'italic' }}>/planes</span>{' '}
           y en tu cotización.
         </p>
 
         <h2 style={h2}>2. Tiempo de entrega</h2>
         <p style={p}>
-          Tras compartirnos tus datos y confirmar tu pago, la primera versión de tu invitación está lista en
-          3 a 5 días hábiles. Puedes revisarla desde tu panel de organizador antes de que se publique.
+          Tras capturar tus datos en el panel de organizador y confirmar tu pago, la primera versión de tu
+          invitación está lista en 3 a 5 días hábiles. Puedes revisarla desde tu panel antes de que se publique.
         </p>
 
         <h2 style={h2}>3. Vigencia y publicación</h2>
@@ -58,9 +56,9 @@ export default function TerminosPage() {
           necesitas publicarla con más anticipación, puedes contratar meses adicionales.
         </p>
         <p style={p}>
-          Tu invitación deja de estar disponible públicamente en la fecha de tu evento. Los datos se
-          conservan 30 días adicionales por si deseas reactivarla; después de ese plazo pueden eliminarse de
-          forma permanente.
+          Tu invitación deja de estar disponible públicamente 2 días después de la fecha de tu evento. Los
+          datos se conservan 30 días adicionales por si deseas reactivarla; después de ese plazo pueden
+          eliminarse de forma permanente.
         </p>
 
         <h2 style={h2}>4. Pago</h2>
@@ -98,13 +96,7 @@ export default function TerminosPage() {
           invitados para tratar sus datos dentro de la plataforma.
         </p>
 
-        <h2 style={h2}>9. Ley aplicable</h2>
-        <p style={p}>
-          Estos términos se rigen por las leyes de los Estados Unidos Mexicanos. Cualquier controversia se
-          resolverá ante los tribunales de Monterrey, Nuevo León.
-        </p>
-
-        <h2 style={h2}>10. Contacto</h2>
+        <h2 style={h2}>9. Contacto</h2>
         <p style={p}>
           Para dudas sobre estos términos,{' '}
           {contactWaHref ? <a href={contactWaHref} target="_blank" rel="noopener noreferrer" style={{ color: '#B8965A' }}>escríbenos por WhatsApp</a> : 'escríbenos por WhatsApp'}.

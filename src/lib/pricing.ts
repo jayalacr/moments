@@ -80,14 +80,14 @@ export function calcularTotal(input: QuoteInput): QuoteBreakdown {
   const lineItems: LineItem[] = [
     {
       label: `Plan ${PLAN_LABEL[plan]}`,
-      detail: `Pago único · ${INCLUDED_MONTHS} meses de publicación incluidos`,
+      detail: `Pago único · ${INCLUDED_MONTHS} meses de anticipación incluidos`,
       amount: base,
     },
   ];
 
   if (extensionMonths > 0) {
     lineItems.push({
-      label: 'Extensión de publicación',
+      label: 'Publicación anticipada',
       detail: `${extensionMonths} mes${extensionMonths !== 1 ? 'es' : ''} adicional${extensionMonths !== 1 ? 'es' : ''} × ${formatMXN(EXTRA_MONTH_PRICE_BY_PLAN[plan])}`,
       amount: extension,
     });

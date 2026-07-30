@@ -840,7 +840,7 @@ export default function PlanesPage() {
           <div className={`mobile-price-section ${activeBg}`}>
             <span className="mobile-price-from">Desde</span>
             <span className="mobile-price-amount">{formatMXN(BASE_PRICES[activeTab])}</span>
-            <span className="mobile-price-note">pago único · 2 meses incluidos</span>
+            <span className="mobile-price-note">pago único · 2 meses de anticipación</span>
           </div>
 
         </div>
@@ -891,17 +891,17 @@ export default function PlanesPage() {
               <div className="price-cell e">
                 <span className="price-from">Desde</span>
                 <span className="price-amount">{formatMXN(BASE_PRICES.essential)}</span>
-                <span className="price-note">pago único · 2 meses incluidos</span>
+                <span className="price-note">pago único · 2 meses de anticipación</span>
               </div>
               <div className="price-cell p">
                 <span className="price-from">Desde</span>
                 <span className="price-amount">{formatMXN(BASE_PRICES.plus)}</span>
-                <span className="price-note">pago único · 2 meses incluidos</span>
+                <span className="price-note">pago único · 2 meses de anticipación</span>
               </div>
               <div className="price-cell d">
                 <span className="price-from">Desde</span>
                 <span className="price-amount">{formatMXN(BASE_PRICES.deluxe)}</span>
-                <span className="price-note">pago único · 2 meses incluidos</span>
+                <span className="price-note">pago único · 2 meses de anticipación</span>
               </div>
             </div>
 

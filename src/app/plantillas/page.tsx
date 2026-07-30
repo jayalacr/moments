@@ -4,6 +4,7 @@ import { Cormorant_Garamond, Jost, Montserrat } from 'next/font/google';
 import SiteHeader from '@/components/site/SiteHeader';
 import SiteFooter from '@/components/site/SiteFooter';
 import { waLink } from '@/lib/contact';
+import { cldVideoUrl } from '@/lib/cloudinary';
 
 
 const cormorant = Cormorant_Garamond({ subsets: ['latin'], weight: ['300', '400', '500'], style: ['normal', 'italic'], variable: '--font-cormorant' });
@@ -15,6 +16,8 @@ export const metadata = {
   description: 'Explora los diseños disponibles para tu invitación digital. Todos los estilos funcionan con cualquier plan.',
 };
 
+// Video: public_id en Cloudinary (carpeta "plantillas/", ej. "plantillas/classic").
+// null hasta que se suba el video — la card usa `image` como fallback mientras tanto.
 const TEMPLATES = [
   {
     key: 'classic',
@@ -23,6 +26,7 @@ const TEMPLATES = [
     description: 'Fondo negro con tipografía dorada. Para parejas que buscan una presencia fuerte, cinematográfica y atemporal.',
     previewBase: '/plantillas/deluxe',
     image: '/templates/classic.jpg',
+    video: null as string | null,
   },
   {
     key: 'elegance',
@@ -31,6 +35,7 @@ const TEMPLATES = [
     description: 'Textura de papel artesanal, transiciones suaves y paleta cálida. Romántico y con carácter propio.',
     previewBase: '/plantillas/classic-elegance',
     image: '/templates/elegance.jpg',
+    video: null as string | null,
   },
   {
     key: 'costa',
@@ -39,6 +44,7 @@ const TEMPLATES = [
     description: 'Diseño luminoso inspirado en bodas frente al mar. Paleta fresca y tipografía elegante para celebraciones en la playa.',
     previewBase: '/plantillas/costa',
     image: '/templates/costa.jpg',
+    video: null as string | null,
   },
 ];
 
@@ -83,11 +89,12 @@ export default function PlantillasPage() {
 
     /* Card */
     .card { border-radius: 20px; overflow: hidden; border: 1px solid var(--muted); background: white; display: flex; flex-direction: column; }
-    .card:hover .preview img { transform: scale(1.04); }
+    .card:hover .preview img, .card:hover .preview video { transform: scale(1.04); }
 
     /* Preview */
     .preview { aspect-ratio: 3 / 5; position: relative; overflow: hidden; background: #1C1611; }
     .preview img { object-fit: cover; object-position: top center; transition: transform 0.4s ease; }
+    .preview video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; transition: transform 0.4s ease; }
 
     /* Card body */
     .card-body { padding: 28px 28px 24px; flex: 1; display: flex; flex-direction: column; }
@@ -151,12 +158,24 @@ export default function PlantillasPage() {
             {TEMPLATES.map((tpl) => (
               <article key={tpl.key} className="card">
                 <div className="preview">
-                  <Image
-                    src={tpl.image}
-                    alt={`Vista previa de la plantilla ${tpl.name}`}
-                    fill
-                    sizes="(max-width: 720px) 100vw, 50vw"
-                  />
+                  {tpl.video ? (
+                    <video
+                      src={cldVideoUrl(tpl.video)}
+                      poster={tpl.image}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      aria-label={`Vista previa de la plantilla ${tpl.name}`}
+                    />
+                  ) : (
+                    <Image
+                      src={tpl.image}
+                      alt={`Vista previa de la plantilla ${tpl.name}`}
+                      fill
+                      sizes="(max-width: 720px) 100vw, 50vw"
+                    />
+                  )}
                 </div>
                 <div className="card-body">
                   <div className="card-name">{tpl.name}</div>

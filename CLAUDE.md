@@ -79,7 +79,7 @@ Para que sea mas clara la diferencia entre planes te puedes guíar por el archiv
 - **Dominio**: ~$12 USD/año (~$1 USD/mes)
 - **Total estimado**: $21 – $41 USD/mes
 
-### Precios Base por Plan (incluye 2 meses de publicación)
+### Precios Base por Plan (incluye 2 meses de anticipación)
 | Plan | Precio único (MXN) | ~USD |
 |------|-------------------|------|
 | **Essential** | $699 | ~$35 |
@@ -88,17 +88,25 @@ Para que sea mas clara la diferencia entre planes te puedes guíar por el archiv
 
 > Fuente de verdad: `src/lib/pricing.ts` (`BASE_PRICES`). Si cambian los precios, actualizar primero ahí y luego este documento.
 
-Todos los planes incluyen **2 meses de publicación** contados a partir de la fecha del evento. A partir del tercer mes se cobra extensión.
+### Modelo de Publicación (MODELO B — importante)
 
-### Extensiones de Tiempo (a partir del mes 3)
+Los meses **NO** son vida útil después de la boda. Son **cuánto antes de la boda se puede publicar** la invitación. Una invitación deja de servir en cuanto pasa el evento.
+
+- Todos los planes incluyen **2 meses de anticipación**: la invitación puede publicarse hasta 2 meses antes de la fecha del evento.
+- Los meses adicionales permiten publicarla **aún más temprano**, no mantenerla viva más tiempo.
+- `expires_at` = **fecha del evento + 2 días** (cubre la madrugada y la tornaboda). No depende de cuántos meses se compraron.
+
+> **Encuadre de venta:** en México las invitaciones se mandan 3–6 meses antes. Una pareja con noviazgo largo que quiera publicar 5 meses antes necesita +3 meses. El copy debe decir **"publica con más anticipación"**, nunca "extensión" ni "más tiempo publicada".
+
+### Meses Adicionales de Anticipación
 El cliente elige **cuántos meses adicionales** quiere mediante un contador (+1). El precio es **por mes** y varía por plan, debido al consumo diferenciado de recursos (imágenes, consultas al dashboard, emails de reenvío, etc.):
 
 | Concepto | Essential | Plus | Deluxe |
 |----------|-----------|------|--------|
-| Meses incluidos en el plan | 2 | 2 | 2 |
+| Meses de anticipación incluidos | 2 | 2 | 2 |
 | Precio por mes adicional | $99 | $149 | $199 |
 
-No hay paquetes con descuento: cada mes adicional se cobra al mismo precio unitario. El total de extensión es `mesesExtra × precioPorMes[plan]`.
+No hay paquetes con descuento: cada mes adicional se cobra al mismo precio unitario. El total es `mesesExtra × precioPorMes[plan]`.
 
 > Fuente de verdad: `src/lib/pricing.ts` (`INCLUDED_MONTHS`, `EXTRA_MONTH_PRICE_BY_PLAN`). El cotizador público (`/cotizar`) y el panel de superadmin deben consumir **la misma** función `calcularTotal()`.
 
@@ -110,14 +118,15 @@ No hay paquetes con descuento: cada mes adicional se cobra al mismo precio unita
   - Solo configuración (el cliente ya tiene su dominio): $499 MXN (pago único).
 
 ### Lógica de Expiración de Invitaciones
-El sistema debe manejar campos `published_at` y `expires_at` en la tabla `events` para controlar la duración de publicación:
-1. **7 días antes de expirar**: Se envía correo de aviso al organizador.
-2. **Al expirar**: La invitación muestra una pantalla amable: *"Esta invitación ya no está disponible. ¿Quieres crear la tuya? Visita moments.com"* (funciona como publicidad orgánica).
-3. **30 días post-expiración**: Los datos se conservan en DB para posible reactivación, pero la URL deja de resolver la invitación.
+1. **`expires_at` = fecha del evento + 2 días** (`POST_EVENT_GRACE_DAYS` en `src/lib/eventDate.ts`). Los 2 días cubren la madrugada posterior a la boda y la tornaboda — la invitación NO debe morir a medianoche del día del evento, porque es cuando más se consulta para ver dirección y horario.
+2. **Al expirar**: La invitación muestra una pantalla amable: *"Esta invitación ya no está disponible. ¿Quieres crear la tuya?"* (funciona como publicidad orgánica).
+3. **`PURGE_GRACE_DAYS = 30`** después de `expires_at`: los datos se conservan en DB por si hay reactivación, y después el evento ya se puede purgar de DB + Cloudinary. El dashboard de `/superadmin` distingue "vigente" / "inactiva (día X/30)" / "lista para depurar".
+4. **Correo de aviso** (`/api/check-expirations`, cron diario 9am): se dispara 7 días antes de `expires_at` y va **al superadmin**, nunca al organizador. Bajo el modelo B equivale a "la boda es en 7 días".
 
-### Campos Pendientes de Implementar en DB
-- `events.published_at` (TIMESTAMPTZ): Fecha en que se publica la invitación.
-- `events.expires_at` (TIMESTAMPTZ): Fecha de expiración calculada según plan + extensiones.
+### Campos de Ciclo de Vida en DB
+- `events.published_at` (TIMESTAMPTZ): Fecha en que se publica la invitación. **Existe pero aún no se escribe** — bajo el modelo B es el dato que sustenta lo que se vendió, conviene registrarlo al publicar.
+- `events.expires_at` (TIMESTAMPTZ): Fecha del evento + 2 días. No depende del plan ni de las extensiones.
+- `events.extension_months` (INTEGER): Meses adicionales de anticipación comprados.
 - `events.custom_domain` (TEXT, nullable): Dominio personalizado asociado al evento.
 - `events.is_expired` (BOOLEAN, computed o trigger): Estado derivado para consultas rápidas.
 

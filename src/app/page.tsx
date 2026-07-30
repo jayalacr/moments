@@ -510,7 +510,7 @@ export default function LandingPage() {
   const faqs = [
     {
       q: '¿Cuánto tiempo tarda en estar lista mi invitación?',
-      a: 'Una vez que eliges plantilla y nos compartes tus datos, la primera versión está lista en 3 a 5 días hábiles. Después afinamos juntos los detalles hasta que quede exactamente como la imaginaste.',
+      a: 'Una vez que eliges plantilla y capturas tus datos en el panel, la primera versión está lista en 3 a 5 días hábiles. Después ajustas los detalles hasta que quede exactamente como la imaginaste.',
     },
     {
       q: '¿Puedo agregar mi lista de invitados y gestionar confirmaciones?',
@@ -526,7 +526,7 @@ export default function LandingPage() {
     },
     {
       q: '¿Puedo ver mi invitación antes de pagar?',
-      a: 'Sí. En cuanto capturamos tus datos puedes revisar la invitación completa desde tu panel de organizador, antes de que se publique y antes de confirmar el pago.',
+      a: 'Sí. En cuanto capturas tus datos puedes revisar la invitación completa desde tu panel de organizador, antes de que se publique y antes de confirmar el pago.',
     },
     {
       q: '¿Qué pasa si necesito corregir algo después de publicarla?',
@@ -732,7 +732,7 @@ export default function LandingPage() {
           <div className="section-head centered reveal">
             <span className="eyebrow centered">Planes y precios</span>
             <h2>Un precio claro. Pago único.</h2>
-            <p className="lede">El plan no define tu diseño — cualquier colección funciona en cualquier plan. Lo que cambia son las funciones. Todos incluyen <strong style={{ color: 'rgba(250,247,242,0.7)' }}>2 meses de publicación incluidos</strong>.</p>
+            <p className="lede">El plan no define tu diseño — cualquier colección funciona en cualquier plan. Lo que cambia son las funciones. Todos incluyen <strong style={{ color: 'rgba(250,247,242,0.7)' }}>2 meses de anticipación incluidos</strong>.</p>
           </div>
           <div className="plans">
             {plans.map((plan, i) => (
@@ -745,7 +745,7 @@ export default function LandingPage() {
                   <span className="amt">{plan.price.toLocaleString('es-MX')}</span>
                   <span className="period">&nbsp;MXN</span>
                 </div>
-                <span className="plan__free">Incluye 2 meses de publicación</span>
+                <span className="plan__free">Publica hasta 2 meses antes</span>
                 <ul className="plan__feats">
                   {plan.feats.map((f) => (
                     <li key={f}><CheckIcon />{f}</li>
@@ -792,7 +792,7 @@ export default function LandingPage() {
             <div className="step reveal" data-d="2">
               <div className="step__num">02</div>
               <h3>Personaliza</h3>
-              <p>Nos compartes nombres, fecha, lugar y fotos. Configuramos y ajustamos cada detalle hasta que quede perfecto.</p>
+              <p>Ingresas nombres, fecha, lugar y fotos desde tu panel. Ajustas cada detalle hasta que quede perfecto.</p>
             </div>
             <div className="step reveal" data-d="3">
               <div className="step__num">03</div>

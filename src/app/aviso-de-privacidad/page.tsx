@@ -8,7 +8,6 @@ const jost = Jost({ subsets: ['latin'], weight: ['300', '400'], variable: '--fon
 
 export const metadata = {
   title: 'Aviso de Privacidad',
-  robots: { index: false, follow: false },
 };
 
 const h2: React.CSSProperties = { fontFamily: 'var(--font-cormorant)', fontSize: '20px', fontWeight: 500, marginTop: '36px', marginBottom: '10px', color: '#1C1611' };
@@ -32,13 +31,6 @@ export default function AvisoDePrivacidadPage() {
             <strong>Borrador pendiente de revisión legal.</strong> Recomendado que alguien con conocimiento de la LFPDPPP lo revise antes de considerarlo definitivo.
           </p>
         </div>
-
-        <p style={p}>
-          code4u, operador de la plataforma Moments (en adelante, &ldquo;Moments&rdquo;, &ldquo;nosotros&rdquo;),
-          con operaciones en Monterrey, Nuevo León, México, es responsable del tratamiento de tus datos
-          personales conforme a la Ley Federal de Protección de Datos Personales en Posesión de los
-          Particulares (LFPDPPP).
-        </p>
 
         <h2 style={h2}>¿Qué datos personales recabamos?</h2>
         <p style={p}>Dependiendo de tu relación con Moments, podemos recabar:</p>
@@ -65,25 +57,16 @@ export default function AvisoDePrivacidadPage() {
           políticas de seguridad:
         </p>
         <ul style={{ paddingLeft: '20px', marginBottom: '12px' }}>
-          <li style={li}><strong>Supabase</strong> — base de datos y autenticación.</li>
-          <li style={li}><strong>Cloudinary</strong> — almacenamiento y optimización de fotografías.</li>
-          <li style={li}><strong>Resend</strong> — envío de correos transaccionales.</li>
-          <li style={li}><strong>Vercel</strong> — hospedaje de la aplicación y analítica agregada de uso (Vercel Analytics), sin cookies de rastreo publicitario.</li>
+          <li style={li}><strong>Proveedor de base de datos y autenticación</strong> — almacena y protege tu información de cuenta y de evento.</li>
+          <li style={li}><strong>Proveedor de almacenamiento de imágenes</strong> — guarda y optimiza las fotografías de tu invitación.</li>
+          <li style={li}><strong>Proveedor de hospedaje</strong> — aloja la aplicación y realiza analítica agregada de uso, sin cookies de rastreo publicitario.</li>
         </ul>
 
         <h2 style={h2}>¿Cuánto tiempo conservamos tus datos?</h2>
         <p style={p}>
           Tu invitación permanece activa hasta la fecha de tu evento. A partir de esa fecha, la invitación
           deja de estar disponible públicamente; los datos se conservan por 30 días adicionales por si deseas
-          reactivarla, y después pueden eliminarse de nuestra base de datos y de las imágenes almacenadas en
-          Cloudinary.
-        </p>
-
-        <h2 style={h2}>Tus derechos ARCO</h2>
-        <p style={p}>
-          Tienes derecho a acceder, rectificar, cancelar u oponerte al tratamiento de tus datos personales
-          (derechos ARCO), así como a revocar tu consentimiento. Para ejercerlos,{' '}
-          {arcoWaHref ? <a href={arcoWaHref} target="_blank" rel="noopener noreferrer" style={{ color: '#B8965A' }}>escríbenos por WhatsApp</a> : 'escríbenos por WhatsApp'}.
+          reactivarla, y después pueden eliminarse de nuestra base de datos y de las imágenes almacenadas.
         </p>
 
         <h2 style={h2}>Cambios a este aviso</h2>

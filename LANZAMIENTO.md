@@ -28,22 +28,27 @@ Casi todo son arreglos de una a tres líneas. **Estimado: 3 a 5 días.**
 
 # PARTE A — Código
 
-## A0 · Modelo de publicación: 2 meses incluidos + contador de meses extra `P0`
+## A0 · Modelo de publicación: ventana previa a la boda `P0`
 
 Cambio de negocio nuevo. Toca precios, copy, expiración y base de datos, así que **va primero**: varios ítems de abajo dependen de él.
 
-### Reglas del modelo
+### Reglas del modelo — **MODELO B**, confirmado por Juan
+
+Los meses **NO** son vida útil después de la boda. Son **cuánto antes de la boda se puede publicar** la invitación. Una invitación no sirve de nada después del evento.
 
 | Concepto | Valor |
 |----------|-------|
 | Meses incluidos en todos los planes | **2** |
-| Se cuentan a partir de | La fecha del evento |
-| Meses adicionales | Contador libre (+1 / −1), elegido por el cliente |
+| Qué significan | Se puede publicar hasta **2 meses antes** de la fecha del evento |
+| Meses adicionales | Contador libre (+1 / −1): permiten publicar **aún más temprano** |
 | Precio por mes adicional | Essential **$99** · Plus **$149** · Deluxe **$199** |
 | Paquetes con descuento | **Se eliminan.** Cada mes vale lo mismo |
 | Precios base | **Sin cambio** — $699 / $1,199 / $1,499 |
+| `expires_at` | Fecha de la boda **+ 2 días** (ver A0.4) |
 
 Fórmula: `total = BASE_PRICES[plan] + (mesesExtra × EXTRA_MONTH_PRICE_BY_PLAN[plan]) + diseñoPersonalizado`
+
+> **Nota de posicionamiento.** En México las invitaciones se mandan 3–6 meses antes de la boda. Con 2 meses incluidos, una pareja con noviazgo largo que quiera publicar 5 meses antes necesita comprar +3 meses. Ese es el argumento de venta: **no es "extensión", es "publica con más anticipación"**. Todo el copy debe usar ese encuadre — "meses adicionales de publicación" no comunica valor, "publica tu invitación con más anticipación" sí.
 
 ### A0.1 — Reescribir el modelo en `src/lib/pricing.ts`
 
@@ -85,15 +90,67 @@ Hoy calcula por su cuenta (`línea 59`) con la constante plana de $99, mientras 
 - Actualizar la llamada a `calcularTotal()` (`línea 86`) a `extensionMonths`.
 - Actualizar `updateEventPricing` en `src/app/superadmin/_actions.ts:89` y su tipo `PricingPayload` para persistir el número de meses.
 
-### A0.4 — `expires_at` ya no depende de esto — corregido, aclaración de modelo
+### A0.4 — ⚠️ REABIERTO · la invitación muere a medianoche del día de la boda `P0`
 
-**Archivo:** `src/lib/eventDate.ts`
+**Archivo:** `src/lib/eventDate.ts:43`
 
-Este ítem existía en la v1 del documento por una lectura incorrecta del modelo. Aclarado con Juan: **`expires_at` siempre es la fecha de la boda, punto** — no se le suma nada, y no depende de cuántos meses se compraron. Los meses incluidos/extra **no extienden la vida útil después de la boda**; una invitación deja de tener sentido en cuanto pasa el evento (ya no hay RSVP que confirmar).
+El modelo B es correcto (`expires_at` no depende de los meses comprados), pero la implementación actual tiene un bug de cara al invitado:
 
-- `computeExpiresAt(config)` → `fechaBoda` tal cual (ya corregido en el repo).
-- `PURGE_GRACE_DAYS = 30` (también en `eventDate.ts`) es un concepto **separado**: días de gracia después de `expires_at` antes de que sea seguro purgar el evento de BD + Cloudinary. No se guarda en DB, se calcula al momento de revisar. El dashboard de `/superadmin` ya distingue "vigente" / "inactiva (día X/30)" / "lista para depurar".
-- **No requiere nada de B4.** Ítem cerrado, sin acción de código pendiente.
+```ts
+export function computeExpiresAt(config: unknown): string | null {
+  const weddingDate = parseWeddingDate(config);
+  return weddingDate ? weddingDate.toISOString() : null;   // ← medianoche
+}
+```
+
+`parseWeddingDate` construye `new Date(year, monthNum, day)`, que es **medianoche local**. El gate de `src/app/[type]/[slug]/page.tsx:112` es `new Date() > expires_at`.
+
+**Consecuencia:** desde las 00:00:01 del día de la boda, cualquier invitado que abra el link ve *"Esta invitación ya no está disponible. ¿Quieres crear la tuya?"* — con publicidad de Moments — justo el día del evento, que es cuando más se consulta para ver dirección, horario y dress code.
+
+**Agravante mexicano:** las bodas terminan a las 3–4am del día siguiente y muchas tienen **tornaboda**. Expirar a medianoche mata la invitación en plena fiesta.
+
+**Arreglo:** `expires_at = fechaBoda + 2 días` (cubre madrugada y tornaboda). No contradice el modelo B: sigue sin depender de los meses comprados.
+
+```ts
+const POST_EVENT_GRACE_DAYS = 2;
+
+export function computeExpiresAt(config: unknown): string | null {
+  const weddingDate = parseWeddingDate(config);
+  if (!weddingDate) return null;
+  const expires = new Date(weddingDate);
+  expires.setDate(expires.getDate() + POST_EVENT_GRACE_DAYS);
+  return expires.toISOString();
+}
+```
+
+**Aceptación:** una boda el 1-mar sigue accesible todo el 1-mar, el 2-mar y muere el 3-mar. `PURGE_GRACE_DAYS = 30` se mantiene sin cambio y sigue contando desde `expires_at`.
+
+- [x] Aplicar el fix (`src/lib/eventDate.ts`)
+- [ ] ⛔ Recalcular `expires_at` de los eventos ya publicados — manual en Supabase:
+      `UPDATE events SET expires_at = expires_at + interval '2 days' WHERE status = 'published';`
+
+### A0.4b — Ventana de publicación: no se valida en código, cerrado
+
+Los meses incluidos/extra determinan cuánto antes de la boda se puede publicar una
+invitación. Se consideró validar esto en código (bloquear/advertir/cobrar automático
+si se publica fuera de la ventana pagada), pero **no hace falta**: solo Juan
+(superadmin) puede publicar un evento — los organizadores no tienen ese botón. Como
+Juan ya conoce el precio al momento de publicar, no hay riesgo de que alguien se
+salte la ventana pagada sin que él se dé cuenta. No construir esto salvo que cambie
+quién puede publicar.
+
+**Pendiente menor de trazabilidad:** la columna `events.published_at` existe y **nunca se escribe** (`grep -rn "published_at" src/` devuelve vacío). Bajo el modelo B, la fecha de publicación es literalmente el producto que se vende, así que conviene registrarla al publicar — no para validar, sino para poder auditar después qué ventana recibió cada cliente.
+
+- [x] Escribir `published_at` cuando un evento pasa a `status = 'published'` (`toggleEventStatus` en `src/app/superadmin/_actions.ts`)
+
+### A0.4c — Correo de expiración: eliminado `P2` — cerrado
+
+Decisión de Juan: bajo el modelo B el aviso no aportaba nada — le llegaba a él (no al cliente) 7 días
+antes de la boda, sin ninguna acción que tomar (la fecha es fija, no depende de que él haga algo).
+
+Se eliminó por completo: `src/app/api/check-expirations/` (ruta), el cron en `vercel.json`, y
+`sendExpirationWarningEmail` en `src/lib/resend.ts`. La columna `events.expiration_notified_at` queda
+en la base de datos sin uso — se puede dropear en una futura migración si se quiere, no es urgente.
 
 ### A0.4b — No aplica, cerrado
 
@@ -118,7 +175,48 @@ quién puede publicar.
 
 Ojo con el matiz de marketing: hoy dice *"1 mes **gratis**"*. Con 2 meses conviene decir **"2 meses de publicación incluidos"** — "gratis" sugiere que lo normal es pagar aparte y abarata la percepción del plan.
 
-**Aceptación:** `grep -rn "1 mes" src/` no devuelve nada relacionado con publicación.
+**Aceptación:** `grep -rn "1 mes" src/` no devuelve nada relacionado con publicación. ✅ cerrado
+
+### A0.6 — Copy ambiguo: se lee como modelo A `P0` — cerrado
+
+El copy quedó **a medias** entre los dos modelos. Estos dos ya están bien y sirven de referencia del tono correcto:
+
+- `src/app/page.tsx:521` (FAQ) — *"2 meses de publicación **antes de la fecha de tu evento**. Si necesitas publicarla con más anticipación…"* ✅
+- `src/lib/pricing.ts:10` (comentario del modelo) ✅
+
+Pero las etiquetas cortas siguen siendo ambiguas, y un cliente las lee como modelo A — *"mi invitación estará en línea 2 meses"*:
+
+| Archivo | Línea | Texto actual | Problema |
+|---------|-------|--------------|----------|
+| `src/app/page.tsx` | 735 | "2 meses de publicación incluidos" | No dice *antes de la boda* |
+| `src/app/page.tsx` | 748 | "Incluye 2 meses de publicación" | Idem |
+| `src/app/planes/page.tsx` | 843, 894, 899, 904 | "pago único · 2 meses incluidos" | Idem |
+| `src/app/cotizar/page.tsx` | 463 | "Tiempo de publicación" | Sugiere duración, no anticipación |
+| `src/app/cotizar/page.tsx` | 512 | "2 meses incluidos" | Idem |
+| `src/lib/pricing.ts` | 90 | "Extensión de publicación" | Encuadre equivocado (ver nota de posicionamiento) |
+
+Reemplazos sugeridos, aplicando el encuadre de "anticipación":
+
+- Etiquetas cortas → **"2 meses de anticipación incluidos"** o **"publica hasta 2 meses antes"**
+- `cotizar` sección → **"¿Con cuánta anticipación quieres publicarla?"**
+- `pricing.ts:90` line item → **"Publicación anticipada"** en vez de "Extensión de publicación"
+- Stepper del cotizador → que el texto de ayuda diga *"Incluidos: publica desde 2 meses antes. Cada mes extra te permite publicarla más temprano."*
+
+**Aceptación:** ninguna cadena de copy visible al cliente puede interpretarse como "sigue en línea después de la boda". ✅
+
+---
+
+## A14 · Copy que implicaba que Moments carga los datos del cliente — cerrado
+
+Detectado por Juan: varios textos decían "nos compartes tus datos" / "capturamos tus datos", cuando en
+realidad el organizador captura todo desde su propio panel (`/admin`) — Moments no recibe ni sube datos
+por el cliente. Contradecía el disclaimer ya correcto de `page.tsx:774` y la sección 5 de `/terminos`.
+
+Corregido en:
+- `src/app/page.tsx` — paso "Personaliza" del *Cómo funciona* (línea ~795) y dos respuestas del FAQ (líneas ~513, ~529).
+- `src/app/terminos/page.tsx` — sección 2 "Tiempo de entrega" (línea ~50). De paso se corrigió la sección 3: decía que la invitación expira "en la fecha del evento", ahora dice "2 días después" (alineado con el fix de A0.4).
+
+**Aceptación:** ningún texto visible sugiere que Moments captura, sube o gestiona los datos personalizados del cliente. ✅
 
 ---
 
@@ -329,10 +427,10 @@ UPDATE events SET extension_months = CASE extension_key
 - [ ] Aplicar migración 2
 - [ ] Guardar ambos scripts en `supabase/migrations/` para dejar registro
 
-### B5 · Diseñar las imágenes OG `P0` → desbloquea **A4**
+### B5 · Diseñar las imágenes OG `P0` → desbloquea **A4** — cerrado
 
-- [ ] `public/og-default.jpg` — 1200×630, fallback de invitaciones sin portada (hoy referenciada pero **inexistente**)
-- [ ] Imagen OG de marca para el sitio de marketing
+- [x] `public/og-default.jpg` — cargada (1920×1080, JPG, 51 KB), metadata en `layout.tsx` actualizada a las dimensiones reales
+- [x] Imagen OG de marca para el sitio de marketing — es la misma `og-default.jpg` (confirmado por Juan)
 
 ### B6 · Analytics — cerrado
 
@@ -345,8 +443,8 @@ Borrador redactado con datos reales (ver A7): identificador "code4u", jurisdicci
 Monterrey N.L., contacto por WhatsApp (sin correo dedicado), reembolso 100% antes
 de la primera versión entregada, sin reembolso después.
 
-- [ ] Revisión legal (abogado o al menos revisión personal de Juan) antes de publicarlo como definitivo
-- [ ] Quitar `robots: { index: false }` de ambas páginas una vez confirmado el contenido
+- [x] Revisión legal — revisión personal de Juan hecha; se pidió no exponer los nombres de los proveedores de infraestructura (Supabase/Cloudinary/Vercel) en el aviso de privacidad, quedó genericado ("proveedor de base de datos", etc.)
+- [x] Quitar `robots: { index: false }` de ambas páginas
 
 ### B8 · Screenshots de las plantillas — cerrado, no requirió a Juan
 

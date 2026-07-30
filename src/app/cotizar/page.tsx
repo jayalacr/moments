@@ -460,8 +460,8 @@ export default function CotizarPage() {
 
           {/* Extension */}
           <div className="q-section">
-            <h2 className="q-section-title">Tiempo de publicación</h2>
-            <p className="q-section-hint">Los primeros {INCLUDED_MONTHS} meses están incluidos en tu plan. Agrega los meses extra que necesites a <strong>{formatMXN(EXTRA_MONTH_PRICE_BY_PLAN[plan])}</strong> c/u.</p>
+            <h2 className="q-section-title">¿Con cuánta anticipación quieres publicarla?</h2>
+            <p className="q-section-hint">Incluidos: publica desde {INCLUDED_MONTHS} meses antes de tu boda. Cada mes extra te permite publicarla más temprano, a <strong>{formatMXN(EXTRA_MONTH_PRICE_BY_PLAN[plan])}</strong> c/u.</p>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginTop: '16px', flexWrap: 'wrap' }}>
               {/* Stepper */}
@@ -509,7 +509,7 @@ export default function CotizarPage() {
 
               {/* Desglose */}
               <div style={{ fontFamily: 'var(--font-jost)', fontSize: '13px', color: 'var(--muted-fg)', lineHeight: 1.6 }}>
-                <span style={{ color: 'var(--charcoal)' }}>{INCLUDED_MONTHS} meses incluidos</span>
+                <span style={{ color: 'var(--charcoal)' }}>{INCLUDED_MONTHS} meses de anticipación incluidos</span>
                 {extraMonths > 0 && (
                   <> + <span style={{ color: 'var(--charcoal)' }}>{extraMonths} mes{extraMonths > 1 ? 'es' : ''} adicional{extraMonths > 1 ? 'es' : ''}</span>
                   {' '}({formatMXN(breakdown.extension)})</>

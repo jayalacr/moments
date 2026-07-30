@@ -23,7 +23,10 @@ export async function updateTemplateType(eventId: string, templateType: string) 
 export async function toggleEventStatus(eventId: string, currentStatus: string) {
   const supabase = await createClient();
   const newStatus = currentStatus === 'published' ? 'paused' : 'published';
-  await supabase.from('events').update({ status: newStatus }).eq('id', eventId);
+  await supabase
+    .from('events')
+    .update(newStatus === 'published' ? { status: newStatus, published_at: new Date().toISOString() } : { status: newStatus })
+    .eq('id', eventId);
 
   const { data: event } = await supabase.from('events').select('slug, event_type').eq('id', eventId).single();
 

@@ -1,5 +1,15 @@
 import { ROOT_DOMAIN } from './invitation';
 
+const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+
+/**
+ * URL de un video de Cloudinary a partir de su public_id (sin extensión).
+ * Ej: cldVideoUrl('plantillas/classic') → mp4 optimizado y transcodificado.
+ */
+export function cldVideoUrl(publicId: string, transforms = 'f_auto,q_auto'): string {
+  return `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/${transforms}/${publicId}.mp4`;
+}
+
 const WATERMARK = `l_text:Arial_60_bold:PREVIEW%20-%20${encodeURIComponent(ROOT_DOMAIN || 'moments.mx')},co_white,o_40,g_center`;
 
 /**
