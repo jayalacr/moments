@@ -155,12 +155,16 @@ const css = `
   @keyframes csBar { from { height: 3px; } to { height: 12px; } }
 
   /* ── Countdown: fichas tipo arco, no círculos ── */
-  .cs-countdown { display: flex; justify-content: center; align-items: flex-end; gap: 0.85rem; flex-wrap: wrap; }
-  .cs-cd-pill { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 78px; padding: 1.35rem 0.5rem 1rem; border-radius: 40px 40px 8px 8px; background: var(--foam); border: 1px solid rgba(185,151,91,0.35); border-top: 2px solid var(--champagne); box-shadow: 0 12px 30px rgba(14,43,51,0.07); }
+  .cs-countdown { display: flex; justify-content: center; align-items: flex-end; gap: 0.4rem; flex-wrap: nowrap; }
+  @media (min-width: 480px) { .cs-countdown { gap: 0.85rem; } }
+  .cs-cd-pill { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 62px; padding: 0.9rem 0.35rem 0.7rem; border-radius: 32px 32px 8px 8px; background: var(--foam); border: 1px solid rgba(185,151,91,0.35); border-top: 2px solid var(--champagne); box-shadow: 0 12px 30px rgba(14,43,51,0.07); }
+  @media (min-width: 480px) { .cs-cd-pill { width: 78px; padding: 1.35rem 0.5rem 1rem; border-radius: 40px 40px 8px 8px; } }
   @media (min-width: 768px) { .cs-cd-pill { width: 98px; padding: 1.75rem 0.5rem 1.25rem; } }
-  .cs-cd-num { font-family: var(--font-fraunces), serif; font-size: 1.6rem; color: var(--ink); }
+  .cs-cd-num { font-family: var(--font-fraunces), serif; font-size: 1.15rem; color: var(--ink); white-space: nowrap; }
+  @media (min-width: 480px) { .cs-cd-num { font-size: 1.6rem; } }
   @media (min-width: 768px) { .cs-cd-num { font-size: 2.1rem; } }
-  .cs-cd-lbl { font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5; margin-top: 0.3rem; }
+  .cs-cd-lbl { font-size: 7px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.5; margin-top: 0.25rem; white-space: nowrap; }
+  @media (min-width: 480px) { .cs-cd-lbl { font-size: 8px; letter-spacing: 0.2em; margin-top: 0.3rem; } }
 
   /* ── Cita: pull-quote a ancho completo sobre foto, no tarjeta aislada ── */
   .cs-quote-bleed { position: relative; min-height: 68svh; display: flex; align-items: center; background-size: cover; background-position: center; }
