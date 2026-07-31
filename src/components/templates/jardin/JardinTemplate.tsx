@@ -193,17 +193,18 @@ const css = `
 
   /* ── Countdown: un solo "boleto de campo" perforado, no fichas sueltas ── */
   .jd-countdown { display: flex; justify-content: center; }
-  .jd-cd-ticket { position: relative; display: flex; background: var(--paper-card); border: 1px dashed rgba(139,149,116,0.55); border-radius: 6px; padding: 1.5rem 1.5rem 1.35rem; box-shadow: 0 16px 34px rgba(59,50,38,0.12); rotate: -1.25deg; }
+  .jd-cd-ticket { position: relative; display: flex; flex-wrap: nowrap; max-width: 100%; background: var(--paper-card); border: 1px dashed rgba(139,149,116,0.55); border-radius: 6px; padding: 1.1rem 0.9rem 1rem; box-shadow: 0 16px 34px rgba(59,50,38,0.12); rotate: -1.25deg; }
+  @media (min-width: 640px) { .jd-cd-ticket { padding: 1.5rem 1.5rem 1.35rem; } }
   .jd-cd-ticket::before, .jd-cd-ticket::after { content: ''; position: absolute; top: 50%; width: 22px; height: 22px; background: var(--paper-deep); border-radius: 50%; transform: translateY(-50%); }
   .jd-cd-ticket::before { left: -11px; }
   .jd-cd-ticket::after { right: -11px; }
   .jd-cd-tape { position: absolute; top: -13px; left: 50%; translate: -50% 0; rotate: -3deg; width: 84px; height: 26px; background: var(--tape); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-  .jd-cd-unit { position: relative; display: flex; flex-direction: column; align-items: center; padding: 0 0.85rem; }
+  .jd-cd-unit { position: relative; display: flex; flex-direction: column; align-items: center; padding: 0 0.5rem; }
   @media (min-width: 640px) { .jd-cd-unit { padding: 0 1.35rem; } }
   .jd-cd-unit + .jd-cd-unit::before { content: ''; position: absolute; left: 0; top: 8%; bottom: 8%; border-left: 1px dashed rgba(139,149,116,0.45); }
-  .jd-cd-num { font-family: var(--font-display), serif; font-style: italic; font-size: 1.6rem; color: var(--ink); }
+  .jd-cd-num { font-family: var(--font-display), serif; font-style: italic; font-size: 1.25rem; color: var(--ink); white-space: nowrap; }
   @media (min-width: 640px) { .jd-cd-num { font-size: 2.1rem; } }
-  .jd-cd-lbl { font-family: var(--font-mono), monospace; font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.6; margin-top: 0.3rem; }
+  .jd-cd-lbl { font-family: var(--font-mono), monospace; font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.6; margin-top: 0.3rem; white-space: nowrap; }
 
   /* ── Cita: pull-quote a ancho completo sobre foto ── */
   .jd-quote-bleed { position: relative; min-height: 62svh; display: flex; align-items: center; background-size: cover; background-position: center; }

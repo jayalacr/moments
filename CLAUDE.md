@@ -31,7 +31,7 @@ Moments es una plataforma premium de invitaciones digitales y gestión de confir
 
 ## Esquema de Base de Datos y RBAC
 El sistema utiliza un modelo estricto de **Row Level Security (RLS)**:
-- `profiles`: Datos extendidos de usuario con roles (`superadmin`, `organizador`).
+- `profiles`: Datos extendidos de usuario con roles (`superadmin`, `organizador`, `wedding-planner`). El `wedding-planner` solo administra la lista de invitados (guests/rsvps) del evento al que fue asignado vía `event_organizers`; no ve ni edita el resto de la configuración del evento (entra directo a `/admin/eventos/[eventId]/invitados`).
 - `events`: Registros centrales del evento. Utiliza un campo `config` (JSONB) para personalización flexible.
 - `venues`: Itinerarios y ubicaciones de los eventos.
 - `guests`: Lista de invitados con un `token` único para rastreo de invitaciones.

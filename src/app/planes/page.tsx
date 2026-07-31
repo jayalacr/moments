@@ -914,11 +914,8 @@ export default function PlanesPage() {
           </Link>
         </div>
 
-        <p className="plans-note">
-          Tú editas la información · diseño personalizado incluido
-        </p>
         <p className="plans-note" style={{ paddingTop: 12 }}>
-          * La carga de datos la realiza el organizador desde su panel.
+          * La carga de datos la realiza el organizador desde su panel. Si tienes wedding planner, puede tener su propio acceso para administrar la lista de invitados.
         </p>
       </div>
       <SiteFooter />

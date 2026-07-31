@@ -29,7 +29,7 @@ const css = `
   .sf__links { display: flex; align-items: center; gap: 24px; justify-self: end; }
   .sf__links a { color: rgba(250,247,242,0.35); text-decoration: none; display: flex; transition: color 0.18s; }
   .sf__links a:hover { color: #B8965A; }
-  .sf__wa { width: 22px; height: 22px; }
+  .sf__wa { width: 28px; height: 28px; }
   @media (max-width: 600px) {
     .sf__inner { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 12px; }
     .sf__wordmark { grid-column: 1 / -1; text-align: center; }

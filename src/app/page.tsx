@@ -540,10 +540,6 @@ export default function LandingPage() {
       q: '¿Cómo se paga?',
       a: 'Por transferencia bancaria. Para iniciar se requiere el 50% de anticipo; el resto se liquida antes de publicar tu invitación. Te compartimos los datos por WhatsApp al confirmar tu plan.',
     },
-    {
-      q: '¿Emiten factura?',
-      a: 'Escríbenos por WhatsApp para coordinar tu facturación.',
-    },
   ];
 
   const plans = [
@@ -613,7 +609,6 @@ export default function LandingPage() {
           <span className="hero__wordmark">moments</span>
           <span className="hero__eyebrow">Invitaciones digitales</span>
           <h1 className="hero__heading">Una invitación tan única como tu boda.</h1>
-          <p className="hero__sub">Con confirmación de asistencia y panel de control. Desde {formatMXN(BASE_PRICES.essential)} MXN, lista en 5 días.</p>
           <div className="hero__ctas">
             <Link className="btn btn--gold" href="/plantillas">Ver plantillas</Link>
             <Link className="btn btn--ghost" href="/cotizar">Cotizar mi invitación</Link>
@@ -771,7 +766,7 @@ export default function LandingPage() {
             </Link>
           </div>
           <p style={{ textAlign: 'center', marginTop: '32px', fontFamily: 'var(--font-c)', fontSize: '14px', fontStyle: 'italic', color: 'rgba(250,247,242,0.35)' }}>
-            * La carga de datos la realiza el organizador desde su panel.
+            * La carga de datos la realiza el organizador desde su panel. Si tienes wedding planner, puede tener su propio acceso para administrar la lista de invitados.
           </p>
         </div>
       </section>
@@ -799,6 +794,11 @@ export default function LandingPage() {
               <h3>Comparte</h3>
               <p>Recibes un enlace personalizado para enviar por WhatsApp. Tus invitados confirman en un solo toque.</p>
             </div>
+          </div>
+          <div style={{ textAlign: 'center', marginTop: '40px' }}>
+            <Link href="/manual" target="_blank" className="btn btn--outline-dark" style={{ display: 'inline-flex' }}>
+              Ver manual de usuario →
+            </Link>
           </div>
         </div>
       </section>
