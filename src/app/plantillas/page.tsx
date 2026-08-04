@@ -5,6 +5,7 @@ import SiteHeader from '@/components/site/SiteHeader';
 import SiteFooter from '@/components/site/SiteFooter';
 import { waLink } from '@/lib/contact';
 import { cldVideoUrl } from '@/lib/cloudinary';
+import VideoPreview from './_components/VideoPreview';
 
 
 const cormorant = Cormorant_Garamond({ subsets: ['latin'], weight: ['300', '400', '500'], style: ['normal', 'italic'], variable: '--font-cormorant' });
@@ -26,7 +27,7 @@ const TEMPLATES = [
     description: 'Fondo negro con tipografía dorada. Para parejas que buscan una presencia fuerte, cinematográfica y atemporal.',
     previewBase: '/plantillas/deluxe',
     image: '/templates/classic.jpg',
-    video: null as string | null,
+    video: 'classic'
   },
   {
     key: 'elegance',
@@ -35,7 +36,7 @@ const TEMPLATES = [
     description: 'Textura de papel artesanal, transiciones suaves y paleta cálida. Romántico y con carácter propio.',
     previewBase: '/plantillas/classic-elegance',
     image: '/templates/elegance.jpg',
-    video: null as string | null,
+    video: 'elegance'
   },
   {
     key: 'costa',
@@ -44,7 +45,7 @@ const TEMPLATES = [
     description: 'Diseño luminoso inspirado en bodas frente al mar. Paleta fresca y tipografía elegante para celebraciones en la playa.',
     previewBase: '/plantillas/costa',
     image: '/templates/costa.jpg',
-    video: null as string | null,
+    video: 'costa'
   },
   {
     key: 'jardin',
@@ -53,7 +54,7 @@ const TEMPLATES = [
     description: 'Diseño cálido y natural inspirado en bodas de jardín al aire libre. Botánico, romántico y luminoso.',
     previewBase: '/plantillas/jardin',
     image: '/templates/jardin.jpg',
-    video: null as string | null,
+    video: 'jardin',
   },
 ];
 
@@ -101,9 +102,17 @@ export default function PlantillasPage() {
     .card:hover .preview img, .card:hover .preview video { transform: scale(1.04); }
 
     /* Preview */
-    .preview { aspect-ratio: 3 / 5; position: relative; overflow: hidden; background: #1C1611; }
+    .preview { aspect-ratio: 2 / 3; position: relative; overflow: hidden; background: #1C1611; }
     .preview img { object-fit: cover; object-position: top center; transition: transform 0.4s ease; }
-    .preview video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; transition: transform 0.4s ease; }
+    .preview video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center center; transition: transform 0.4s ease; }
+    .preview-hint {
+      position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%);
+      font-family: var(--font-j); font-size: 11px; font-weight: 400; letter-spacing: 0.06em;
+      color: #fff; background: rgba(28, 22, 17, 0.55); backdrop-filter: blur(4px);
+      padding: 8px 16px; border-radius: 100px; pointer-events: none; white-space: nowrap;
+      opacity: 1; transition: opacity 0.25s ease;
+    }
+    .card:hover .preview-hint { opacity: 0; }
 
     /* Card body */
     .card-body { padding: 28px 28px 24px; flex: 1; display: flex; flex-direction: column; }
@@ -121,6 +130,7 @@ export default function PlantillasPage() {
       padding: 6px 16px; text-decoration: none; transition: border-color 0.18s, color 0.18s;
     }
     .plan-link:hover { border-color: var(--gold); color: var(--gold); }
+    .plan-hint { font-size: 12px; font-weight: 300; color: var(--muted-fg); margin-top: 10px; }
 
     /* Soon card */
     .card--soon { border-style: dashed; background: transparent; }
@@ -164,19 +174,19 @@ export default function PlantillasPage() {
 
         <div className="wrap">
           <div className="grid">
-            {TEMPLATES.map((tpl) => (
+            {TEMPLATES.map((tpl, i) => (
               <article key={tpl.key} className="card">
                 <div className="preview">
                   {tpl.video ? (
-                    <video
-                      src={cldVideoUrl(tpl.video)}
-                      poster={tpl.image}
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      aria-label={`Vista previa de la plantilla ${tpl.name}`}
-                    />
+                    <>
+                      <VideoPreview
+                        src={cldVideoUrl(tpl.video, 'f_auto,q_auto,w_1280')}
+                        poster={tpl.image}
+                        label={`Vista previa de la plantilla ${tpl.name}`}
+                        priority={i === 0}
+                      />
+                      <span className="preview-hint">Coloca el cursor aquí para ver la vista previa</span>
+                    </>
                   ) : (
                     <Image
                       src={tpl.image}
@@ -204,6 +214,7 @@ export default function PlantillasPage() {
                       ))}
                     </div>
                   </div>
+                  <p className="plan-hint">Haz clic en un plan para ver la vista previa completa de {tpl.name} en ese plan.</p>
                 </div>
               </article>
             ))}

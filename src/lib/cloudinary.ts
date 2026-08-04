@@ -4,9 +4,9 @@ const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 
 /**
  * URL de un video de Cloudinary a partir de su public_id (sin extensión).
- * Ej: cldVideoUrl('plantillas/classic') → mp4 optimizado y transcodificado.
+ * Ej: cldVideoUrl('moments/plantillas/classic') → mp4 optimizado y transcodificado.
  */
-export function cldVideoUrl(publicId: string, transforms = 'f_auto,q_auto'): string {
+export function cldVideoUrl(publicId: string, transforms = 'f_auto,q_auto,w_1280'): string {
   return `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/${transforms}/${publicId}.mp4`;
 }
 
