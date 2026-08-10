@@ -28,7 +28,7 @@ const montserrat = Montserrat({
   variable: '--font-montserrat',
 });
 
-const WA_HREF = waLink('Hola Moments, quiero cotizar mi invitación');
+const WA_HREF = waLink('Hola, quiero cotizar mi invitación');
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (

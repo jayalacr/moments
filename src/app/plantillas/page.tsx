@@ -65,7 +65,7 @@ const PLANS = [
 ];
 
 export default function PlantillasPage() {
-  const newDesignWaHref = waLink('Hola Moments, tengo una idea para un nuevo diseño de plantilla');
+  const newDesignWaHref = waLink('Hola, tengo una idea para un nuevo diseño de plantilla');
   const css = `
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {

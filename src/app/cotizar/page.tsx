@@ -70,7 +70,7 @@ export default function CotizarPage() {
       ? `${INCLUDED_MONTHS} meses (incluidos)`
       : `${totalMonths} meses (${INCLUDED_MONTHS} incluidos + ${extraMonths} adicional${extraMonths > 1 ? 'es' : ''})`;
     const lines: string[] = [
-      `Hola! Me interesa más información sobre moments.`,
+      `Hola! Me interesa más información sobre mi invitación digital.`,
       ``,
       `Esto es lo que estoy buscando:`,
       `• Plan: ${PLAN_LABEL[plan]}`,
