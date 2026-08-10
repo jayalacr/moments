@@ -56,7 +56,7 @@ export default function SiteFooter() {
                 <WhatsAppIcon className="sf__wa" />
               </a>
             )}
-            <a href="https://www.instagram.com/code4u_mx/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <a href="https://www.instagram.com/_momentsmx" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
               <Instagram size={20} strokeWidth={1.5} />
             </a>
           </div>
