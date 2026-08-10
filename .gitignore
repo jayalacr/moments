@@ -55,3 +55,6 @@ comparativo_planes_boda.html
 
 # Prompts para Claude Code (son instrucciones internas, no código)
 /prompts/
+
+# Salida generada del script del reel (video regenerable)
+/scripts/reel/salida/

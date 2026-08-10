@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Reel — composición 2 columnas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&family=Montserrat:wght@300&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  :root{
+    --ivory:#FAF7F2; --gold:#B8965A; --gold-2:#D4AA72;
+    --charcoal:#1C1611; --muted-fg:#6B5D52;
+  }
+
+  /* Lienzo exacto de Reel: 1080x1920 */
+  html,body{ width:1080px; height:1920px; overflow:hidden; background:var(--charcoal); }
+  body{ font-family:'Jost',system-ui,sans-serif; display:flex; position:relative; }
+
+  /* Glow único de fondo, a pantalla completa: evita el corte visible entre columnas */
+  body::before{
+    content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
+    background:
+      radial-gradient(circle at 30% 40%, rgba(184,150,90,.10) 0%, transparent 42%),
+      radial-gradient(circle at 76% 50%, rgba(184,150,90,.13) 0%, transparent 46%);
+  }
+
+  /* ---------- COLUMNA IZQUIERDA ---------- */
+  .left{
+    width:0; height:100%; position:relative; z-index:1;
+    padding:110px 0; display:flex; flex-direction:column; justify-content:center;
+    background:transparent; overflow:hidden;
+    transition:width .7s cubic-bezier(.4,0,.2,1), padding .7s cubic-bezier(.4,0,.2,1);
+  }
+  body.split .left{ width:46%; padding:110px 64px; }
+
+  .beat{
+    position:absolute; left:64px; right:64px;
+    opacity:0; transform:translateY(26px);
+    transition:opacity .55s ease, transform .55s ease;
+  }
+  .beat.on{ opacity:1; transform:none; }
+
+  /* Beat inicial: fade puro, retrasado hasta que la columna termine de abrirse
+     (si arranca a la vez que el ancho anima, el texto se reacomoda mientras
+     se desvanece y se ve roto) */
+  .beat[data-beat="0"]{ transform:none; transition:opacity .55s ease; }
+  .beat[data-beat="0"].on{ opacity:1; transition:opacity .9s ease .75s; }
+
+  .beat h2{
+    font-family:'Cormorant Garamond',Georgia,serif;
+    font-size:58px; font-weight:300; line-height:1.18; color:var(--ivory);
+    letter-spacing:-.3px;
+  }
+  .beat h2 em{ font-style:italic; color:var(--gold-2); }
+  .beat .small{
+    margin-top:26px; font-size:27px; font-weight:300;
+    color:rgba(250,247,242,.5); letter-spacing:.02em; line-height:1.6;
+  }
+
+  /* Marca de agua de cierre */
+  .wordmark{
+    font-family:'Montserrat',sans-serif; font-weight:300;
+    font-size:76px; letter-spacing:.28em; color:var(--ivory); text-transform:lowercase;
+  }
+
+  /* ---------- PANEL SIMULADO (beat RSVP) ---------- */
+  .panel{
+    background:#FFFFFF; border-radius:20px; padding:40px 38px;
+    box-shadow:0 30px 90px rgba(0,0,0,.5);
+    border:1px solid #EDE5D8;
+  }
+  .panel__label{
+    font-size:19px; letter-spacing:.22em; text-transform:uppercase;
+    color:#9C8E82; margin-bottom:26px;
+  }
+  .panel__row{ display:flex; align-items:baseline; gap:16px; margin-bottom:14px; }
+  .panel__num{
+    font-family:'Cormorant Garamond',serif; font-size:96px; line-height:1;
+    color:#5A7A5A; font-weight:400; font-variant-numeric:tabular-nums;
+    transition:transform .3s ease;
+  }
+  .panel__num.bump{ transform:scale(1.14); }
+  .panel__num-label{ font-size:26px; color:var(--muted-fg); }
+  .panel__meta{ display:flex; gap:30px; margin-top:22px; padding-top:22px; border-top:1px solid #EDE5D8; }
+  .panel__meta div{ font-size:22px; color:#7A6F63; }
+  .panel__meta b{ display:block; font-family:'Cormorant Garamond',serif; font-size:44px; color:var(--charcoal); font-weight:400; }
+  .panel__cap{ margin-top:30px; font-size:26px; color:rgba(250,247,242,.55); }
+
+  /* ---------- COLUMNA DERECHA: MOCKUP ---------- */
+  .right{
+    width:100%; height:100%; position:relative; z-index:1;
+    display:flex; align-items:center; justify-content:center;
+    background:transparent;
+    transition:width .7s cubic-bezier(.4,0,.2,1);
+  }
+  body.split .right{ width:54%; }
+
+  .phone{
+    position:relative; width:430px; height:900px;
+    background:#0A0A0A; border-radius:56px; padding:12px;
+    box-shadow:0 40px 110px rgba(0,0,0,.65), 0 0 0 2px rgba(255,255,255,.07);
+  }
+  .phone__notch{
+    position:absolute; top:26px; left:50%; transform:translateX(-50%);
+    width:112px; height:30px; background:#0A0A0A; border-radius:16px; z-index:3;
+  }
+  .phone__screen{
+    width:100%; height:100%; border-radius:44px; overflow:hidden;
+    background:#000; position:relative;
+  }
+  .phone__screen iframe{
+    width:390px; height:844px; border:0;
+    transform:scale(1.0426); transform-origin:top left; /* 406/390 para llenar */
+    display:block;
+  }
+
+  /* Cross-fade entre plantillas */
+  .frame{ position:absolute; inset:0; opacity:0; transition:opacity .5s ease; }
+  .frame.on{ opacity:1; }
+
+  /* ---------- CIERRE: logo a pantalla completa ---------- */
+  .outro{
+    position:fixed; inset:0; z-index:10;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:26px;
+    background:var(--charcoal);
+    opacity:0; pointer-events:none;
+    transition:opacity .6s ease;
+  }
+  .outro.on{ opacity:1; }
+  .outro .wordmark{ font-size:96px; }
+  .outro .small{ font-size:27px; font-weight:300; color:rgba(250,247,242,.5); letter-spacing:.02em; }
+  .outro .by{
+    font-family:'Jost',system-ui,sans-serif; font-size:20px; font-weight:300;
+    color:rgba(250,247,242,.35); letter-spacing:.04em;
+  }
+</style>
+</head>
+<body>
+
+  <!-- ================= IZQUIERDA ================= -->
+  <div class="left">
+    <div class="beat" data-beat="0">
+      <h2>No es solo una invitación. Es <em>lo primero que verán</em> de tu boda.</h2>
+      <p class="small">Despídete del PDF aburrido de WhatsApp.</p>
+    </div>
+
+    <div class="beat" data-beat="1">
+      <h2>Todos los detalles de tu gran día, <em>siempre a la mano</em>.</h2>
+      <p class="small">Mapa interactivo, itinerario y cuenta regresiva en un solo lugar.</p>
+    </div>
+
+    <div class="beat" data-beat="2">
+      <div class="panel">
+        <div class="panel__label">Confirmaciones</div>
+        <div class="panel__row">
+          <span class="panel__num" id="counter">47</span>
+          <span class="panel__num-label">confirmados</span>
+        </div>
+        <div class="panel__meta">
+          <div><b id="pend">12</b> pendientes</div>
+          <div><b>3</b> declinaron</div>
+        </div>
+      </div>
+      <p class="panel__cap">Cero llamadas. Cero dudas. Tu lista confirmada al instante.</p>
+    </div>
+
+    <div class="beat" data-beat="3">
+      <h2>Elige un diseño increíble <em>o creamos uno exclusivo</em> para ti.</h2>
+      <p class="small">Tu estilo reflejado desde el primer clic.</p>
+    </div>
+
+    <div class="beat" data-beat="4">
+      <h2>Un plan pensado <em>para cada tipo de boda</em>.</h2>
+      <p class="small">Descubre Essential, Plus y Deluxe.</p>
+    </div>
+
+    <div class="beat" data-beat="5">
+      <h2>Empieza a diseñar la tuya <em>desde $699 MXN</em>.</h2>
+      <p class="small">Da clic y cotiza la tuya hoy.</p>
+    </div>
+  </div>
+
+  <!-- ================= DERECHA ================= -->
+  <div class="right">
+    <div class="phone">
+      <div class="phone__notch"></div>
+      <div class="phone__screen">
+        <div class="frame" data-frame="costa">
+          <iframe id="fCosta" src="/plantillas/costa?plan=deluxe&ui=hidden"></iframe>
+        </div>
+        <div class="frame on" data-frame="classic">
+          <iframe id="fClassic" src="/plantillas/deluxe?plan=deluxe&ui=hidden"></iframe>
+        </div>
+        <div class="frame" data-frame="elegance">
+          <iframe id="fElegance" src="/plantillas/classic-elegance?plan=deluxe&ui=hidden"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CIERRE (pantalla completa) ================= -->
+  <div class="outro" id="outro">
+    <div class="wordmark">moments</div>
+    <p class="by">by code4u</p>
+  </div>
+
+<script>
+/* ------------------------------------------------------------------
+   LÍNEA DE TIEMPO — 29 s
+   Cada beat define: cuándo entra el texto y hasta dónde llega el scroll.
+   El texto SIEMPRE entra un poco antes que el movimiento del celular.
+   El scroll de "classic" es continuo y monótono (0 -> 1, sin retrocesos):
+   recorre TODA la invitación de una sola pasada mientras van cambiando
+   los textos. Los % están calibrados a las secciones reales de esa
+   plantilla (hero 0 / itinerario .33 / destino .55 / dresscode .68 /
+   regalos .83 / rsvp .93). Solo se interrumpe brevemente para mostrar
+   costa/elegance en el beat de "elige tu plantilla".
+------------------------------------------------------------------- */
+const TIMELINE = [
+  { t: 0.0,  beat:0, frame:'classic',  scrollTo:0.00 },
+  { t: 4.8,  beat:1, frame:'classic',  scrollTo:0.33 },
+  { t: 9.6,  beat:2, frame:'classic',  scrollTo:0.55, rsvp:true },
+  { t:13.8,  beat:3, frame:'costa',    scrollTo:0.35 },
+  { t:18.3,  beat:3, frame:'elegance', scrollTo:0.35 },
+  { t:22.8,  beat:4, frame:'classic',  scrollTo:0.83 },
+  { t:27.6,  beat:5, frame:'classic',  scrollTo:1.00 },
+  { t:31.8,  beat:'outro' },
+];
+const DURATION = 34.8;
+
+const beats  = [...document.querySelectorAll('.beat')];
+const frames = [...document.querySelectorAll('.frame')];
+const outro  = document.getElementById('outro');
+
+function showBeat(i){
+  beats.forEach(b => b.classList.toggle('on', +b.dataset.beat === i));
+}
+function showFrame(name){
+  frames.forEach(f => f.classList.toggle('on', f.dataset.frame === name));
+}
+function showOutro(){
+  outro.classList.add('on');
+}
+
+/* Scroll suave dentro del iframe (mismo origen => accesible) */
+function scrollFrame(name, pct, ms){
+  const map = { costa:'fCosta', classic:'fClassic', elegance:'fElegance' };
+  const ifr = document.getElementById(map[name]);
+  if(!ifr || !ifr.contentWindow) return;
+  const doc = ifr.contentDocument;
+  if(!doc) return;
+  const max = Math.max(0, doc.body.scrollHeight - ifr.clientHeight);
+  const to  = max * pct;
+  const from = ifr.contentWindow.scrollY;
+  const start = performance.now();
+  // easing suave, sin tirones
+  const ease = x => x<.5 ? 2*x*x : 1-Math.pow(-2*x+2,2)/2;
+  (function step(now){
+    const p = Math.min(1,(now-start)/ms);
+    ifr.contentWindow.scrollTo(0, from + (to-from)*ease(p));
+    if(p<1) requestAnimationFrame(step);
+  })(start);
+}
+
+/* Animación del contador 47 -> 48 */
+function bumpCounter(){
+  const c = document.getElementById('counter');
+  const p = document.getElementById('pend');
+  setTimeout(()=>{
+    c.textContent = '48';
+    p.textContent = '11';
+    c.classList.add('bump');
+    setTimeout(()=>c.classList.remove('bump'), 320);
+  }, 1400); // sincronizado con el "tap" de confirmación
+}
+
+window.startTimeline = function(){
+  document.body.classList.add('split');
+  TIMELINE.forEach((step, i) => {
+    const next = TIMELINE[i+1];
+    const dur  = ((next ? next.t : DURATION) - step.t) * 1000;
+    setTimeout(() => {
+      if (step.beat === 'outro') { showOutro(); return; }
+      showBeat(step.beat);
+      showFrame(step.frame);
+      scrollFrame(step.frame, step.scrollTo, dur * 0.92);
+      if(step.rsvp) bumpCounter();
+    }, step.t * 1000);
+  });
+};
+
+/* ------------------------------------------------------------------
+   Señal de "listo" para Playwright.
+   En dev, Next compila cada plantilla bajo demanda: los 3 iframes pueden
+   tardar decenas de segundos la primera vez. Por eso esperamos el evento
+   load real de cada uno en vez de un timeout fijo.
+------------------------------------------------------------------- */
+(function(){
+  const ifr = [...document.querySelectorAll('iframe')];
+  let pendientes = ifr.length;
+
+  window.__reelProgress = { total: ifr.length, cargados: 0 };
+
+  function marcarCargado(){
+    pendientes--;
+    window.__reelProgress.cargados = ifr.length - pendientes;
+    if (pendientes <= 0) {
+      // margen para fuentes web y primer paint dentro de los iframes
+      setTimeout(() => { window.__reelReady = true; }, 1800);
+    }
+  }
+
+  ifr.forEach(f => {
+    // Si ya cargó antes de registrar el listener
+    try {
+      if (f.contentDocument && f.contentDocument.readyState === 'complete') {
+        return marcarCargado();
+      }
+    } catch (e) { /* aún no accesible */ }
+    f.addEventListener('load', marcarCargado, { once:true });
+  });
+
+  if (ifr.length === 0) window.__reelReady = true;
+})();
+</script>
+</body>
+</html>
