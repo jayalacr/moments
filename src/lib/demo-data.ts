@@ -4,6 +4,7 @@ import { ClassicConfig } from '@/components/templates/classic/ClassicTemplate';
 import { EleganceConfig } from '@/components/templates/elegance/EleganceTemplate';
 import { CostaConfig } from '@/components/templates/costa/CostaTemplate';
 import { JardinConfig } from '@/components/templates/jardin/JardinTemplate';
+import { CanvasConfig } from '@/components/templates/canvas/CanvasTemplate';
 
 
 export const DELUXE_DEMO: ClassicConfig = {
@@ -497,4 +498,48 @@ export const JARDIN_DEMO: JardinConfig = {
     destination: true,
     gifts: true,
   },
+};
+
+
+// Canvas — fiesta infantil. El arte es una imagen; el código sólo pone texto encima.
+// ponytail: arte placeholder en /public para el prototipo; en producción va en Cloudinary.
+export const CANVAS_DEMO: CanvasConfig = {
+  fonts: ['Yellowtail', 'Quicksand:wght@500;600;700'],
+  pageBg: '#EFE9F7',
+  maxWidth: 620,
+  hostName: 'Alicia',
+  cta: { label: 'Confirmar asistencia', bg: '#F59BC3', color: '#fff', font: "'Quicksand', sans-serif" },
+  whatsapp: { number: '5219991234567', message: '¡Hola! Confirmo mi asistencia al cumpleaños de Alicia.' },
+  rsvp: { maxPlusOnes: 2 },
+  screens: [
+    {
+      art: '/templates/canvas/fiesta-movil.jpg',
+      aspect: '1092 / 1440',
+      ctaAt: { x: 50, y: 63, size: 2.9 },
+      slots: [
+        { text: 'Estás invitado', x: 50, y: 14.5, size: 7.2, width: 70, font: "'Yellowtail', cursive", color: '#C6A5DC' },
+        { text: 'ACOMPÁÑANOS\nA CELEBRAR', x: 50, y: 23, size: 4.1, width: 66, font: "'Quicksand', sans-serif", weight: 700, color: '#8085C9', letterSpacing: 0.07, lineHeight: 1.5 },
+        { text: 'Alicia', x: 50, y: 33, size: 14, width: 70, font: "'Yellowtail', cursive", color: '#F59BC3' },
+        { text: 'Mi primer añito', x: 50, y: 41, size: 6.2, width: 70, font: "'Yellowtail', cursive", color: '#C6A5DC' },
+        { text: 'JULIO · 24 · 2PM', x: 50, y: 47.5, size: 4.4, width: 68, font: "'Quicksand', sans-serif", weight: 600, color: '#8085C9', letterSpacing: 0.16 },
+        { text: 'CASA DE LOS MILLER', x: 50, y: 53.5, size: 4.2, width: 64, font: "'Quicksand', sans-serif", weight: 700, color: '#8085C9', letterSpacing: 0.04 },
+        { text: 'Av. Principal 122, Col. Centro', x: 50, y: 57.5, size: 3.2, width: 64, font: "'Quicksand', sans-serif", weight: 500, color: '#9AA0D4', letterSpacing: 0.04 },
+      ],
+      desktop: {
+        art: '/templates/canvas/fiesta-desktop.jpg',
+        aspect: '1672 / 941',
+        maxWidth: 1200,
+        ctaAt: { x: 50, y: 84, size: 1.5 },
+        slots: [
+          { text: 'Estás invitado', x: 50, y: 20, size: 3.6, width: 44, font: "'Yellowtail', cursive", color: '#C6A5DC' },
+          { text: 'ACOMPÁÑANOS A CELEBRAR', x: 50, y: 27.5, size: 1.8, width: 44, font: "'Quicksand', sans-serif", weight: 700, color: '#8085C9', letterSpacing: 0.14 },
+          { text: 'Alicia', x: 50, y: 41, size: 9, width: 44, font: "'Yellowtail', cursive", color: '#F59BC3' },
+          { text: 'Mi primer añito', x: 50, y: 53, size: 3.4, width: 44, font: "'Yellowtail', cursive", color: '#C6A5DC' },
+          { text: 'JULIO · 24 · 2PM', x: 50, y: 62, size: 2.2, width: 44, font: "'Quicksand', sans-serif", weight: 600, color: '#8085C9', letterSpacing: 0.18 },
+          { text: 'CASA DE LOS MILLER', x: 50, y: 69.5, size: 2.1, width: 44, font: "'Quicksand', sans-serif", weight: 700, color: '#8085C9', letterSpacing: 0.06 },
+          { text: 'Av. Principal 122, Col. Centro', x: 50, y: 75, size: 1.55, width: 44, font: "'Quicksand', sans-serif", weight: 500, color: '#9AA0D4', letterSpacing: 0.04 },
+        ],
+      },
+    },
+  ],
 };
